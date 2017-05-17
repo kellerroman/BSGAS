@@ -1,0 +1,26 @@
+
+HOMEDIR=../../
+include $(HOMEDIR)Makefile.global
+CODE_OBJ=$(HOMEDIR)$(OBJECT_DIR)/
+
+INCLUDE += -I$(CODE_OBJ)
+
+
+EXECUTABLE_DIR = ../bin
+SOURCE_DIR = ../src
+
+
+_EXE= create_xdmf
+
+EXE = $(patsubst %,$(EXECUTABLE_DIR)/%,$(_EXE))
+
+all: $(EXE) module_gridgen.o
+
+
+$(EXECUTABLE_DIR)/%:$(SOURCE_DIR)/%.F90
+	$(FC) $(CFLAGS) $^ $(LIBS) -o $@ $(INCLUDE)
+
+%.o: ../src/%.F90
+	$(FC) $(CFLAGS) $< -c $(INCLUDE)
+
+include ../../inc_Makefile_dep

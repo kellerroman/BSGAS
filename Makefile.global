@@ -1,0 +1,26 @@
+FC=gfortran
+
+OBJECT_DIR=obj
+EXECUTABLE_DIR=bin
+TOOLS_DIR=tools
+
+REALMAKEFILE=../Makefile.in
+
+
+
+
+
+LIBS = -lhdf5 -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lm
+
+INCLUDE = -I/usr/include/
+
+
+CFLAGS = -std=f2008
+
+CFLAGS += -Wconversion -Wall -Wextra -Warray-temporaries -Werror
+
+CFLAGS += -O3
+#CFLAGS += -g -fbacktrace -ffpe-trap=invalid,zero,overflow -fcheck=all -fbounds-check
+
+
+#CFLAGS += -DDEBUG #Unnecessary comments are oppressed

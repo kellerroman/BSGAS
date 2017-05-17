@@ -1,0 +1,78 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+BSGAS	main.F90	/^program BSGAS$/;"	p
+COORD_NAME	grid.F90	/^character(len=*), parameter :: COORD_NAME(/;"	v	module:structured_grid
+GREEN_END	screen_io.F90	/^character(len=*),parameter :: GREEN_END /;"	v	module:screen_io
+GREEN_START	screen_io.F90	/^character(len=*),parameter :: GREEN_START /;"	v	module:screen_io
+GROUP_BLOCK	grid.F90	/^character(len=*), parameter :: GROUP_BLOCK /;"	v	module:structured_grid
+GROUP_GRID	grid.F90	/^character(len=*), parameter :: GROUP_GRID /;"	v	module:structured_grid
+INT_KIND	const.F90	/^integer, parameter :: INT_KIND /;"	v	module:const
+N_SPRINGS	spring.F90	/^integer(INT_KIND), parameter :: N_SPRINGS /;"	v	module:spring
+REAL_KIND	const.F90	/^integer, parameter :: REAL_KIND /;"	v	module:const
+RED_END	screen_io.F90	/^character(len=*),parameter :: RED_END /;"	v	module:screen_io
+RED_START	screen_io.F90	/^character(len=*),parameter :: RED_START /;"	v	module:screen_io
+SCREEN_WIDTH	screen_io.F90	/^integer(INT_KIND), parameter :: SCREEN_WIDTH /;"	v	module:screen_io
+alloc_int_1d	help_routines.F90	/^subroutine alloc_int_1d(/;"	s	module:help_routines
+alloc_int_2d	help_routines.F90	/^subroutine alloc_int_2d(/;"	s	module:help_routines
+alloc_real_1d	help_routines.F90	/^subroutine alloc_real_1d(/;"	s	module:help_routines
+alloc_real_2d	help_routines.F90	/^subroutine alloc_real_2d(/;"	s	module:help_routines
+calc_edge_forces	unstr.F90	/^subroutine calc_edge_forces(/;"	s	module:unstr
+calc_edge_length	unstr.F90	/^subroutine calc_edge_length(/;"	s	module:unstr
+calc_edge_springs	spring.F90	/^subroutine calc_edge_springs$/;"	s	module:spring
+calc_point_forces	unstr.F90	/^subroutine calc_point_forces(/;"	s	module:unstr
+const	const.F90	/^module const$/;"	m
+control	control.F90	/^module control$/;"	m
+coords	types.F90	/^      real(REAL_KIND), allocatable :: coords(/;"	k	type:t_block
+dimension	types.F90	/^      integer(INT_KIND) :: dimension$/;"	k	type:t_unstr
+dw_soll	spring.F90	/^real(REAL_KIND), parameter :: dw_soll /;"	v	module:spring
+edge_forces	types.F90	/^      real(REAL_KIND), allocatable   :: edge_forces(/;"	k	type:t_unstr
+edge_lengths	types.F90	/^      real(REAL_KIND), allocatable   :: edge_lengths(/;"	k	type:t_unstr
+edge_points	types.F90	/^      integer(INT_KIND), allocatable :: edge_points(/;"	k	type:t_unstr
+edge_springs	types.F90	/^      real(REAL_KIND), allocatable   :: edge_springs(/;"	k	type:t_unstr
+edge_streching	spring.F90	/^subroutine edge_streching$/;"	s	module:spring
+edge_vectors	types.F90	/^      real(REAL_KIND), allocatable   :: edge_vectors(/;"	k	type:t_unstr
+end_adaption	control.F90	/^logical :: end_adaption$/;"	v	module:control
+filename_grid_in	grid.F90	/^character(len=*), parameter :: filename_grid_in /;"	v	module:structured_grid
+git	unstr.F90	/^type(t_unstr) :: git$/;"	v	module:unstr
+help_routines	help_routines.F90	/^module help_routines$/;"	m
+init_springs	spring.F90	/^subroutine init_springs$/;"	s	module:spring
+iter	control.F90	/^integer :: iter /;"	v	module:control
+loop_control	control.F90	/^subroutine loop_control$/;"	s	module:control
+max_edge_f	main.F90	/^real(REAL_KIND) :: max_point_f, max_edge_f$/;"	v	program:BSGAS
+max_point_f	main.F90	/^real(REAL_KIND) :: max_point_f,/;"	v	program:BSGAS
+move_points	unstr.F90	/^subroutine move_points(/;"	s	module:unstr
+nCells	types.F90	/^      integer(INT_KIND) :: nCells(/;"	k	type:t_block
+nIter	control.F90	/^integer :: nIter /;"	v	module:control
+nPoints	types.F90	/^      integer(INT_KIND) :: nPoints(/;"	k	type:t_block
+nedge	types.F90	/^      integer(INT_KIND) :: nedge$/;"	k	type:t_unstr
+npoint	types.F90	/^      integer(INT_KIND) :: npoint$/;"	k	type:t_unstr
+output_grid	control.F90	/^logical :: output_grid$/;"	v	module:control
+point_coords	types.F90	/^      real(REAL_KIND), allocatable   :: point_coords(/;"	k	type:t_unstr
+point_edge_signs	types.F90	/^      real(REAL_KIND), allocatable   :: point_edge_signs(/;"	k	type:t_unstr
+point_edges	types.F90	/^      integer(INT_KIND), allocatable :: point_edges(/;"	k	type:t_unstr
+point_forces	types.F90	/^      real(REAL_KIND), allocatable   :: point_forces(/;"	k	type:t_unstr
+point_nedges	types.F90	/^      integer(INT_KIND), allocatable :: point_nedges(/;"	k	type:t_unstr
+point_refs	types.F90	/^      integer(INT_KIND), allocatable :: point_refs(/;"	k	type:t_unstr
+res_out	control.F90	/^integer :: res_out /;"	v	module:control
+res_out_start	control.F90	/^integer :: res_out_start /;"	v	module:control
+screen_io	screen_io.F90	/^module screen_io$/;"	m
+spring	spring.F90	/^module spring$/;"	m
+springs	spring.F90	/^real(REAL_KIND), allocatable :: springs(/;"	v	module:spring
+structured_grid	grid.F90	/^module structured_grid$/;"	m
+strukt2unstr	unstr.F90	/^subroutine strukt2unstr(/;"	s	module:unstr
+sw_full_line	screen_io.F90	/^subroutine sw_full_line(/;"	s	module:screen_io
+sw_init_residual	screen_io.F90	/^subroutine sw_init_residual$/;"	s	module:screen_io
+sw_program_end	screen_io.F90	/^subroutine sw_program_end(/;"	s	module:screen_io
+sw_program_start	screen_io.F90	/^subroutine sw_program_start(/;"	s	module:screen_io
+sw_residual	screen_io.F90	/^subroutine sw_residual(/;"	s	module:screen_io
+t_block	types.F90	/^type :: t_block$/;"	t	module:types
+t_unstr	types.F90	/^type :: t_unstr$/;"	t	module:types
+types	types.F90	/^module types$/;"	m
+unstr	unstr.F90	/^module unstr$/;"	m
+unstr_output	unstr_output.F90	/^module unstr_output$/;"	m
+wall_refinment	spring.F90	/^subroutine wall_refinment$/;"	s	module:spring
+write_output	unstr_output.F90	/^subroutine write_output(/;"	s	module:unstr_output

@@ -1,0 +1,26 @@
+include ../Makefile.global
+include ../inc_Makefile_src
+OBJECTS=$(_SOURCES:.F90=.o)
+EXECUTABLE = ../bin/BSGAS
+SOURCE_DIR = ../src
+
+compile: write $(EXECUTABLE)
+	@true
+
+VPATH := $(SOURCE_DIR)
+
+write:
+	@echo "COMPILING PROGRAM:" `pwd`
+
+$(EXECUTABLE): $(OBJECTS)
+	$(FC) $(CFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
+
+%.o: %.F90
+	$(FC) -c $(CFLAGS) $(INCLUDE) $< -o $@ 
+	
+include ../inc_Makefile_dep
+
+../inc_Makefile_src ../inc_Makefile_dep:
+	cd ../; tools/make_dependencies.py src/ 
+
+.PHONY: write
