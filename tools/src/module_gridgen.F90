@@ -34,6 +34,7 @@ end type
 type(tblock), allocatable :: blocks(:)
 interface add_block
    module procedure add_block_scalar1
+   module procedure add_block_scalar2
    module procedure add_block_scalar3
    module procedure add_block_array3
 end interface add_block
@@ -67,6 +68,26 @@ contains
       ncells_temp(nblock,1)  = ni
       if (debug) &
          write(*,*) "Adding Block: NB:",nblock,"(ni)",ni
+   end subroutine
+
+   subroutine add_block_scalar2(ni,nj)
+      implicit none
+      integer, intent(in) :: ni,nj
+      if (dimension /= 2) then
+         write(*,*) "Cannot add 2D Block"
+         write(*,*) "Dimension was set to:",dimension
+         stop 1
+      end if
+      if (blocks_allocated) then
+         write(*,*) "add_block: Cannot add Block"
+         write(*,*) "Blocks are allready allocated"
+         stop 1
+      end if
+      nblock = nblock + 1
+      ncells_temp(nblock,1)  = ni
+      ncells_temp(nblock,2)  = nj
+      if (debug) &
+         write(*,*) "Adding Block: NB:",nblock,"(ni,nj)",ni,nj
    end subroutine
 
    subroutine add_block_array3(ncells)

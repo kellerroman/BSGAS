@@ -150,6 +150,10 @@
             end do
             write(fu,'(A)') '</DataItem>'
             write(fu,'(A)') '</Topology>'
+         else if (dims(3,nb) == 1) then
+         write(fu,'(A,3(I0,1X),A)') '     <Topology TopologyType="2DSMesh" NumberOfElements="'&
+                                   ,(dims(d,nb),d=RANK,1,-1) &
+                                   ,'"/>'
          else
          write(fu,'(A,3(I0,1X),A)') '     <Topology TopologyType="3DSMesh" NumberOfElements="'&
                                    ,(dims(d,nb),d=RANK,1,-1) &

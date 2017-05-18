@@ -17,6 +17,12 @@ contains
 
 subroutine read_grid()
 implicit none
+call read_grid_hdf5()
+call connect_blocks()
+end subroutine read_grid
+
+subroutine read_grid_hdf5()
+implicit none
 
 character(len=len(GROUP_BLOCK)+2) :: block_group
 real(REAL_KIND), allocatable :: data_in(:,:,:)
@@ -79,5 +85,10 @@ end do
 call h5gclose_f(group_id_grid, error) ! CLOSE GRID GROUP
 
 call h5fclose_f(file_id, error)
-end subroutine read_grid
+end subroutine read_grid_hdf5
+
+subroutine connect_blocks()
+implicit none
+end subroutine connect_blocks
+
 end module structured_grid  

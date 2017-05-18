@@ -30,3 +30,15 @@
 *.exe
 *.out
 *.app
+
+inc_Makefile_src
+inc_Makefile_dep
+bin/
+obj/
+
+*.xdmf
+*.vtk
+*.bin
+.*.swp
+*.h5
+gridgen

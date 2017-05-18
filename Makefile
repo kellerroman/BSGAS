@@ -1,6 +1,6 @@
 include Makefile.global
 
-all: BSGAS
+all: BSGAS tools
 
 BSGAS: FORCE
 	@(cd $(OBJECT_DIR) && $(MAKE) -f $(REALMAKEFILE) --no-print-directory)
@@ -10,6 +10,7 @@ tools:
 
 clean:
 	@rm -rf $(OBJECT_DIR) $(EXECUTABLE_DIR) inc_Makefile_* src/*.mod
+	$(MAKE) -C $(TOOLS_DIR) clean
 
 ##### CREATES NECESSARY FOLDERS
 FORCE:
@@ -18,4 +19,7 @@ FORCE:
 
 dep: FORCE
 	@(cd $(OBJECT_DIR) && $(MAKE) -f $(REALMAKEFILE) ../inc_Makefile_src --no-print-directory)
-.PHONY: FORCE
+
+test:
+	@$(MAKE) -C test
+.PHONY: FORCE tools dep test
