@@ -2,7 +2,7 @@ module help_routines
 use const
 implicit none
 private
-public :: alloc
+public :: alloc, vec_common
 interface alloc
    module procedure alloc_real_1d
    module procedure alloc_real_2d
@@ -80,4 +80,42 @@ integer(INT_KIND), intent(in)             :: d1
 allocate (array(d1))
 
 end subroutine alloc_log_1d
+
+subroutine vec_normalize(vec)
+implicit none
+real(REAL_KIND), intent(inout) :: vec(3)
+
+real(REAL_KIND) :: l
+
+l = sqrt(vec(1) * vec(1) + vec(2) * vec(2) + vec(3) * vec(3) )
+vec = vec / l
+
+end subroutine vec_normalize
+subroutine vec_common(v1,v2)
+implicit none
+real(REAL_KIND),parameter :: EPS = 1.0E-9_REAL_KIND
+real(REAL_KIND), intent(inout) :: v1(3)
+real(REAL_KIND), intent(in)    :: v2(3)
+real(REAL_KIND) :: sp
+real(REAL_KIND) :: tv(3)
+
+call vec_normalize(v1)
+tv = v2
+call vec_normalize(tv)
+
+sp = scalar_product(v1,tv)
+
+if (abs(sp-1.0D0) > EPS) then
+   v1 = 0
+end if
+
+end subroutine vec_common
+real(REAL_KIND) function scalar_product(v1,v2)
+implicit none
+real(REAL_KIND), intent(in) :: v1(3) , v2(3)
+
+scalar_product = v1(1) * v2(1) + v1(2) * v2(2) + v1(3) * v2(3)
+
+end function scalar_product
+
 end module help_routines

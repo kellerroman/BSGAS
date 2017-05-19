@@ -1,7 +1,7 @@
 module unstr
 use const
 use types
-use help_routines, only: alloc
+use help_routines, only: alloc, vec_common
 implicit none
 type(t_unstr) :: git
 contains
@@ -17,6 +17,8 @@ integer :: nwe ! NUMBER WALL EDGES
 integer :: p, p1, pe, eop, e2, p2
 
 integer :: nne, ne
+
+real(REAL_KIND) :: v1(3), v2(3)
 nBlock = ubound(blocks,1)
 
 write(*,*) "Block structured number of Blocks:",nBlock
@@ -200,12 +202,18 @@ do k = 1, blocks(b) % nPoints(3)
          !Left and Rigth Wall
          else if (i == 1 .or. i == blocks(b) % nPoints(1)) then
             git % point_move_rest(np) = .true.
-            git % point_move_rest_vector(:,np) = [-1,1,0] / sqrt(2.0D0)
+            v1 = blocks(b) % coords(i,j+1,k,:) - git % point_coords(:,np)
+            v2 =  git % point_coords(:,np) - blocks(b) % coords(i,j-1,k,:)
+            call vec_common(v1,v2)
+            git % point_move_rest_vector(:,np) = v1
 
          !Lower and upper Wall
          else if (j == 1 .or. j == blocks(b) % nPoints(2)) then
             git % point_move_rest(np) = .true.
-            git % point_move_rest_vector(:,np) = [1,1,0] / sqrt(2.0D0)
+            v1 = blocks(b) % coords(i+1,j,k,:) - git % point_coords(:,np)
+            v2 =  git % point_coords(:,np) - blocks(b) % coords(i-1,j,k,:)
+            call vec_common(v1,v2)
+            git % point_move_rest_vector(:,np) = v1
 
          !Inner Points
          else
