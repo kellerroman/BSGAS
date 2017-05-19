@@ -2,6 +2,7 @@ module structured_grid
 use hdf5
 use const
 use types
+use help_routines, only: alloc
 implicit none
 
 character(len=*), parameter :: filename_grid_in = "grid.h5"
@@ -71,14 +72,17 @@ do b = 1, nBlock
 
    allocate (data_in(blocks(b)%nPoints(1),blocks(b)%nPoints(2),blocks(b)%nPoints(3)))
    allocate ( blocks(b) % coords (blocks(b)%nPoints(1),blocks(b)%nPoints(2),blocks(b)%nPoints(3),3))
+   call alloc (blocks(b) % refs,blocks(b) % nPoints)
+
    do d = 1,dimen
       call h5dopen_f(group_id_block, COORD_NAME(d), dset_id, error)
       call h5dread_f(dset_id, H5T_NATIVE_DOUBLE, data_in, dims, error)
       blocks(b) % coords (1:blocks(b)%nPoints(1) &
-                          ,1:blocks(b)%nPoints(2) &
-                          ,1:blocks(b)%nPoints(3),d) = data_in
+                         ,1:blocks(b)%nPoints(2) &
+                         ,1:blocks(b)%nPoints(3),d) = data_in
       call h5dclose_f(dset_id, error)
    end do
+
    deallocate(data_in)
    call h5gclose_f(group_id_block, error)
 end do

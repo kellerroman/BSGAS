@@ -9,11 +9,20 @@ subroutine strukt2unstr(blocks)
 implicit none
 type(t_block) :: blocks(:)
 
-integer :: i,j,k,np,ne,b
+integer :: nBlock
+integer :: i,j,k,np,e,b
 
-integer :: p, p1, pe
+integer :: nwe ! NUMBER WALL EDGES
 
-write(*,*) "Block structured number of Blocks:",ubound(blocks)
+integer :: p, p1, pe, eop, e2, p2
+
+integer :: nne, ne
+nBlock = ubound(blocks,1)
+
+write(*,*) "Block structured number of Blocks:",nBlock
+if (nBlock /= 1) then
+   write(*,*) "Multiblock ist noch nicht unterstützt"
+end if
 
 b = 1
 
@@ -31,28 +40,45 @@ git % npoint = product(blocks(b) % nPoints)
 
 if (git % dimension == 1) then
    git % nedge = git % npoint - 1
+else if (git % dimension == 2) then
+   git % nedge = blocks(b) % nCells(1) * blocks(b) % nPoints(2) &
+               + blocks(b) % nCells(2) * blocks(b) % nPoints(1)
+end if
+if ( git % dimension == 2) then
+git % nWallEdge = blocks(b) % nPoints(2) + blocks(b) % nPoints(1)
+else
+git % nWallEdge = blocks(b) % nPoints(2)! + blocks(b) % nPoints(1)
 end if
 
 write(*,*) "Number of Points & Edges in unstr Grid:",git % npoint, git % nedge
 
-call alloc(git % point_coords    , 3, git % npoint)
-call alloc(git % point_refs      , 4, git % npoint)
-call alloc(git % point_nedges       , git % npoint)
-call alloc(git % point_edges     , 6, git % npoint)
-call alloc(git % point_edge_signs, 6, git % npoint)
-call alloc(git % point_forces    , 3, git % npoint)
-call alloc(git % edge_lengths       , git % nedge)
-call alloc(git % edge_points     , 2, git % nedge)
-call alloc(git % edge_springs       , git % nedge)
-call alloc(git % edge_vectors    , 3, git % nedge)
-call alloc(git % edge_forces     , 3, git % nedge)
+call alloc(git % point_coords          , 3, git % npoint)
+call alloc(git % point_refs            , 4, git % npoint)
+call alloc(git % point_nedges             , git % npoint)
+call alloc(git % point_edges           , 6, git % npoint)
+call alloc(git % point_edge_signs      , 6, git % npoint)
+call alloc(git % point_forces          , 3, git % npoint)
+call alloc(git % point_move_rest          , git % npoint)
+call alloc(git % point_move_rest_vector, 3, git % npoint)
+call alloc(git % edge_lengths             , git % nedge)
+call alloc(git % edge_points           , 2, git % nedge)
+call alloc(git % edge_springs             , git % nedge)
+call alloc(git % edge_vectors          , 3, git % nedge)
+call alloc(git % edge_forces           , 3, git % nedge)
+call alloc(git % edge_nneighbor           , git % nedge)
+call alloc(git % edge_neighbor         , 2, git % nedge)
+
+call alloc(git % wall_edges         , git % nWallEdge)
 
 git % point_forces = 0.0e0_REAL_KIND
 git % point_nedges = 0
 git % point_forces = 0.0e0_REAL_KIND
 
+git % edge_nneighbor = 0
+git % edge_neighbor  = -1
 np = 0
-ne = 0
+e = 0
+nwe = 0
 do k = 1, blocks(b) % nPoints(3)
    do j = 1, blocks(b) % nPoints(2)
       do i = 1, blocks(b) % nPoints(1)
@@ -62,41 +88,176 @@ do k = 1, blocks(b) % nPoints(3)
          git % point_refs(2,np) = i
          git % point_refs(3,np) = j
          git % point_refs(4,np) = k
+         blocks(b) % refs(i,j,k) = np
+
+!====================================================================================================
+!==========================      CREATE EDGES    ====================================================
+!====================================================================================================
          if (i > 1) then
-            ne = ne + 1
+            e = e + 1
             ! Add points to edge and edge to points
             do p = 1, 2
                p1 = np - 2 + p ! id of point, since it is i-direction it is np-1 & np
                ! Add point to edge
-               git % edge_points(p,ne) = p1
+               git % edge_points(p,e) = p1
                ! Add edge to the first point
                !Increase points edge count
                pe  = git % point_nedges(p1) + 1
                git % point_nedges(p1) = pe
                ! add edge to point at current edge count
-               git % point_edges(pe,p1) = ne
+               git % point_edges(pe,p1) = e
                ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
                if (p == 1) then
                   git % point_edge_signs(pe,p1) =  1.0E0_REAL_KIND
                else
                   git % point_edge_signs(pe,p1) = -1.0E0_REAL_KIND
                end if
-
             end do
+            ! WALL EDGE
+            if (i == blocks(1) % nPoints(1)) then
+               nwe = nwe + 1
+               git % wall_edges(nwe)  = e
+            end if
+            ! NEIGHBOR EDGE
+            if (i > 2) then
+               nne = git % edge_nneighbor(e) + 1
+               git % edge_nneighbor(e) = nne
+               if (j > 1) then
+                  ne = e - 2
+               else
+                  ne = e - 1
+               end if
+               git % edge_neighbor(nne,e) = ne
+               nne = git % edge_nneighbor(ne) + 1
+               git % edge_nneighbor(ne) = nne
+               git % edge_neighbor(nne,ne) = e
+            end if
          end if
+         if (j > 1) then
+            e = e + 1
+            ! Add points to edge and edge to points
+            do p = 1, 2
+               p1 = np - (2 - p) * blocks(b) % nPoints(1) ! id of point, since it is j-direction it is np-npi & np
+               ! Add point to edge
+               git % edge_points(p,e) = p1
+               ! Add edge to the first point
+               !Increase points edge count
+               pe  = git % point_nedges(p1) + 1
+               git % point_nedges(p1) = pe
+               ! add edge to point at current edge count
+               git % point_edges(pe,p1) = e
+               ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
+               if (p == 1) then
+                  git % point_edge_signs(pe,p1) =  1.0E0_REAL_KIND
+               else
+                  git % point_edge_signs(pe,p1) = -1.0E0_REAL_KIND
+               end if
+            end do
+            ! WALL EDGE
+            if (j == 2) then
+               nwe = nwe + 1
+               git % wall_edges(nwe)  = e
+            end if
+            ! NEIGHBOR EDGE
+            if (j > 2) then
+               ! if j > 2 there exists another edge in the negative j direction
+               ! Unfortunatelly there is no direct way to get this edge, thus
+               ! we compare all edges of the left point and see if there first point's
+               ! reference is j-2
+               ne = -1
+               p1 = git % edge_points(1,e) ! Left point of Edge
+               do eop = 1, git % point_nedges(p1)
+                  e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                  p2 = git % edge_points(1,e2)
+                  if (git % point_refs(3,p2) == j - 2) then
+                     ne = e2
+                     exit
+                  end if
+               end do
+               if (ne == -1) then
+                  write(*,*) "Error Neighbor edge not found"
+                  stop 1
+               end if
+               
+               nne = git % edge_nneighbor(e) + 1 ! Increasing neighbor edge count
+               git % edge_nneighbor(e) = nne     ! Increasing neighbor edge count
+               git % edge_neighbor(nne,e) = ne   ! Referncing new neighbor edge
+               nne = git % edge_nneighbor(ne) + 1! Increasing neighbor edge count of neighbor edge
+               git % edge_nneighbor(ne) = nne
+               git % edge_neighbor(nne,ne) = e   ! REferenceing current edge in neighbor edge's neighbor edge array
+            end if
+        end if
+         ! WALL EDGE
+!====================================================================================================
+!==========================      CREATE MOVEMENT RESTRICTION INFORMATION  ===========================
+!====================================================================================================
+         ! CORNER POINTS
+         if (  (i == 1 .or. i == blocks(b) % nPoints(1)) &
+         .and. (j == 1 .or. j == blocks(b) % nPoints(2))) then
+            git % point_move_rest(np) = .true.
+            git % point_move_rest_vector(:,np) = [0,0,0]
+
+         !Left and Rigth Wall
+         else if (i == 1 .or. i == blocks(b) % nPoints(1)) then
+            git % point_move_rest(np) = .true.
+            git % point_move_rest_vector(:,np) = [-1,1,0] / sqrt(2.0D0)
+
+         !Lower and upper Wall
+         else if (j == 1 .or. j == blocks(b) % nPoints(2)) then
+            git % point_move_rest(np) = .true.
+            git % point_move_rest_vector(:,np) = [1,1,0] / sqrt(2.0D0)
+
+         !Inner Points
+         else
+            git % point_move_rest(np) = .false.
+         end if
+
       end do
    end do
 end do
+!!!!!!!! TEST ARRAY ASSUMPTIONS
+if (np /= git % nPoint) then
+   write(*,*) "Number of Points wrongly approximated"
+   write(*,*) np,git % nPoint
+   stop 1
+end if
+if (e /= git % nEdge) then
+   write(*,*) "Number of Edges wrongly approximated"
+   write(*,*) e, git % nEdge
+   stop 1
+end if
+if (nwe /= git % nWallEdge) then
+   write(*,*) "Number of WallEdges wrongly approximated"
+   write(*,*) nwe, git % nWallEdge
+   stop 1
+end if
 
 do np = 1, git % nPoint
    pe = git % point_nedges(np)
    write(*,*) np, git % point_coords(:,np),pe , git % point_edges(1:pe,np)
 end do
 
-do ne = 1, git % nedge
-   write(*,*) ne, git % edge_points(:,ne)
+do e = 1, git % nedge
+   !write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4)') e, git % edge_points(:,e), git % edge_neighbor(:,e)
+   if (git % edge_nneighbor(e) == 2) then
+   write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4, " Pointrange: ",4I4)') &
+         e, git % edge_points(:,e), git % edge_neighbor(:,e) &
+         , git % edge_points(1,git % edge_neighbor(1,e)) &
+         , git % edge_points(:,e) &
+         , git % edge_points(2,git % edge_neighbor(2,e)) 
+   else
+   write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4, " Pointrange: ",3I4)') &
+         e, git % edge_points(:,e), git % edge_neighbor(:,e) &
+         , git % edge_points(:,e) &
+         , git % edge_points(1,git % edge_neighbor(1,e)) 
+   end if
 end do
 
+do nwe = 1, git % nWallEdge
+   e = git%wall_edges(nwe)
+   np = git % edge_points(2,e)
+   write(*,*) nwe,e,np,git % point_refs(:,np)
+end do
 git % edge_springs = 1.0e0_REAL_KIND
 
 git % edge_lengths = -1
@@ -107,12 +268,12 @@ end subroutine strukt2unstr
 
 subroutine calc_edge_length()
 implicit none
-integer :: ne,p1,p2
+integer :: e,p1,p2
 real(REAL_KIND) :: x1,x2,y1,y2,z1,z2
 real(REAL_KIND) :: dx,dy,dz
-do ne = 1, git % nedge
-   p1 = git % edge_points(1,ne)
-   p2 = git % edge_points(2,ne)
+do e = 1, git % nedge
+   p1 = git % edge_points(1,e)
+   p2 = git % edge_points(2,e)
    x1 = git % point_coords(1,p1)
    x2 = git % point_coords(1,p2)
    y1 = git % point_coords(2,p1)
@@ -122,27 +283,27 @@ do ne = 1, git % nedge
    dx = x2-x1
    dy = y2-y1
    dz = z2-z1
-   git % edge_vectors(1,ne) = dx
-   git % edge_vectors(2,ne) = dy
-   git % edge_vectors(3,ne) = dz
-   git % edge_lengths(ne) = sqrt( dx * dx &
+   git % edge_vectors(1,e) = dx
+   git % edge_vectors(2,e) = dy
+   git % edge_vectors(3,e) = dz
+   git % edge_lengths(e) = sqrt( dx * dx &
                                 + dy * dy &
                                 + dz * dz )
-   !write(*,*) ne, git % edge_lengths(ne), git % edge_vectors(:,ne)
+   !write(*,*) e, git % edge_lengths(e), git % edge_vectors(:,e)
 end do
 end subroutine calc_edge_length
 subroutine calc_edge_forces(max_f)
 implicit none
 real(REAL_KIND), intent(out) :: max_f
 
-integer :: ne
+integer :: e
 
 max_f = 0.0E0_REAL_KIND
-do ne = 1, git % nedge
-   git % edge_forces(:,ne) = git % edge_springs(ne) * git % edge_vectors(:,ne)
-   max_f = max(max_f,sqrt( git % edge_forces(1,ne) * git % edge_forces(1,ne) &
-                         + git % edge_forces(2,ne) * git % edge_forces(2,ne) &
-                         + git % edge_forces(3,ne) * git % edge_forces(3,ne) ))
+do e = 1, git % nedge
+   git % edge_forces(:,e) = git % edge_springs(e) * git % edge_vectors(:,e)
+   max_f = max(max_f,sqrt( git % edge_forces(1,e) * git % edge_forces(1,e) &
+                         + git % edge_forces(2,e) * git % edge_forces(2,e) &
+                         + git % edge_forces(3,e) * git % edge_forces(3,e) ))
 end do
 end subroutine calc_edge_forces
 
@@ -150,15 +311,25 @@ subroutine calc_point_forces(max_f)
 implicit none
 real(REAL_KIND), intent(out) :: max_f
 
-integer :: np, ne, edge
-real(REAL_KIND) :: tmp(3)
+integer :: np, e, edge
+real(REAL_KIND) :: tmp(3), sp
 max_f = 0.0E0_REAL_KIND
-do np = 2, git % nPoint-1
+do np = 1, git % nPoint
     tmp = 0.0E0_REAL_KIND
-   do ne = 1, git % point_nedges(np)
-      edge = git % point_edges(ne,np)
-      tmp = tmp + git % edge_forces(:,edge) * git % point_edge_signs(ne,np)
+   do e = 1, git % point_nedges(np)
+      edge = git % point_edges(e,np)
+      tmp = tmp + git % edge_forces(:,edge) * git % point_edge_signs(e,np)
    end do
+   if (git % point_move_rest(np)) then
+
+      sp = tmp(1)*git % point_move_rest_vector(1,np) &
+         + tmp(2)*git % point_move_rest_vector(2,np) &
+         + tmp(3)*git % point_move_rest_vector(3,np)
+
+      tmp = git % point_move_rest_vector(:,np) * sp
+!      write(*,*) "restricting:",np,git % point_refs(2:4,np),sp,tmp
+   end if
+      
    git % point_forces(:,np) = tmp
    max_f = max(max_f,sqrt(tmp(1)*tmp(1)+tmp(2)*tmp(2)+tmp(3)*tmp(3)))
    !write(*,*) np,git % point_nedges(np), git % point_forces(:,np)
@@ -175,7 +346,7 @@ integer :: np
 min_l = minval(git % edge_lengths)
 fk = min(1.0E0_REAL_KIND,min_l / max_f)
 !write(*,*) "FK",min_l,max_f,fk
-do np = 2, git % npoint-1
+do np = 1, git % npoint
    git % point_coords(:,np) = git % point_coords(:,np) + git % point_forces(:,np) / POINT_WEIGTH * fk
 
 end do

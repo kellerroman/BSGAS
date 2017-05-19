@@ -1,2 +1,4 @@
 all:
-	@echo "no TESTCASES YET"
+	@$(MAKE) -C square
+	@$(MAKE) -C square_turned
+

@@ -31,13 +31,15 @@ end subroutine calc_edge_springs
 
 subroutine wall_refinment
 implicit none
-integer :: e
-e = git % nedge
-springs(1,e) = springs(1,e) & 
-      * exp(1E-2 * (git % edge_lengths(e) - dw_soll))
-springs(1,e) = max(0.0E0_REAL_KIND,springs(1,e))
+integer :: e,i
+do i = 1, git % nWallEdge
+   e = git % wall_edges(i)
+   springs(1,e) = springs(1,e) & 
+         * exp(1E-2 * (git % edge_lengths(e) - dw_soll))
+   springs(1,e) = max(0.0E0_REAL_KIND,springs(1,e))
 
-!write(*,*)  springs(1,e), git % edge_lengths(e),exp(1E-2 * (git % edge_lengths(e) - dw_soll))
+!   write(*,*)  e,springs(1,e), git % edge_lengths(e),exp(1E-2 * (git % edge_lengths(e) - dw_soll))
+end do
 end subroutine wall_refinment
 
 
@@ -46,20 +48,17 @@ implicit none
 real(REAL_KIND), parameter :: dl_max = 1.2E+0_REAL_KIND
 integer :: e
 integer :: ne  !neighbor edge
+integer :: n
 
 real(REAL_KIND) :: el,nel
 real(REAL_KIND) :: fkt
 do e = 1, git % nedge
    el = git % edge_lengths(e)
    nel = 1E10_REAL_KIND
-   if (e > 1) then
-      ne = e - 1
+   do n = 1, git % edge_nneighbor(e)
+      ne = git % edge_neighbor(n,e)
       nel = min(nel,git % edge_lengths(ne))
-   end if
-   if (e < git % nedge) then
-      ne = e + 1
-      nel = min(nel,git % edge_lengths(ne))
-   end if
+   end do
    fkt = el / nel
    fkt = fkt - dl_max
    springs(2,e) = max(springs(2,e) * exp(1E-2 * fkt), 0.0E+0_REAL_KIND)

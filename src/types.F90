@@ -7,6 +7,7 @@ type :: t_block
       integer(INT_KIND) :: nCells(3)
       integer(INT_KIND) :: nPoints(3)
       real(REAL_KIND), allocatable :: coords(:,:,:,:)
+      integer(INT_KIND), allocatable :: refs(:,:,:)
 end type t_block
 
 type :: t_unstr
@@ -32,6 +33,12 @@ type :: t_unstr
       real(REAL_KIND), allocatable   :: point_forces(:,:)
       !< Force, sum of attateced edge forces, acting on the point
 
+      logical, allocatable           :: point_move_rest(:)
+      !< Logical if the Point has Movement restrictions
+
+      real(REAL_KIND), allocatable   :: point_move_rest_vector(:,:)
+      !< Vector with the movement restriction
+
 
       integer(INT_KIND), allocatable :: edge_points(:,:)
       !< Indices of points at edge end (point_id, edge_id)
@@ -45,6 +52,17 @@ type :: t_unstr
       real(REAL_KIND), allocatable   :: edge_forces(:,:)
       !< FORCE VECTOR of EDGE (edge_spring * edge_vector)
 
+      integer(INT_KIND), allocatable :: edge_nneighbor(:)
+      !< NUmber of Neighbor Edges in same direction 
+      integer(INT_KIND), allocatable :: edge_neighbor(:,:)
+      !< Neighbor Edges in same direction (length diff resitrictions)
+
+
+      !!!!!! LISTS FOR SPECIAL TYPES:
+
+      integer(INT_KIND) :: nWallEdge
+      integer(INT_KIND), allocatable :: wall_edges(:)
+      !< List of all edges that are ajectent to a wall thus having size requirements
 end type t_unstr
 
 end module types
