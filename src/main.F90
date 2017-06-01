@@ -15,7 +15,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 program BSGAS
-use boundary
+use boundary, only: init_boundary, init_walledges
 use control, only: loop_control, end_adaption, iter
 use screen_io, only: sw_program_start,sw_program_end, sw_init_residual, sw_residual
 use structured_grid, only: read_grid, blocks
@@ -33,6 +33,7 @@ call read_grid
 
 call strukt2unstr(blocks)
 call init_boundary(git,blocks)
+call init_walledges(git,blocks)
 call init_springs
 call sw_init_residual
 end_adaption = .false.

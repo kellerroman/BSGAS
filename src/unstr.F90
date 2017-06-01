@@ -12,11 +12,12 @@ type(t_block) :: blocks(:)
 integer :: nBlock
 integer :: i,j,k,np,e,b,nb
 
-integer :: nwe ! NUMBER WALL EDGES
 
 integer :: p, p1, pe, eop, e2, p2, ps
 
 integer :: nne, ne
+
+logical :: edge_exists
 
 nBlock = ubound(blocks,1)
 
@@ -26,7 +27,6 @@ b = 1
 git % nPoint = 0
 git % nEdge  = 0
 
-git % nWallEdge = 0
 if (blocks(b) % nPoints(2) == 1) then
    git % dimension = 1
 else if  ( blocks(b) % nPoints(3) == 1) then
@@ -61,15 +61,10 @@ do b = 1, nBlock
       git % nEdge = git % npoint - 1
    else if (git % dimension == 2) then
       git % nEdge = git % nEdge &
-                  + blocks(b) % nCells(1) * blocks(b) % nPoints(2) &
-                  + blocks(b) % nCells(2) * blocks(b) % nPoints(1)
+                  + blocks(b) % nCells(1) * j &
+                  + blocks(b) % nCells(2) * i
    end if
 
-   if ( git % dimension == 2) then
-   git % nWallEdge = git % nWallEdge + blocks(b) % nPoints(2) + blocks(b) % nPoints(1)
-   else
-   git % nWallEdge = git % nWallEdge + blocks(b) % nPoints(2)! + blocks(b) % nPoints(1)
-   end if
 
 end do
 
@@ -91,7 +86,6 @@ call alloc(git % edge_forces           , 3, git % nedge)
 call alloc(git % edge_nneighbor           , git % nedge)
 call alloc(git % edge_neighbor         , 2, git % nedge)
 
-call alloc(git % wall_edges         , git % nWallEdge)
 
 git % point_forces = 0.0e0_REAL_KIND
 git % point_nedges = 0
@@ -101,142 +95,178 @@ git % edge_nneighbor = 0
 git % edge_neighbor  = -1
 np = 0
 e = 0
-nwe = 0
 do b = 1, nBlock
-do k = 1, blocks(b) % nPoints(3)
-   do j = 1, blocks(b) % nPoints(2)
-      do i = 1, blocks(b) % nPoints(1)
-         if (blocks(b) % refs(i,j,k) == -1) then
-            np = np + 1
-            git % point_coords(:,np) = blocks(b) % coords(i,j,k,:)
-            git % point_refs(1,np) = b
-            git % point_refs(2,np) = i
-            git % point_refs(3,np) = j
-            git % point_refs(4,np) = k
-            blocks(b) % refs(i,j,k) = np
-            ! Check if this point is also a point in another grid
-            if (i == blocks(b) % nPoints(1)) then
-               nb = blocks(b) % boundary_cond(2) % bc_type
-               if (nb > 0) then
-                  if (blocks(b) % boundary_cond(2) % permutation == 1) then
-                     blocks(nb) % refs(1,j,k) = np
+   do k = 1, blocks(b) % nPoints(3)
+      do j = 1, blocks(b) % nPoints(2)
+         do i = 1, blocks(b) % nPoints(1)
+            if (blocks(b) % refs(i,j,k) == -1) then
+               np = np + 1
+               git % point_coords(:,np) = blocks(b) % coords(i,j,k,:)
+               git % point_refs(1,np) = b
+               git % point_refs(2,np) = i
+               git % point_refs(3,np) = j
+               git % point_refs(4,np) = k
+               blocks(b) % refs(i,j,k) = np
+               ! Check if this point is also a point in another grid
+               if (i == blocks(b) % nPoints(1)) then
+                  nb = blocks(b) % boundary_cond(2) % bc_type
+                  if (nb > 0) then
+                     if (blocks(b) % boundary_cond(2) % permutation == 1) then
+                        blocks(nb) % refs(1,j,k) = np
+                     end if
                   end if
                end if
             end if
-         end if
 
-!====================================================================================================
-!==========================      CREATE EDGES    ====================================================
-!====================================================================================================
-         if (i > 1) then
-            e = e + 1
-            ! Add points to edge and edge to points
-            do p = 1, 2
-               !p1 = np - 2 + p ! id of point, since it is i-direction it is np-1 & np
-               p1 = blocks(b) % refs(i-(2-p),j,k)
-               ! Add point to edge
-               git % edge_points(p,e) = p1
-               ! Add edge to the first point
-               !Increase points edge count
-               pe  = git % point_nedges(p1) + 1
-               git % point_nedges(p1) = pe
-               ! add edge to point at current edge count
-               git % point_edges(pe,p1) = e
-               ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
-               git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
-            end do
-            ! WALL EDGE
-            if (i == blocks(b) % nPoints(1) .and. blocks(b) % boundary_cond(2) % bc_type == 0 ) then
-               nwe = nwe + 1
-               git % wall_edges(nwe)  = e
-            end if
-            ! NEIGHBOR EDGE
-            if (i > 2) then
-               ne = -1
-               p1 = git % edge_points(1,e) ! Left point of Edge
-               ps = blocks(b) % refs(i - 2,j,k) ! Point_Soll Point we are looking for
-               do eop = 1, git % point_nedges(p1)
-                  e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
-                  p2 = git % edge_points(1,e2)
-                  if (p2 == ps) then
-                     ne = e2
-                     exit
-                  end if
-               end do
-               if (ne == -1) then
-                  write(*,*) "Error Neighbor edge not found"
-                  write(*,*) b,i,j,k
-                  write(*,*) p1, git % point_edges(:,p1)
-                  stop 1
+   !====================================================================================================
+   !==========================      CREATE EDGES    ====================================================
+   !====================================================================================================
+            if (i > 1) then
+               edge_exists = .false.
+               ! check if the edge already exists
+               ! This can be the case if we are at a block boundary and there is an other block connected
+               if (    (j == 1                      .and. blocks(b) % boundary_cond(3) % bc_type > 0)  &       ! at south boundary and a connected block
+                  .or. (j == blocks(b) % nPoints(2) .and. blocks(b) % boundary_cond(4) % bc_type > 0)) then    ! at north boundary and a connected block
+                  ! A connection from p (i,j,k) to ps (i-1,j,k) shall be created
+                  p = blocks(b) % refs(i,j,k)
+                  ! check all existing edges from point p and if one edge already connects to ps skip creation of this edge
+                  ne = git % point_nedges(p)
+                  if (ne >0) then
+                     ps = blocks(b) % refs(i-1,j,k)
+                     do pe = 1,ne
+                        e2 = git % point_edges(pe,p)
+                        p1 = git % edge_points(1,e2)
+                        if (ps == p1) then
+                           edge_exists = .true.
+                           exit
+                        end if
+                     end do
+                  end if 
                end if
+               if (.not. edge_exists) then
+                  e = e + 1
+                  ! Add points to edge and edge to points
+                  do p = 1, 2
+                     !p1 = np - 2 + p ! id of point, since it is i-direction it is np-1 & np
+                     p1 = blocks(b) % refs(i-(2-p),j,k)
+                     ! Add point to edge
+                     git % edge_points(p,e) = p1
+                     ! Add edge to the first point
+                     !Increase points edge count
+                     pe  = git % point_nedges(p1) + 1
+                     git % point_nedges(p1) = pe
+                     ! add edge to point at current edge count
+                     git % point_edges(pe,p1) = e
+                     ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
+                     git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
+                  end do
+                  ! NEIGHBOR EDGE
+                  if (i > 2) then
+                     ne = -1
+                     p1 = git % edge_points(1,e) ! Left point of Edge
+                     ps = blocks(b) % refs(i - 2,j,k) ! Point_Soll Point we are looking for
+                     do eop = 1, git % point_nedges(p1)
+                        e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                        p2 = git % edge_points(1,e2)
+                        if (p2 == ps) then
+                           ne = e2
+                           exit
+                        end if
+                     end do
+                     if (ne == -1) then
+                        write(*,*) "Error Neighbor edge not found"
+                        write(*,*) b,i,j,k
+                        write(*,*) p1, git % point_edges(:,p1)
+                        stop 1
+                     end if
 
-               nne = git % edge_nneighbor(e) + 1
-               git % edge_nneighbor(e) = nne
-               git % edge_neighbor(nne,e) = ne
-               nne = git % edge_nneighbor(ne) + 1
-               git % edge_nneighbor(ne) = nne
-               git % edge_neighbor(nne,ne) = e
-            end if
-         end if
-         if (j > 1) then
-            e = e + 1
-            ! Add points to edge and edge to points
-            do p = 1, 2
-               !p1 = np - (2 - p) * blocks(b) % nPoints(1) ! id of point, since it is j-direction it is np-npi & np
-               p1 = blocks(b) % refs(i,j-(2-p),k)
-               if (p == 1) then
-                  p1 = blocks(b) % refs(i,j-1,k)
-               else
-                  p1 = blocks(b) % refs(i,j,k)
-               end if
-               ! Add point to edge
-               git % edge_points(p,e) = p1
-               ! Add edge to the first point
-               !Increase points edge count
-               pe  = git % point_nedges(p1) + 1
-               git % point_nedges(p1) = pe
-               ! add edge to point at current edge count
-               git % point_edges(pe,p1) = e
-               ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
-               git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
-            end do
-            ! WALL EDGE
-            if (j == 2) then
-               nwe = nwe + 1
-               git % wall_edges(nwe)  = e
-            end if
-            ! NEIGHBOR EDGE
-            if (j > 2) then
-               ! if j > 2 there exists another edge in the negative j direction
-               ! Unfortunatelly there is no direct way to get this edge, thus
-               ! we compare all edges of the left point and see if there first point's
-               ! reference is j-2
-               ne = -1
-               p1 = git % edge_points(1,e) ! Left point of Edge
-               do eop = 1, git % point_nedges(p1)
-                  e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
-                  p2 = git % edge_points(1,e2)
-                  if (git % point_refs(3,p2) == j - 2) then
-                     ne = e2
-                     exit
+                     nne = git % edge_nneighbor(e) + 1
+                     git % edge_nneighbor(e) = nne
+                     git % edge_neighbor(nne,e) = ne
+                     nne = git % edge_nneighbor(ne) + 1
+                     git % edge_nneighbor(ne) = nne
+                     git % edge_neighbor(nne,ne) = e
                   end if
-               end do
-               if (ne == -1) then
-                  write(*,*) "Error Neighbor edge not found"
-                  stop 1
                end if
-               
-               nne = git % edge_nneighbor(e) + 1 ! Increasing neighbor edge count
-               git % edge_nneighbor(e) = nne     ! Increasing neighbor edge count
-               git % edge_neighbor(nne,e) = ne   ! Referncing new neighbor edge
-               nne = git % edge_nneighbor(ne) + 1! Increasing neighbor edge count of neighbor edge
-               git % edge_nneighbor(ne) = nne
-               git % edge_neighbor(nne,ne) = e   ! REferenceing current edge in neighbor edge's neighbor edge array
             end if
-        end if
+            if (j > 1) then
+               edge_exists = .false.
+               ! check if the edge already exists
+               ! This can be the case if we are at a block boundary and there is an other block connected
+               if (    (i == 1                      .and. blocks(b) % boundary_cond(1) % bc_type > 0)  &       ! at West boundary and a connected block
+                  .or. (i == blocks(b) % nPoints(1) .and. blocks(b) % boundary_cond(2) % bc_type > 0)) then    ! at east boundary and a connected block
+                  ! A connection from p (i,j,k) to ps (i,j-1,k) shall be created
+                  p = blocks(b) % refs(i,j,k)
+                  ! check all existing edges from point p and if one edge already connects to ps skip creation of this edge
+                  ne = git % point_nedges(p)
+                  if (ne > 0) then
+                     ps = blocks(b) % refs(i,j-1,k)
+                     ! loop over all edges of p
+                     do pe = 1,ne
+                        e2 = git % point_edges(pe,p)
+                        p1 = git % edge_points(1,e2)
+                        if (ps == p1) then
+                           edge_exists = .true.
+                           exit
+                        end if
+                     end do
+                  end if 
+               end if
+               if (.not. edge_exists) then
+                  e = e + 1
+                  ! Add points to edge and edge to points
+                  do p = 1, 2
+                     !p1 = np - (2 - p) * blocks(b) % nPoints(1) ! id of point, since it is j-direction it is np-npi & np
+                     p1 = blocks(b) % refs(i,j-(2-p),k)
+                     if (p == 1) then
+                        p1 = blocks(b) % refs(i,j-1,k)
+                     else
+                        p1 = blocks(b) % refs(i,j,k)
+                     end if
+                     ! Add point to edge
+                     git % edge_points(p,e) = p1
+                     ! Add edge to the first point
+                     !Increase points edge count
+                     pe  = git % point_nedges(p1) + 1
+                     git % point_nedges(p1) = pe
+                     ! add edge to point at current edge count
+                     git % point_edges(pe,p1) = e
+                     ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
+                     git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
+                  end do
+                  ! NEIGHBOR EDGE
+                  if (j > 2) then
+                     ! if j > 2 there exists another edge in the negative j direction
+                     ! Unfortunatelly there is no direct way to get this edge, thus
+                     ! we compare all edges of the left point and see if there first point's
+                     ! reference is j-2
+                     ne = -1
+                     p1 = git % edge_points(1,e) ! Left point of Edge
+                     do eop = 1, git % point_nedges(p1)
+                        e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                        p2 = git % edge_points(1,e2)
+                        if (git % point_refs(3,p2) == j - 2) then
+                           ne = e2
+                           exit
+                        end if
+                     end do
+                     if (ne == -1) then
+                        write(*,*) "Error Neighbor edge not found"
+                        stop 1
+                     end if
+                     
+                     nne = git % edge_nneighbor(e) + 1 ! Increasing neighbor edge count
+                     git % edge_nneighbor(e) = nne     ! Increasing neighbor edge count
+                     git % edge_neighbor(nne,e) = ne   ! Referncing new neighbor edge
+                     nne = git % edge_nneighbor(ne) + 1! Increasing neighbor edge count of neighbor edge
+                     git % edge_nneighbor(ne) = nne
+                     git % edge_neighbor(nne,ne) = e   ! REferenceing current edge in neighbor edge's neighbor edge array
+                  end if
+              end if
+           end if
+         end do
       end do
    end do
-end do
 end do
 !!!!!!!! TEST ARRAY ASSUMPTIONS
 if (np /= git % nPoint) then
@@ -247,11 +277,6 @@ end if
 if (e /= git % nEdge) then
    write(*,*) "Number of Edges wrongly approximated"
    write(*,*) e, git % nEdge
-   !stop 1
-end if
-if (nwe /= git % nWallEdge) then
-   write(*,*) "Number of WallEdges wrongly approximated"
-   write(*,*) nwe, git % nWallEdge
    !stop 1
 end if
 write(*,*) "Points"
@@ -276,12 +301,6 @@ do e = 1, git % nedge
    end if
 end do
 
-write(*,*) "Walledges"
-do nwe = 1, git % nWallEdge
-   e = git%wall_edges(nwe)
-   np = git % edge_points(2,e)
-   write(*,'("# ",I4," #E: ",I4," np: ",I4," Ref:",4(1X,I4))') nwe,e,np,git % point_refs(:,np)
-end do
 git % edge_springs = 1.0e0_REAL_KIND
 
 git % edge_lengths = -1

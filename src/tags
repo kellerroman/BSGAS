@@ -24,7 +24,10 @@ alloc_log_1d	help_routines.F90	/^subroutine alloc_log_1d(/;"	s	module:help_routi
 alloc_real_1d	help_routines.F90	/^subroutine alloc_real_1d(/;"	s	module:help_routines
 alloc_real_2d	help_routines.F90	/^subroutine alloc_real_2d(/;"	s	module:help_routines
 alloc_real_3d	help_routines.F90	/^subroutine alloc_real_3d(/;"	s	module:help_routines
-boundary_cond	types.F90	/^      integer(INT_KIND), allocatable :: boundary_cond(/;"	k	type:t_block
+alloc_real_3d_array	help_routines.F90	/^subroutine alloc_real_3d_array(/;"	s	module:help_routines
+bc_type	types.F90	/^      integer(INT_KIND)              :: bc_type$/;"	k	type:t_boundary_condition
+boundary	boundary.F90	/^module boundary$/;"	m
+boundary_cond	types.F90	/^      type(t_boundary_condi/;"	k	type:t_block
 calc_edge_forces	unstr.F90	/^subroutine calc_edge_forces(/;"	s	module:unstr
 calc_edge_length	unstr.F90	/^subroutine calc_edge_length(/;"	s	module:unstr
 calc_edge_springs	spring.F90	/^subroutine calc_edge_springs$/;"	s	module:spring
@@ -47,7 +50,9 @@ end_adaption	control.F90	/^logical :: end_adaption$/;"	v	module:control
 filename_grid_in	grid.F90	/^character(len=*), parameter :: filename_grid_in /;"	v	module:structured_grid
 git	unstr.F90	/^type(t_unstr) :: git$/;"	v	module:unstr
 help_routines	help_routines.F90	/^module help_routines$/;"	m
+init_boundary	boundary.F90	/^subroutine init_boundary(/;"	s	module:boundary
 init_springs	spring.F90	/^subroutine init_springs$/;"	s	module:spring
+init_walledges	boundary.F90	/^subroutine init_walledges(/;"	s	module:boundary
 iter	control.F90	/^integer :: iter /;"	v	module:control
 loop_control	control.F90	/^subroutine loop_control$/;"	s	module:control
 max_edge_f	main.F90	/^real(REAL_KIND) :: max_point_f, max_edge_f$/;"	v	program:BSGAS
@@ -58,8 +63,10 @@ nIter	control.F90	/^integer :: nIter /;"	v	module:control
 nPoints	types.F90	/^      integer(INT_KIND)              :: nPoints(/;"	k	type:t_block
 nWallEdge	types.F90	/^      integer(INT_KIND) :: nWallEdge$/;"	k	type:t_unstr
 nedge	types.F90	/^      integer(INT_KIND) :: nedge$/;"	k	type:t_unstr
+neighbor_face	types.F90	/^      integer(INT_KIND)              :: neighbor_face$/;"	k	type:t_boundary_condition
 npoint	types.F90	/^      integer(INT_KIND) :: npoint$/;"	k	type:t_unstr
 output_grid	control.F90	/^logical :: output_grid$/;"	v	module:control
+permutation	types.F90	/^      integer(INT_KIND)              :: permutation$/;"	k	type:t_boundary_condition
 point_coords	types.F90	/^      real(REAL_KIND), allocatable   :: point_coords(/;"	k	type:t_unstr
 point_edge_signs	types.F90	/^      real(REAL_KIND), allocatable   :: point_edge_signs(/;"	k	type:t_unstr
 point_edges	types.F90	/^      integer(INT_KIND), allocatable :: point_edges(/;"	k	type:t_unstr
@@ -84,6 +91,7 @@ sw_program_end	screen_io.F90	/^subroutine sw_program_end(/;"	s	module:screen_io
 sw_program_start	screen_io.F90	/^subroutine sw_program_start(/;"	s	module:screen_io
 sw_residual	screen_io.F90	/^subroutine sw_residual(/;"	s	module:screen_io
 t_block	types.F90	/^type :: t_block$/;"	t	module:types
+t_boundary_condition	types.F90	/^type :: t_boundary_condition$/;"	t	module:types
 t_unstr	types.F90	/^type :: t_unstr$/;"	t	module:types
 types	types.F90	/^module types$/;"	m
 unstr	unstr.F90	/^module unstr$/;"	m
