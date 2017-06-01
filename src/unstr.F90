@@ -14,7 +14,7 @@ integer :: i,j,k,np,e,b,nb
 
 integer :: nwe ! NUMBER WALL EDGES
 
-integer :: p, p1, pe, eop, e2, p2
+integer :: p, p1, pe, eop, e2, p2, ps
 
 integer :: nne, ne
 
@@ -154,16 +154,19 @@ do k = 1, blocks(b) % nPoints(3)
             if (i > 2) then
                ne = -1
                p1 = git % edge_points(1,e) ! Left point of Edge
+               ps = blocks(b) % refs(i - 2,j,k) ! Point_Soll Point we are looking for
                do eop = 1, git % point_nedges(p1)
                   e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
                   p2 = git % edge_points(1,e2)
-                  if (git % point_refs(2,p2) == i - 2) then
+                  if (p2 == ps) then
                      ne = e2
                      exit
                   end if
                end do
                if (ne == -1) then
                   write(*,*) "Error Neighbor edge not found"
+                  write(*,*) b,i,j,k
+                  write(*,*) p1, git % point_edges(:,p1)
                   stop 1
                end if
 
