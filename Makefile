@@ -11,6 +11,7 @@ tools:
 clean:
 	@rm -rf $(OBJECT_DIR) $(EXECUTABLE_DIR) inc_Makefile_* src/*.mod
 	$(MAKE) -C $(TOOLS_DIR) clean
+	$(MAKE) -C test clean
 
 ##### CREATES NECESSARY FOLDERS
 FORCE:

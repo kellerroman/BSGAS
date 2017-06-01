@@ -15,10 +15,11 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 program BSGAS
+use boundary
 use control, only: loop_control, end_adaption, iter
 use screen_io, only: sw_program_start,sw_program_end, sw_init_residual, sw_residual
 use structured_grid, only: read_grid, blocks
-use unstr, only: strukt2unstr,calc_edge_length,calc_edge_forces, calc_point_forces, move_points
+use unstr, only: strukt2unstr,calc_edge_length,calc_edge_forces, calc_point_forces, move_points, git
 use unstr_output, only: write_output
 use spring, only: init_springs,calc_edge_springs
 use types
@@ -31,6 +32,7 @@ call sw_program_start()
 call read_grid
 
 call strukt2unstr(blocks)
+call init_boundary(git,blocks)
 call init_springs
 call sw_init_residual
 end_adaption = .false.

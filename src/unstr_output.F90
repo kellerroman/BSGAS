@@ -38,6 +38,21 @@ write(10,"(A)") 'VECTORS Point_FORCE float'
 do i = 1, git % nPoint
    write(10,'(3(f20.13,1X))') git % point_forces(:,i)
 end do
+write(10,"(A)") 'SCALARS MOVEMENT float'
+write(10,"(A)") 'LOOKUP_TABLE Default'
+do i = 1, git % nPoint
+   if (git % point_move_rest(i)) then
+      if (git % point_move_rest_vector(1,i) ** 2 &
+         +git % point_move_rest_vector(2,i) ** 2 &
+         +git % point_move_rest_vector(3,i) ** 2 <= 1E-5) then
+         write(10,*) 1.0D0
+      else
+         write(10,*) 2.0D0
+      end if
+   else
+      write(10,*) 0.0D0
+   end if
+end do
 write(10,"(A,1X,I0)") "CELL_DATA",git % nedge
 write(10,"(A)") 'SCALARS Kantenlaenge double'
 write(10,"(A)") 'LOOKUP_TABLE Default'

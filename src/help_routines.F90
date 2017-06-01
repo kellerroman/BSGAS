@@ -2,10 +2,12 @@ module help_routines
 use const
 implicit none
 private
-public :: alloc, vec_common
+public :: alloc, vec_common, vec_normalize
 interface alloc
    module procedure alloc_real_1d
    module procedure alloc_real_2d
+   module procedure alloc_real_3d
+   module procedure alloc_real_3d_array
    module procedure alloc_int_1d
    module procedure alloc_int_2d
    module procedure alloc_int_3d
@@ -32,6 +34,26 @@ integer(INT_KIND), intent(in)             :: d2
 allocate (array(d1,d2))
 
 end subroutine alloc_real_2d
+
+subroutine alloc_real_3d(array,d1,d2,d3)
+implicit none
+real(REAL_KIND), allocatable, intent(out) :: array(:,:,:)
+integer(INT_KIND), intent(in)             :: d1
+integer(INT_KIND), intent(in)             :: d2
+integer(INT_KIND), intent(in)             :: d3
+
+allocate (array(d1,d2,d3))
+
+end subroutine alloc_real_3d
+
+subroutine alloc_real_3d_array(array,d)
+implicit none
+real(REAL_KIND), allocatable, intent(out) :: array(:,:,:)
+integer(INT_KIND), intent(in)             :: d(3)
+
+call alloc_real_3d(array,d(1),d(2),d(3))
+
+end subroutine alloc_real_3d_array
 
 subroutine alloc_int_1d(array,d1)
 implicit none
@@ -105,7 +127,7 @@ call vec_normalize(tv)
 
 sp = scalar_product(v1,tv)
 
-if (abs(sp-1.0D0) > EPS) then
+if (abs(abs(sp)-1.0D0) > EPS) then
    v1 = 0
 end if
 

@@ -3,11 +3,24 @@ use const
 implicit none
 
 
+type :: t_boundary_condition
+      integer(INT_KIND)              :: bc_type
+      !< Boundary-Type: >0: Blocknumber of other Block
+      !<                 0: Uninitialized
+      integer(INT_KIND)              :: neighbor_face
+      integer(INT_KIND)              :: permutation
+end type t_boundary_condition
+
 type :: t_block
-      integer(INT_KIND) :: nCells(3)
-      integer(INT_KIND) :: nPoints(3)
-      real(REAL_KIND), allocatable :: coords(:,:,:,:)
+      integer(INT_KIND)              :: nCells(3)
+      integer(INT_KIND)              :: nPoints(3)
+      real(REAL_KIND)  , allocatable :: coords(:,:,:,:)
       integer(INT_KIND), allocatable :: refs(:,:,:)
+      type(t_boundary_condition), allocatable :: boundary_cond(:)
+      !< Boundary Condition at the Block Faces (Face-id)
+      !< Face: 1 = West (i = 1), 2 = East (i = Imax)
+      !<       3 = South(j = 1), 4 = North(j = Jmax)
+      !<       5 = Front(k = 1), 4 = Back (k = kmax)
 end type t_block
 
 type :: t_unstr

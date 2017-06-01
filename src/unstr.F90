@@ -10,7 +10,7 @@ implicit none
 type(t_block) :: blocks(:)
 
 integer :: nBlock
-integer :: i,j,k,np,e,b
+integer :: i,j,k,np,e,b,nb
 
 integer :: nwe ! NUMBER WALL EDGES
 
@@ -18,16 +18,15 @@ integer :: p, p1, pe, eop, e2, p2
 
 integer :: nne, ne
 
-real(REAL_KIND) :: v1(3), v2(3)
 nBlock = ubound(blocks,1)
 
 write(*,*) "Block structured number of Blocks:",nBlock
-if (nBlock /= 1) then
-   write(*,*) "Multiblock ist noch nicht unterstützt"
-end if
 
 b = 1
+git % nPoint = 0
+git % nEdge  = 0
 
+git % nWallEdge = 0
 if (blocks(b) % nPoints(2) == 1) then
    git % dimension = 1
 else if  ( blocks(b) % nPoints(3) == 1) then
@@ -38,19 +37,41 @@ end if
 
 write(*,*) "Grid is of Dimension:", git % dimension
 
-git % npoint = product(blocks(b) % nPoints)
+do b = 1, nBlock
+   i = blocks(b) % nPoints(1)
+   j = blocks(b) % nPoints(2)
+   k = blocks(b) % nPoints(3)
 
-if (git % dimension == 1) then
-   git % nedge = git % npoint - 1
-else if (git % dimension == 2) then
-   git % nedge = blocks(b) % nCells(1) * blocks(b) % nPoints(2) &
-               + blocks(b) % nCells(2) * blocks(b) % nPoints(1)
-end if
-if ( git % dimension == 2) then
-git % nWallEdge = blocks(b) % nPoints(2) + blocks(b) % nPoints(1)
-else
-git % nWallEdge = blocks(b) % nPoints(2)! + blocks(b) % nPoints(1)
-end if
+   if (blocks(b) % boundary_cond(1) % bc_type > 0) then
+      i = i - 1
+   end if
+   if (blocks(b) % boundary_cond(3) % bc_type > 0) then
+      j = j - 1
+   end if
+   if (git % dimension ==3) then
+      if (blocks(b) % boundary_cond(5) % bc_type > 0) then
+         k = k - 1
+      end if
+   end if
+
+   git % nPoint = git % nPoint + i * j * k
+   write(*,*) i,j,k
+
+   if (git % dimension == 1) then
+      git % nEdge = git % npoint - 1
+   else if (git % dimension == 2) then
+      git % nEdge = git % nEdge &
+                  + blocks(b) % nCells(1) * blocks(b) % nPoints(2) &
+                  + blocks(b) % nCells(2) * blocks(b) % nPoints(1)
+   end if
+
+   if ( git % dimension == 2) then
+   git % nWallEdge = git % nWallEdge + blocks(b) % nPoints(2) + blocks(b) % nPoints(1)
+   else
+   git % nWallEdge = git % nWallEdge + blocks(b) % nPoints(2)! + blocks(b) % nPoints(1)
+   end if
+
+end do
 
 write(*,*) "Number of Points & Edges in unstr Grid:",git % npoint, git % nedge
 
@@ -81,16 +102,28 @@ git % edge_neighbor  = -1
 np = 0
 e = 0
 nwe = 0
+do b = 1, nBlock
 do k = 1, blocks(b) % nPoints(3)
    do j = 1, blocks(b) % nPoints(2)
       do i = 1, blocks(b) % nPoints(1)
-         np = np + 1
-         git % point_coords(:,np) = blocks(b) % coords(i,j,k,:)
-         git % point_refs(1,np) = b
-         git % point_refs(2,np) = i
-         git % point_refs(3,np) = j
-         git % point_refs(4,np) = k
-         blocks(b) % refs(i,j,k) = np
+         if (blocks(b) % refs(i,j,k) == -1) then
+            np = np + 1
+            git % point_coords(:,np) = blocks(b) % coords(i,j,k,:)
+            git % point_refs(1,np) = b
+            git % point_refs(2,np) = i
+            git % point_refs(3,np) = j
+            git % point_refs(4,np) = k
+            blocks(b) % refs(i,j,k) = np
+            ! Check if this point is also a point in another grid
+            if (i == blocks(b) % nPoints(1)) then
+               nb = blocks(b) % boundary_cond(2) % bc_type
+               if (nb > 0) then
+                  if (blocks(b) % boundary_cond(2) % permutation == 1) then
+                     blocks(nb) % refs(1,j,k) = np
+                  end if
+               end if
+            end if
+         end if
 
 !====================================================================================================
 !==========================      CREATE EDGES    ====================================================
@@ -99,7 +132,16 @@ do k = 1, blocks(b) % nPoints(3)
             e = e + 1
             ! Add points to edge and edge to points
             do p = 1, 2
-               p1 = np - 2 + p ! id of point, since it is i-direction it is np-1 & np
+               !p1 = np - 2 + p ! id of point, since it is i-direction it is np-1 & np
+               if (p == 1) then
+                  p1 = blocks(b) % refs(i-1,j,k)
+                  ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
+                  git % point_edge_signs(pe,p1) =  1.0E0_REAL_KIND
+               else
+                  p1 = blocks(b) % refs(i,j,k)
+                  ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
+                  git % point_edge_signs(pe,p1) = -1.0E0_REAL_KIND
+               end if
                ! Add point to edge
                git % edge_points(p,e) = p1
                ! Add edge to the first point
@@ -108,27 +150,31 @@ do k = 1, blocks(b) % nPoints(3)
                git % point_nedges(p1) = pe
                ! add edge to point at current edge count
                git % point_edges(pe,p1) = e
-               ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
-               if (p == 1) then
-                  git % point_edge_signs(pe,p1) =  1.0E0_REAL_KIND
-               else
-                  git % point_edge_signs(pe,p1) = -1.0E0_REAL_KIND
-               end if
             end do
             ! WALL EDGE
-            if (i == blocks(1) % nPoints(1)) then
+            if (i == blocks(b) % nPoints(1) .and. blocks(b) % boundary_cond(2) % bc_type == 0 ) then
                nwe = nwe + 1
                git % wall_edges(nwe)  = e
             end if
             ! NEIGHBOR EDGE
             if (i > 2) then
+               ne = -1
+               p1 = git % edge_points(1,e) ! Left point of Edge
+               do eop = 1, git % point_nedges(p1)
+                  e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                  p2 = git % edge_points(1,e2)
+                  if (git % point_refs(2,p2) == i - 2) then
+                     ne = e2
+                     exit
+                  end if
+               end do
+               if (ne == -1) then
+                  write(*,*) "Error Neighbor edge not found"
+                  stop 1
+               end if
+
                nne = git % edge_nneighbor(e) + 1
                git % edge_nneighbor(e) = nne
-               if (j > 1) then
-                  ne = e - 2
-               else
-                  ne = e - 1
-               end if
                git % edge_neighbor(nne,e) = ne
                nne = git % edge_nneighbor(ne) + 1
                git % edge_nneighbor(ne) = nne
@@ -139,7 +185,16 @@ do k = 1, blocks(b) % nPoints(3)
             e = e + 1
             ! Add points to edge and edge to points
             do p = 1, 2
-               p1 = np - (2 - p) * blocks(b) % nPoints(1) ! id of point, since it is j-direction it is np-npi & np
+               !p1 = np - (2 - p) * blocks(b) % nPoints(1) ! id of point, since it is j-direction it is np-npi & np
+               if (p == 1) then
+                  p1 = blocks(b) % refs(i,j-1,k)
+                  ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
+                  git % point_edge_signs(pe,p1) =  1.0E0_REAL_KIND
+               else
+                  p1 = blocks(b) % refs(i,j,k)
+                  ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
+                  git % point_edge_signs(pe,p1) = -1.0E0_REAL_KIND
+               end if
                ! Add point to edge
                git % edge_points(p,e) = p1
                ! Add edge to the first point
@@ -148,12 +203,6 @@ do k = 1, blocks(b) % nPoints(3)
                git % point_nedges(p1) = pe
                ! add edge to point at current edge count
                git % point_edges(pe,p1) = e
-               ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
-               if (p == 1) then
-                  git % point_edge_signs(pe,p1) =  1.0E0_REAL_KIND
-               else
-                  git % point_edge_signs(pe,p1) = -1.0E0_REAL_KIND
-               end if
             end do
             ! WALL EDGE
             if (j == 2) then
@@ -189,62 +238,32 @@ do k = 1, blocks(b) % nPoints(3)
                git % edge_neighbor(nne,ne) = e   ! REferenceing current edge in neighbor edge's neighbor edge array
             end if
         end if
-         ! WALL EDGE
-!====================================================================================================
-!==========================      CREATE MOVEMENT RESTRICTION INFORMATION  ===========================
-!====================================================================================================
-         ! CORNER POINTS
-         if (  (i == 1 .or. i == blocks(b) % nPoints(1)) &
-         .and. (j == 1 .or. j == blocks(b) % nPoints(2))) then
-            git % point_move_rest(np) = .true.
-            git % point_move_rest_vector(:,np) = [0,0,0]
-
-         !Left and Rigth Wall
-         else if (i == 1 .or. i == blocks(b) % nPoints(1)) then
-            git % point_move_rest(np) = .true.
-            v1 = blocks(b) % coords(i,j+1,k,:) - git % point_coords(:,np)
-            v2 =  git % point_coords(:,np) - blocks(b) % coords(i,j-1,k,:)
-            call vec_common(v1,v2)
-            git % point_move_rest_vector(:,np) = v1
-
-         !Lower and upper Wall
-         else if (j == 1 .or. j == blocks(b) % nPoints(2)) then
-            git % point_move_rest(np) = .true.
-            v1 = blocks(b) % coords(i+1,j,k,:) - git % point_coords(:,np)
-            v2 =  git % point_coords(:,np) - blocks(b) % coords(i-1,j,k,:)
-            call vec_common(v1,v2)
-            git % point_move_rest_vector(:,np) = v1
-
-         !Inner Points
-         else
-            git % point_move_rest(np) = .false.
-         end if
-
       end do
    end do
+end do
 end do
 !!!!!!!! TEST ARRAY ASSUMPTIONS
 if (np /= git % nPoint) then
    write(*,*) "Number of Points wrongly approximated"
    write(*,*) np,git % nPoint
-   stop 1
+   !stop 1
 end if
 if (e /= git % nEdge) then
    write(*,*) "Number of Edges wrongly approximated"
    write(*,*) e, git % nEdge
-   stop 1
+   !stop 1
 end if
 if (nwe /= git % nWallEdge) then
    write(*,*) "Number of WallEdges wrongly approximated"
    write(*,*) nwe, git % nWallEdge
-   stop 1
+   !stop 1
 end if
-
+write(*,*) "Points"
 do np = 1, git % nPoint
    pe = git % point_nedges(np)
-   write(*,*) np, git % point_coords(:,np),pe , git % point_edges(1:pe,np)
+   write(*,*) np, git % point_coords(:,np), pe, git % point_edges(1:pe,np)
 end do
-
+write(*,*) "Edges"
 do e = 1, git % nedge
    !write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4)') e, git % edge_points(:,e), git % edge_neighbor(:,e)
    if (git % edge_nneighbor(e) == 2) then
@@ -254,17 +273,18 @@ do e = 1, git % nedge
          , git % edge_points(:,e) &
          , git % edge_points(2,git % edge_neighbor(2,e)) 
    else
-   write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4, " Pointrange: ",3I4)') &
-         e, git % edge_points(:,e), git % edge_neighbor(:,e) &
+   write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",I4,4X, " Pointrange: ",4I4)') &
+         e, git % edge_points(:,e), git % edge_neighbor(1,e) &
          , git % edge_points(:,e) &
-         , git % edge_points(1,git % edge_neighbor(1,e)) 
+         , git % edge_points(:,git % edge_neighbor(1,e)) 
    end if
 end do
 
+write(*,*) "Walledges"
 do nwe = 1, git % nWallEdge
    e = git%wall_edges(nwe)
    np = git % edge_points(2,e)
-   write(*,*) nwe,e,np,git % point_refs(:,np)
+   write(*,'("# ",I4," #E: ",I4," np: ",I4," Ref:",4(1X,I4))') nwe,e,np,git % point_refs(:,np)
 end do
 git % edge_springs = 1.0e0_REAL_KIND
 
@@ -355,8 +375,7 @@ min_l = minval(git % edge_lengths)
 fk = min(1.0E0_REAL_KIND,min_l / max_f)
 !write(*,*) "FK",min_l,max_f,fk
 do np = 1, git % npoint
-   git % point_coords(:,np) = git % point_coords(:,np) + git % point_forces(:,np) / POINT_WEIGTH * fk
-
+   git % point_coords(:,np) = git % point_coords(:,np) + git % point_forces(:,np) / POINT_WEIGTH !* fk
 end do
 end subroutine move_points
 end module unstr
