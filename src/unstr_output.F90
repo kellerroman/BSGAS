@@ -53,6 +53,10 @@ do i = 1, git % nPoint
       write(10,*) 0.0D0
    end if
 end do
+write(10,"(A)") 'VECTORS MOVEMENT_VECTOR float'
+do i = 1, git % nPoint
+   write(10,'(3(f20.13,1X))') git % point_move_rest_vector(:,i)
+end do
 write(10,"(A,1X,I0)") "CELL_DATA",git % nedge
 write(10,"(A)") 'SCALARS Kantenlaenge double'
 write(10,"(A)") 'LOOKUP_TABLE Default'

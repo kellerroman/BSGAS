@@ -133,15 +133,7 @@ do k = 1, blocks(b) % nPoints(3)
             ! Add points to edge and edge to points
             do p = 1, 2
                !p1 = np - 2 + p ! id of point, since it is i-direction it is np-1 & np
-               if (p == 1) then
-                  p1 = blocks(b) % refs(i-1,j,k)
-                  ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
-                  git % point_edge_signs(pe,p1) =  1.0E0_REAL_KIND
-               else
-                  p1 = blocks(b) % refs(i,j,k)
-                  ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
-                  git % point_edge_signs(pe,p1) = -1.0E0_REAL_KIND
-               end if
+               p1 = blocks(b) % refs(i-(2-p),j,k)
                ! Add point to edge
                git % edge_points(p,e) = p1
                ! Add edge to the first point
@@ -150,6 +142,8 @@ do k = 1, blocks(b) % nPoints(3)
                git % point_nedges(p1) = pe
                ! add edge to point at current edge count
                git % point_edges(pe,p1) = e
+               ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
+               git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
             end do
             ! WALL EDGE
             if (i == blocks(b) % nPoints(1) .and. blocks(b) % boundary_cond(2) % bc_type == 0 ) then
@@ -186,14 +180,11 @@ do k = 1, blocks(b) % nPoints(3)
             ! Add points to edge and edge to points
             do p = 1, 2
                !p1 = np - (2 - p) * blocks(b) % nPoints(1) ! id of point, since it is j-direction it is np-npi & np
+               p1 = blocks(b) % refs(i,j-(2-p),k)
                if (p == 1) then
                   p1 = blocks(b) % refs(i,j-1,k)
-                  ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
-                  git % point_edge_signs(pe,p1) =  1.0E0_REAL_KIND
                else
                   p1 = blocks(b) % refs(i,j,k)
-                  ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
-                  git % point_edge_signs(pe,p1) = -1.0E0_REAL_KIND
                end if
                ! Add point to edge
                git % edge_points(p,e) = p1
@@ -203,6 +194,8 @@ do k = 1, blocks(b) % nPoints(3)
                git % point_nedges(p1) = pe
                ! add edge to point at current edge count
                git % point_edges(pe,p1) = e
+               ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
+               git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
             end do
             ! WALL EDGE
             if (j == 2) then
@@ -344,10 +337,13 @@ real(REAL_KIND) :: tmp(3), sp
 max_f = 0.0E0_REAL_KIND
 do np = 1, git % nPoint
     tmp = 0.0E0_REAL_KIND
+    !write(*,*) np
    do e = 1, git % point_nedges(np)
       edge = git % point_edges(e,np)
       tmp = tmp + git % edge_forces(:,edge) * git % point_edge_signs(e,np)
+      !write(*,*) "->   ",e,edge,git % edge_forces(:,edge) , git % point_edge_signs(e,np)
    end do
+   !write(*,*) tmp, git % point_move_rest_vector(:,np)
    if (git % point_move_rest(np)) then
 
       sp = tmp(1)*git % point_move_rest_vector(1,np) &
@@ -375,7 +371,7 @@ min_l = minval(git % edge_lengths)
 fk = min(1.0E0_REAL_KIND,min_l / max_f)
 !write(*,*) "FK",min_l,max_f,fk
 do np = 1, git % npoint
-   git % point_coords(:,np) = git % point_coords(:,np) + git % point_forces(:,np) / POINT_WEIGTH !* fk
+   git % point_coords(:,np) = git % point_coords(:,np) + git % point_forces(:,np) / POINT_WEIGTH * fk
 end do
 end subroutine move_points
 end module unstr
