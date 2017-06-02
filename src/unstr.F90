@@ -10,7 +10,7 @@ implicit none
 type(t_block) :: blocks(:)
 
 integer :: nBlock
-integer :: i,j,k,np,e,b,nb
+integer :: i,j,k,np,e,b,nb,nbe,nbn,nben,nbne
 
 
 integer :: p, p1, pe, eop, e2, p2, ps
@@ -42,14 +42,14 @@ do b = 1, nBlock
    j = blocks(b) % nPoints(2)
    k = blocks(b) % nPoints(3)
 
-   if (blocks(b) % boundary_cond(1) % bc_type > 0) then
+   if (blocks(b) % boundary_cond(WEST) % bc_type > 0) then
       i = i - 1
    end if
-   if (blocks(b) % boundary_cond(3) % bc_type > 0) then
+   if (blocks(b) % boundary_cond(SOUTH) % bc_type > 0) then
       j = j - 1
    end if
    if (git % dimension ==3) then
-      if (blocks(b) % boundary_cond(5) % bc_type > 0) then
+      if (blocks(b) % boundary_cond(FRONT) % bc_type > 0) then
          k = k - 1
       end if
    end if
@@ -108,11 +108,64 @@ do b = 1, nBlock
                git % point_refs(4,np) = k
                blocks(b) % refs(i,j,k) = np
                ! Check if this point is also a point in another grid
+               !!! CORNER POINT:
+               if (i == blocks(b) % nPoints(1) .and. j == blocks(b) % nPoints(2)) then
+                  nbe = blocks(b) % boundary_cond(EAST) % bc_type   ! Neighbor EAST
+                  nbn = blocks(b) % boundary_cond(NORTH) % bc_type   ! Neighbor NORTH
+                  ! Both sides have a connecting Block, Ckeck if the both have a
+                  ! diagonal neighbor
+                  ! If this is the same point, also transfer point there
+                  if (nbe > 0 .and. nbn > 0) then
+                     if   (      blocks(b) % boundary_cond(EAST) % permutation == 1  & 
+                           .and. blocks(b) % boundary_cond(NORTH) % permutation == 1) then
+                        nben = blocks(nbe) % boundary_cond(NORTH) % bc_type
+                        nbne = blocks(nbn) % boundary_cond(EAST) % bc_type
+                        if (nben > 0 .and. nbne > 0 .and. nben == nbne) then
+                           if   (      blocks(nbn) % boundary_cond(EAST) % permutation == 1  & 
+                                 .and. blocks(nbe) % boundary_cond(NORTH) % permutation == 1) then
+                              write(*,*) "Transfering Point to diagonal Block:",b,i,j,k, " to ", nben,1,1,k
+                              blocks(nben) % refs(1,1,k) = np
+
+                           else
+                              write(*,*) "Error in UNSTR: Permutation diagonal noch nicht implementiert" &
+                                        ,__LINE__,__FILE__
+                              write(*,*) b,i,j,k,np, blocks(b) % boundary_cond(EAST) % permutation
+                              stop 1
+                           end if
+                        end if
+                     else
+                        write(*,*) "Error in UNSTR: Permutation diagonal noch nicht implementiert" &
+                                  ,__LINE__,__FILE__
+                        write(*,*) b,i,j,k,np, blocks(b) % boundary_cond(EAST) % permutation
+                        stop 1
+                     end if
+                  end if
+               end if
                if (i == blocks(b) % nPoints(1)) then
-                  nb = blocks(b) % boundary_cond(2) % bc_type
+                  nb = blocks(b) % boundary_cond(EAST) % bc_type
                   if (nb > 0) then
-                     if (blocks(b) % boundary_cond(2) % permutation == 1) then
+                     if (blocks(b) % boundary_cond(EAST) % permutation == 1) then
+                        write(*,*) "Transfering Point to connected Block:",b,i,j,k, " to ", nb,1,j,k
                         blocks(nb) % refs(1,j,k) = np
+                     else
+                        write(*,*) "Error in UNSTR: Permutation in i-Richtung noch nicht implementiert" &
+                                  ,__LINE__,__FILE__
+                        write(*,*) b,i,j,k,np, blocks(b) % boundary_cond(EAST) % permutation
+                        stop 1
+                     end if
+                  end if
+               end if
+               if (j == blocks(b) % nPoints(2)) then
+                  nb = blocks(b) % boundary_cond(NORTH) % bc_type
+                  if (nb > 0) then
+                     if (blocks(b) % boundary_cond(NORTH) % permutation == 1) then
+                        write(*,*) "Transfering Point to connected Block:",b,i,j,k, " to ", nb,i,1,k
+                        blocks(nb) % refs(i,1,k) = np
+                     else
+                        write(*,*) "Error in UNSTR: Permutation in i-Richtung noch nicht implementiert" &
+                                  ,__LINE__,__FILE__
+                        write(*,*) b,i,j,k,np, blocks(b) % boundary_cond(EAST) % permutation
+                        stop 1
                      end if
                   end if
                end if
@@ -125,9 +178,12 @@ do b = 1, nBlock
                edge_exists = .false.
                ! check if the edge already exists
                ! This can be the case if we are at a block boundary and there is an other block connected
-               if (    (j == 1                      .and. blocks(b) % boundary_cond(3) % bc_type > 0)  &       ! at south boundary and a connected block
-                  .or. (j == blocks(b) % nPoints(2) .and. blocks(b) % boundary_cond(4) % bc_type > 0)) then    ! at north boundary and a connected block
+               if (    (j == 1                      .and. blocks(b) % boundary_cond(SOUTH) % bc_type > 0)  &       ! at south boundary and a connected block
+                  .or. (j == blocks(b) % nPoints(2) .and. blocks(b) % boundary_cond(NORTH) % bc_type > 0)) then    ! at north boundary and a connected block
+
+               write(*,*) "Checking connection from ",i,j,k," to ",i-1,j,k
                   ! A connection from p (i,j,k) to ps (i-1,j,k) shall be created
+               
                   p = blocks(b) % refs(i,j,k)
                   ! check all existing edges from point p and if one edge already connects to ps skip creation of this edge
                   ne = git % point_nedges(p)
@@ -138,6 +194,7 @@ do b = 1, nBlock
                         p1 = git % edge_points(1,e2)
                         if (ps == p1) then
                            edge_exists = .true.
+                           write(*,*) "Connection exists: ",e2
                            exit
                         end if
                      end do
@@ -180,6 +237,8 @@ do b = 1, nBlock
                         stop 1
                      end if
 
+                     write(*,*) b,i,j,k, np,e ,p1,ps
+                     write(*,*) "Connecting: ",b,i,j,k," with ",git % point_refs(:,p2)
                      nne = git % edge_nneighbor(e) + 1
                      git % edge_nneighbor(e) = nne
                      git % edge_neighbor(nne,e) = ne
@@ -193,8 +252,8 @@ do b = 1, nBlock
                edge_exists = .false.
                ! check if the edge already exists
                ! This can be the case if we are at a block boundary and there is an other block connected
-               if (    (i == 1                      .and. blocks(b) % boundary_cond(1) % bc_type > 0)  &       ! at West boundary and a connected block
-                  .or. (i == blocks(b) % nPoints(1) .and. blocks(b) % boundary_cond(2) % bc_type > 0)) then    ! at east boundary and a connected block
+               if (    (i == 1                      .and. blocks(b) % boundary_cond(WEST) % bc_type > 0)  &       ! at West boundary and a connected block
+                  .or. (i == blocks(b) % nPoints(1) .and. blocks(b) % boundary_cond(EAST) % bc_type > 0)) then    ! at east boundary and a connected block
                   ! A connection from p (i,j,k) to ps (i,j-1,k) shall be created
                   p = blocks(b) % refs(i,j,k)
                   ! check all existing edges from point p and if one edge already connects to ps skip creation of this edge
@@ -218,11 +277,6 @@ do b = 1, nBlock
                   do p = 1, 2
                      !p1 = np - (2 - p) * blocks(b) % nPoints(1) ! id of point, since it is j-direction it is np-npi & np
                      p1 = blocks(b) % refs(i,j-(2-p),k)
-                     if (p == 1) then
-                        p1 = blocks(b) % refs(i,j-1,k)
-                     else
-                        p1 = blocks(b) % refs(i,j,k)
-                     end if
                      ! Add point to edge
                      git % edge_points(p,e) = p1
                      ! Add edge to the first point
@@ -238,20 +292,23 @@ do b = 1, nBlock
                   if (j > 2) then
                      ! if j > 2 there exists another edge in the negative j direction
                      ! Unfortunatelly there is no direct way to get this edge, thus
-                     ! we compare all edges of the left point and see if there first point's
+                     ! we compare all edges of the lower point and see if there first point's
                      ! reference is j-2
                      ne = -1
-                     p1 = git % edge_points(1,e) ! Left point of Edge
+                     p1 = git % edge_points(1,e) ! Lower point of Edge
+                     ps = blocks(b) % refs(i,j - 2,k) ! Point_Soll Point we are looking for
                      do eop = 1, git % point_nedges(p1)
                         e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
                         p2 = git % edge_points(1,e2)
-                        if (git % point_refs(3,p2) == j - 2) then
+                        if (p2 == ps) then
                            ne = e2
                            exit
                         end if
                      end do
                      if (ne == -1) then
                         write(*,*) "Error Neighbor edge not found"
+                        write(*,*) b,i,j,k
+                        write(*,*) p1, git % point_edges(:,p1)
                         stop 1
                      end if
                      
@@ -272,12 +329,12 @@ end do
 if (np /= git % nPoint) then
    write(*,*) "Number of Points wrongly approximated"
    write(*,*) np,git % nPoint
-   !stop 1
+   stop 1
 end if
 if (e /= git % nEdge) then
    write(*,*) "Number of Edges wrongly approximated"
    write(*,*) e, git % nEdge
-   !stop 1
+   stop 1
 end if
 write(*,*) "Points"
 do np = 1, git % nPoint

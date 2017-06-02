@@ -5,7 +5,7 @@ program gridgen
 implicit none
 
 integer :: imax = 11
-integer :: jmax = 11
+integer :: jmax =  9
 integer, parameter :: nVar   = 0
 
 real(kind=8), parameter :: length = 3.0D0

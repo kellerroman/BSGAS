@@ -21,4 +21,10 @@ implicit none
 public
 integer, parameter :: REAL_KIND = selected_real_kind(15 , 307)
 integer, parameter :: INT_KIND  = selected_int_kind(8)
+
+
+enum, bind(C)
+   enumerator :: WEST= 1, EAST, SOUTH, NORTH, FRONT, BACK
+end enum
+
 end module const
