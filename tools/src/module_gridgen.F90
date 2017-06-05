@@ -5,19 +5,12 @@ private
 integer         , parameter :: MAX_BLOCK             = 10 !Maximale Anzahl Bloecke (Dimension des temp block arrays)
 integer         , parameter :: VARNAME_LENGTH        = 20
 character(len=*), parameter :: FILENAME              = "grid.h5"  ! file name HDF5
-character(len=*), parameter :: FILENAME_XDMF         = "grid.xdmf"   ! filename XDMF
-character(len=*), parameter :: FILENAME_BC           = "bc.bin"  ! file name HDF5
 character(len=*), parameter :: GROUP_GRID            = "grid"
 character(len=*), parameter :: GROUP_DATA            = "data"
 character(len=*), parameter :: GROUP_BLOCK           = "block"
 
 character(len=*) , parameter   :: COORD_NAME(3)      = [ "CoordinateX","CoordinateY","CoordinateZ" ]
 
-!character(len=VARNAME_LENGTH), parameter :: VARNAME_RHO   = "Density"     ! dataset name
-!character(len=VARNAME_LENGTH), parameter :: VARNAME_SPU   = "Geschw_U"    ! dataset name
-!character(len=VARNAME_LENGTH), parameter :: VARNAME_SPV   = "Geschw_V"    ! dataset name
-!character(len=VARNAME_LENGTH), parameter :: VARNAME_SPW   = "Geschw_W"    ! dataset name
-!character(len=VARNAME_LENGTH), parameter :: VARNAME_ENE   = "Energie"     ! dataset name
 integer :: dimension
 integer :: nblock = 0
 integer :: nVar = 4
@@ -28,8 +21,6 @@ type :: tblock
    integer                       :: ncells(3)
    integer                       :: npkts(3)
    real(kind = 8), allocatable   :: xyzs(:,:,:,:)
-   real(kind = 8), allocatable   :: vars(:,:,:,:)
-   integer                       :: boundary_condition(6)
 end type
 type(tblock), allocatable :: blocks(:)
 interface add_block
@@ -149,7 +140,6 @@ contains
                write(*,*) i, blocks(i)%ncells, blocks(i) % npkts
             end if
             allocate(blocks(i) % xyzs(blocks(i) %  npkts(1),blocks(i) %  npkts(2),blocks(i) %  npkts(3),3))
-            allocate(blocks(i) % vars(blocks(i) % ncells(1),blocks(i) % ncells(2),blocks(i) % ncells(3),nvar)) 
          end do
       else
          write(*,*) "allocate_blocks: Cannot allocate Blocks"
@@ -174,8 +164,6 @@ contains
 
    integer :: nb 
    integer :: nd
-   integer                         :: file_unit
-
    
    if (debug) &
       write(*,*) "write_grid: Writing HDF5 output File"
@@ -216,51 +204,11 @@ contains
    ! Close the group.
    call h5gclose_f(group_id, error)
 
-
-!   ! Create a group data in the file.
-!   call h5gcreate_f(file_id,  GROUP_DATA, group_id,  error)
-!   call h5gcreate_f(group_id,  "0", group_id1,  error)
-!
-!   !   Write Coordinates into data/blockN/
-!   do nb = 1, nBlock
-!      write(block_group,'(A,I0)') GROUP_BLOCK,nb
-!      dims2 = blocks(nb) % ncells 
-!      call h5screate_simple_f(rank, dims2, dspace_id, error)
-!
-!      ! Create a group named for block1 in the file.
-!      call h5gcreate_f(group_id1, block_group, group_id2, error)
-!       
-!      do nd = 1, nVar
-!      
-!         call h5dcreate_f(group_id2, varname_out(nd), h5t_native_double, dspace_id, &
-!              dset_id, error)
-!         call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, blocks(nb) % vars(:,:,:,nd), dims2, error)
-!         call h5dclose_f(dset_id, error)
-!      end do
-!
-!      ! terminate access to the data space.
-!      call h5sclose_f(dspace_id, error)
-!      ! Close the group.
-!      call h5gclose_f(group_id2, error)
-!   end do
-!
-!   call h5gclose_f(group_id1, error)
-!   ! Close the group.
-!   call h5gclose_f(group_id, error)
-
-   
    ! close the file.
    call h5fclose_f(file_id, error)
    
    ! close fortran interface.
    call h5close_f(error)
-   open(newunit = file_unit, file=trim(FILENAME_BC),form="unformatted",access="stream")
-   do nb = 1, nBlock
-      do nd = 1,6
-         write(file_unit) blocks(nb) % boundary_condition(nd) 
-      end do
-   end do
-   close(file_unit)
 
    end subroutine
 
