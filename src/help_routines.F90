@@ -2,7 +2,7 @@ module help_routines
 use const
 implicit none
 private
-public :: alloc, vec_common, vec_normalize
+public :: alloc, vec_common, vec_normalize, lower_case
 interface alloc
    module procedure alloc_real_1d
    module procedure alloc_real_2d
@@ -139,5 +139,21 @@ real(REAL_KIND), intent(in) :: v1(3) , v2(3)
 scalar_product = v1(1) * v2(1) + v1(2) * v2(2) + v1(3) * v2(3)
 
 end function scalar_product
+
+function lower_case( input_string ) result ( output_string )
+   implicit none
+   character( * ), intent( in )       :: input_string
+   character( len( input_string ) )   :: output_string
+   integer                            :: ii,ic,nlen
+   nlen = len(input_string)
+   do ii=1,nlen
+      ic = ichar(input_string(ii:ii))
+      if (ic >= 65 .and. ic < 90) then
+         output_string(ii:ii) = char(ic+32)
+      else
+         output_string(ii:ii) = char(ic)
+      end if
+   end do
+end function lower_case
 
 end module help_routines

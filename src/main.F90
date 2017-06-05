@@ -1,22 +1,23 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BLOCK STRUCUTRED GRID ADAPTION SOLVER MAIN FILE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!
+!================================================================================================================================
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BLOCK STRUCUTRED GRID ADAPTION SOLVER MAIN FILE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!===                                                                                                                          ===
 !! AUTHORS:             ROMAN KELLER(RK)
-!!
+!===                                                                                                                          ===
 !! START:               13.05.2017               
-!! LAST CHANGE:         13.05.2017
+!! LAST CHANGE:         05.06.2017
 !! VERSION:             V0.0.1
-!!
+!===                                                                                                                          ===
 !! CHANGELOG:
 !!          13.05.2017,RK: Start of Project
-!!
+!===                                                                                                                          ===
 !! TODO:
-!!          
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!===                                                                                                                          ===
+!================================================================================================================================
 
 program BSGAS
-use boundary, only: init_boundary, init_walledges
+use boundary, only: read_boundary, init_boundary, init_walledges
 use control, only: loop_control, end_adaption, iter
+use config, only: read_config
 use screen_io, only: sw_program_start,sw_program_end, sw_init_residual, sw_residual
 use structured_grid, only: read_grid, blocks
 use unstr, only: strukt2unstr,calc_edge_length,calc_edge_forces, calc_point_forces, move_points, git
@@ -27,9 +28,10 @@ implicit none
 real(REAL_KIND) :: max_point_f, max_edge_f
 call sw_program_start()
 
-!call read_config
+call read_config
 
 call read_grid
+call read_boundary(blocks)
 
 call strukt2unstr(blocks)
 call init_boundary(git,blocks)

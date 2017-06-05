@@ -3,7 +3,7 @@ module control
 implicit none
 logical :: end_adaption
 logical :: output_grid
-integer :: nIter = 5!000
+integer :: nIter = 5000
 integer :: res_out = 10
 integer :: res_out_start = 50
 integer :: iter = 0

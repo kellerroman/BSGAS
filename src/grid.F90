@@ -5,7 +5,7 @@ use types
 use help_routines, only: alloc
 implicit none
 
-character(len=*), parameter :: filename_grid_in = "grid.h5"
+character(len=100)          :: filename_grid_in
 character(len=*), parameter :: GROUP_GRID            = "grid"
 character(len=*), parameter :: GROUP_BLOCK           = "block"
 character(len=*), parameter :: COORD_NAME(3)      = [ "CoordinateX","CoordinateY","CoordinateZ" ]
@@ -36,7 +36,13 @@ integer(hid_t) :: dspace_id     ! dataspace identifier
 integer(HSIZE_T) :: dims(3)
 integer(HSIZE_T) :: maxdims(3)
 integer :: b,d
+logical :: fexists
 
+inquire(file=trim(filename_grid_in),exist=fexists)
+if (.not. fexists) then
+   write(*,*) "Grid file: '"//trim(filename_grid_in)//"' not found!",__FILE__,__LINE__
+   stop 1
+end if
 ! Initialize FORTRAN interface.
 call h5open_f(error)
 

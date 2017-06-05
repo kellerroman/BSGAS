@@ -5,8 +5,9 @@ use unstr, only: git
 use help_routines, only: alloc
 implicit none
 integer(INT_KIND), parameter :: N_SPRINGS = 2
-real(REAL_KIND), parameter :: dw_soll = 1.0E-1_REAL_KIND
 real(REAL_KIND), allocatable :: springs(:,:)
+
+real(REAL_KIND) :: cell_ink
 contains
 
 subroutine init_springs
@@ -35,7 +36,7 @@ integer :: e,i
 do i = 1, git % nWallEdge
    e = git % wall_edges(i)
    springs(1,e) = springs(1,e) & 
-         * exp(1E-2 * (git % edge_lengths(e) - dw_soll))
+         * exp(1E-2 * (git % edge_lengths(e) - git % wall_edge_dns(i)))
    springs(1,e) = max(0.0E0_REAL_KIND,springs(1,e))
 
 !   write(*,*)  e,springs(1,e), git % edge_lengths(e),exp(1E-2 * (git % edge_lengths(e) - dw_soll))
@@ -45,7 +46,6 @@ end subroutine wall_refinment
 
 subroutine edge_streching
 implicit none
-real(REAL_KIND), parameter :: dl_max = 1.2E+0_REAL_KIND
 integer :: e
 integer :: ne  !neighbor edge
 integer :: n
@@ -60,7 +60,7 @@ do e = 1, git % nedge
       nel = min(nel,git % edge_lengths(ne))
    end do
    fkt = el / nel
-   fkt = fkt - dl_max
+   fkt = fkt - cell_ink
    springs(2,e) = max(springs(2,e) * exp(1E-2 * fkt), 0.0E+0_REAL_KIND)
 end do
 end subroutine edge_streching

@@ -9,6 +9,7 @@ type :: t_boundary_condition
       !<                 0: Uninitialized
       integer(INT_KIND)              :: neighbor_face
       integer(INT_KIND)              :: permutation
+      real(REAL_KIND)                :: dn
 end type t_boundary_condition
 
 type :: t_block
@@ -75,6 +76,7 @@ type :: t_unstr
 
       integer(INT_KIND) :: nWallEdge
       integer(INT_KIND), allocatable :: wall_edges(:)
+      real(REAL_KIND)  , allocatable :: wall_edge_dns(:)
       !< List of all edges that are ajectent to a wall thus having size requirements
 end type t_unstr
 
