@@ -30,7 +30,7 @@ interface add_block
    module procedure add_block_array3
 end interface add_block
 
-public:: blocks,  add_block, allocate_blocks, debug, write_grid, set_dimension
+public:: blocks,  add_block, allocate_blocks, debug, write_grid, set_dimension, tblock
 
 contains
    subroutine set_dimension(given_dimension)
