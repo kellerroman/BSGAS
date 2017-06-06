@@ -170,6 +170,21 @@ do b = 1, nBlock
                      end if
                   end if
                end if
+!                        !!! CASE THAT THE IS A CONNECTION IN WEST SINDE ON UPPER
+!                        !   BLOCK BUT NOT ON THIS BLOCK -> MUST UPDATE THE CORNER
+!                        !   POINT AS WELL
+!                        nbne = blocks(nb) %boundary_cond(WEST) % bc_type 
+!                        nbe  = blocks( b) %boundary_cond(WEST) % bc_type 
+!                        if (nbne > 0 .and. nbe <= 0) then ! this Block has no Neighbor  in west but north neighbor has
+!                           if (blocks(nb) % boundary_cond(WEST) % permutation == 1 ) then
+!                              blocks(nbne) % refs(blocks(nbne) % nPoints(1), 1, k) = np
+!                           else
+!                              write(*,*) "Error in UNSTR: Permutation in WEST-Richtungi des NORTH-BLOCKS noch nicht implementiert" &
+!                                        ,__LINE__,__FILE__
+!                              write(*,*) "Point:",np,"REF:",b,i,j,k,"to",nb,"PERM:", blocks(b) % boundary_cond(EAST) % permutation
+!                              stop 1
+!                           end if
+!                        end if
                if (i == blocks(b) % nPoints(1)) then
                   nb = blocks(b) % boundary_cond(EAST) % bc_type
                   if (nb > 0) then
