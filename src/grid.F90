@@ -238,6 +238,7 @@ do b = 1, nBlock
       end do
    end do
 end do
+write(*,*) blocks(1) % nSamePoints(11,11,1)
 stop
 end subroutine connect_blocks
 subroutine addSamePoints(b,f,nb,nf,per)
@@ -253,12 +254,9 @@ subroutine addSamePoints(b,f,nb,nf,per)
    integer :: cj,dj
    integer :: ck,dk
    if (f == EAST .and. nf == WEST) then
-         is = blocks(b) % nPoints(1)
-         ie = is
-         js = 1
-         je = blocks(b) % nPoints(2)
-         ks = 1
-         ke = blocks(b) % nPoints(3)
+         is = blocks(b) % nPoints(1); ie = is
+         js = 1                     ; je = blocks(b) % nPoints(2)
+         ks = 1                     ; ke = blocks(b) % nPoints(3)
          select case (per) 
          case(1)
             ci = 1; di = 0
@@ -335,11 +333,60 @@ subroutine addSamePoints(b,f,nb,nf,per)
       stop 1
 end subroutine addSamePoints
 
-subroutine addSamePoint(b,i,j,k,nb,ni,nj,nk)
+recursive subroutine addSamePoint(b,i,j,k,nb,ni,nj,nk)
    implicit none
    integer, intent(in) :: b,i,j,k,nb,ni,nj,nk
 
-   write(*,*) "Adding to ",b,i,j,k," Point at ",nb,ni,nj,nk
+   integer :: nsp_b,nsp_nb,n,nsp_t
+   type(t_same), allocatable :: sp_b(:)
 
+   nsp_b = blocks(b) % nSamePoints(i,j,k)
+   nsp_nb = blocks(nb) % nSamePoints(ni,nj,nk)
+   ! check if already in list
+   do n = 1, nsp_b
+      if (nb == blocks(b) % SamePoints(n,i,j,k) % b .and. & 
+          ni == blocks(b) % SamePoints(n,i,j,k) % i .and. & 
+          nj == blocks(b) % SamePoints(n,i,j,k) % j .and. & 
+          nk == blocks(b) % SamePoints(n,i,j,k) % k ) then
+         write(*,*) b,i,j,k," is already connected to ",nb,ni,nj,nk,n
+         return
+      end if
+   end do
+   write(*,*) "Working @",b,i,j,k
+   
+   if (nsp_b > 0) then
+      allocate(sp_b(nsp_b))
+      do n =  1, nsp_b 
+         sp_b(n) = blocks(b) % SamePoints(n,i,j,k)
+         ! Update all points in k
+      end do
+   end if
+      
+   if (nsp_nb > 0) then
+      do n =  1, nsp_nb 
+         nsp_b = nsp_b + 1
+         blocks(b) % SamePoints(nsp_b,i,j,k) = blocks(nb) % SamePoints(n,ni,nj,nk)
+         write(*,*) "+Cross-A:", blocks(nb) % SamePoints(n,ni,nj,nk)," to ", b,i,j,k,"@",nsp_b
+      end do
+   end if
+   nsp_b = nsp_b + 1
+   write(*,*) "+Adding:",nb,ni,nj,nk," to ",b,i,j,k,"@",nsp_b
+   blocks(b) % SamePoints(nsp_b,i,j,k) = t_same(nb,ni,nj,nk)
+
+   if (allocated(sp_b)) then
+      do n =  1, ubound(sp_b,1) 
+         nsp_nb = nsp_nb + 1
+         blocks(nb) % SamePoints(nsp_nb,ni,nj,nk) = sp_b(n)
+         write(*,*) "-Cross-A:", sp_b(n)," to ", nb,ni,nj,nk,"@",nsp_nb
+      end do
+      deallocate(sp_b)
+   end if
+   nsp_nb = nsp_nb + 1
+   write(*,*) "-Adding:",b,i,j,k," to ",nb,ni,nj,nk,"@",nsp_nb
+   blocks(nb) % SamePoints(nsp_nb,ni,nj,nk) = t_same(b,i,j,k)
+
+   ! Updating the Number of Same points
+   blocks(b) % nSamePoints(i,j,k) = nsp_b
+   blocks(nb) % nSamePoints(ni,nj,nk) = nsp_nb
    end subroutine addSamePoint
 end module structured_grid  
