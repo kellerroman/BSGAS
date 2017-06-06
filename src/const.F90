@@ -27,4 +27,5 @@ enum, bind(C)
    enumerator :: WEST= 1, EAST, SOUTH, NORTH, FRONT, BACK
 end enum
 
+character(len = 5) :: FACE_NAMES(6) = ["WEST ", "EAST ", "SOUTH", "NORTH", "FRONT", "BACK "]
 end module const

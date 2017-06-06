@@ -2,6 +2,12 @@ module types
 use const
 implicit none
 
+type :: t_same
+      integer(INT_KIND)              :: b
+      integer(INT_KIND)              :: i
+      integer(INT_KIND)              :: j
+      integer(INT_KIND)              :: k
+end type t_same
 
 type :: t_boundary_condition
       integer(INT_KIND)              :: bc_type
@@ -22,6 +28,10 @@ type :: t_block
       !< Face: 1 = West (i = 1), 2 = East (i = Imax)
       !<       3 = South(j = 1), 4 = North(j = Jmax)
       !<       5 = Front(k = 1), 4 = Back (k = kmax)
+      integer(INT_KIND), allocatable :: nSamePoints(:,:,:)
+      !< Number of Other Points that are identical
+      type(t_same), allocatable :: samePoints(:,:,:,:)
+      !< Reference of identical Points (n,i,j,k)
 end type t_block
 
 type :: t_unstr

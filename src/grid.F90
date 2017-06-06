@@ -79,7 +79,16 @@ do b = 1, nBlock
    call alloc (data_in, blocks(b)%nPoints)
    allocate ( blocks(b) % coords (blocks(b)%nPoints(1),blocks(b)%nPoints(2),blocks(b)%nPoints(3),3))
    call alloc (blocks(b) % refs,blocks(b) % nPoints)
+   call alloc (blocks(b) % nSamePoints,blocks(b) % nPoints)
+   allocate ( blocks(b) % samePoints(8,blocks(b) % nPoints(1) &
+                                      ,blocks(b) % nPoints(2) &
+                                      ,blocks(b) % nPoints(3) ))
    blocks(b) % refs = -1
+   blocks(b) % nSamePoints = 0
+   blocks(b) % samePoints(:,:,:,:) % b = -1
+   blocks(b) % samePoints(:,:,:,:) % i = -1
+   blocks(b) % samePoints(:,:,:,:) % j = -1
+   blocks(b) % samePoints(:,:,:,:) % k = -1
 
    do d = 1,dimen
       call h5dopen_f(group_id_block, COORD_NAME(d), dset_id, error)
@@ -119,6 +128,7 @@ integer, allocatable :: point_on_face(:,:)
 !< face: (W,E,S,N,F,B)
 integer, allocatable :: permutation(:,:)
 !< Different Point arrangment due to misaligned blocks (point_id,permutation)
+
 b = 1
 if (blocks(b) % nPoints(2) == 1) then
    return 
@@ -214,6 +224,7 @@ do b = 1, nBlock
                   blocks(b) % boundary_cond(f) % bc_type       = nb
                   blocks(b) % boundary_cond(f) % neighbor_face = nf
                   blocks(b) % boundary_cond(f) % permutation   = per
+                  call addSamePoints(b,f,nb,nf,per)
                   exit
                end if
             end do
@@ -227,7 +238,108 @@ do b = 1, nBlock
       end do
    end do
 end do
-
+stop
 end subroutine connect_blocks
+subroutine addSamePoints(b,f,nb,nf,per)
+   implicit none
+   integer, intent(in)  :: b,f,nb,nf,per
+   integer :: i,j,k,ni,nj,nk
 
+   integer :: is,ie
+   integer :: js,je
+   integer :: ks,ke
+
+   integer :: ci,di
+   integer :: cj,dj
+   integer :: ck,dk
+   if (f == EAST .and. nf == WEST) then
+         is = blocks(b) % nPoints(1)
+         ie = is
+         js = 1
+         je = blocks(b) % nPoints(2)
+         ks = 1
+         ke = blocks(b) % nPoints(3)
+         select case (per) 
+         case(1)
+            ci = 1; di = 0
+            cj = 0; dj = 1
+            ck = 0; dk = 1
+         case default 
+            goto 666
+         end select
+   else if (f == WEST .and. nf == EAST) then
+         is = 1
+         ie = is
+         js = 1
+         je = blocks(b) % nPoints(2)
+         ks = 1
+         ke = blocks(b) % nPoints(3)
+         select case (per) 
+         case(1)
+            ci = blocks(nb) % nPoints(1); di = 0
+            cj = 0                      ; dj = 1
+            ck = 0                      ; dk = 1
+         case default 
+            goto 666
+         end select
+   else if (f == NORTH .and. nf == SOUTH) then
+         is = 1 
+         ie = blocks(b) % nPoints(1)
+         js = blocks(b) % nPoints(2)
+         je = js
+         ks = 1
+         ke = blocks(b) % nPoints(3)
+         select case (per) 
+         case(1)
+            ci = 0; di = 1
+            cj = 1; dj = 0
+            ck = 0; dk = 1
+         case default 
+            goto 666
+         end select
+   else if (f == SOUTH .and. nf == NORTH) then
+         is = 1 
+         ie = blocks(b) % nPoints(1)
+         js = 1
+         je = js
+         ks = 1
+         ke = blocks(b) % nPoints(3)
+         select case (per) 
+         case(1)
+            ci = 0                        ; di = 1
+            cj = blocks(nb) % nPoints(2)  ; dj = 0
+            ck = 0                        ; dk = 1
+         case default 
+            goto 666
+         end select
+   else
+      goto 6666
+   end if
+   do k = ks,ke
+      nk = ck + dk * k
+      do j = js,je
+         nj = cj + dj * j
+         do i = is,ie
+            ni = ci + di * i
+            call addSamePoint(b,i,j,k,nb,ni,nj,nk)
+         end do
+      end do
+   end do
+   return
+666  continue
+         write(*,*) "Per: ",per, "for ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"
+         stop 1
+   
+6666  continue
+      write(*,*) "Case ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"
+      stop 1
+end subroutine addSamePoints
+
+subroutine addSamePoint(b,i,j,k,nb,ni,nj,nk)
+   implicit none
+   integer, intent(in) :: b,i,j,k,nb,ni,nj,nk
+
+   write(*,*) "Adding to ",b,i,j,k," Point at ",nb,ni,nj,nk
+
+   end subroutine addSamePoint
 end module structured_grid  
