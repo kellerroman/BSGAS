@@ -232,7 +232,7 @@ do b = 1, nBlock
                               exit
                            end if
                         end do
-                        if (edge_exists = .true.) exit
+                        if (edge_exists) exit
                      end do
                   end if 
                end if
@@ -329,7 +329,7 @@ do b = 1, nBlock
                               exit
                            end if
                         end do
-                        if (edge_exists = .true.) exit
+                        if (edge_exists) exit
                      end do
                   end if 
                end if
