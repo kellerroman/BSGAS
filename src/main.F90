@@ -26,20 +26,25 @@ use spring, only: init_springs,calc_edge_springs
 use types
 implicit none
 real(REAL_KIND) :: max_point_f, max_edge_f
+
 call sw_program_start()
 
 call read_config
 
 call read_grid
 call read_boundary(blocks)
-
 call sw_grid_info(blocks)
 
 call strukt2unstr(blocks)
 call init_boundary(git,blocks)
 call init_walledges(git,blocks)
+
+call calc_edge_length()
 call init_springs
 call sw_init_residual
+
+call write_output(0)
+
 end_adaption = .false.
 ITER_LOOP: do while (.not. end_adaption)
 

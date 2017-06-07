@@ -72,7 +72,7 @@ type(t_block), intent(in) :: blocks(:)
 integer :: nBlock,b
 
 nBlock = ubound(blocks,1)
-write(*,*) "Number of Blocks:", nBlock
+!write(*,*) "Number of Blocks:", nBlock
 write(*,'(A3,9(1X,A5))') "B#", "NI","NJ","NK","WEST","EAST","SOUTH","NORTH","FRONT","BACK"
 do b = 1, nBlock
    write(*,'(I3,9(1X,I5))') b, blocks(b) % nCells, blocks(b) % boundary_cond(:) % bc_type

@@ -10,7 +10,7 @@ implicit none
 type(t_block) :: blocks(:)
 
 integer :: nBlock
-integer :: i,j,k,np,e,b,nb,nbe,nbn,nben,nbne
+integer :: i,j,k,np,e,b,nb
 
 
 integer :: p, p1, pe, eop, e2, p2, ps
@@ -18,10 +18,14 @@ integer :: p, p1, pe, eop, e2, p2, ps
 integer :: nne, ne
 
 logical :: edge_exists,do_connect
+                  
+real(REAL_KIND) :: temp
+
+type(t_same) :: sp
 
 nBlock = ubound(blocks,1)
 
-write(*,*) "Block structured number of Blocks:",nBlock
+!write(*,*) "Block structured number of Blocks:",nBlock
 
 b = 1
 git % nPoint = 0
@@ -55,7 +59,7 @@ do b = 1, nBlock
    end if
 
    git % nPoint = git % nPoint + i * j * k
-   write(*,*) i,j,k
+   !write(*,*) blocks(b) % nPoints,i,j,k
 
    if (git % dimension == 1) then
       git % nEdge = git % npoint - 1
@@ -68,6 +72,21 @@ do b = 1, nBlock
 
 end do
 
+p = 0
+temp = 0.0d0
+do b = 1, nBlock
+   p = p + product(blocks(b) % nPoints)
+   do k = 1, blocks(b) % nPoints(3)
+      do j = 1, blocks(b) % nPoints(2)
+         do i = 1, blocks(b) % nPoints(1)
+            nb = blocks(b) % nSamePoints(i,j,k)
+            temp = temp + dble(nb) / dble(nb+1)
+         end do
+      end do
+   end do
+end do
+git % npoint = p-int(temp)
+write(*,*) "Points in structured Grid:             ",p
 write(*,*) "Number of Points & Edges in unstr Grid:",git % npoint, git % nedge
 
 call alloc(git % point_coords          , 3, git % npoint)
@@ -113,110 +132,12 @@ do b = 1, nBlock
                blocks(b) % refs(i,j,k) = np
 
    !====================================================================================================
-   !==========================   TRANSFER POINT TO OTHER BLOCKS ========================================
+   !==========================   TRANSFER POINT TO OTHER SAME POINTS ===================================
    !====================================================================================================
-               ! Check if this point is also a point in another grid
-               !!! CORNER POINT:
-               if (i == blocks(b) % nPoints(1) .and. j == blocks(b) % nPoints(2)) then
-                  nbe = blocks(b) % boundary_cond(EAST) % bc_type   ! Neighbor EAST
-                  nbn = blocks(b) % boundary_cond(NORTH) % bc_type   ! Neighbor NORTH
-                  ! Both sides have a connecting Block, Ckeck if the both have a
-                  ! diagonal neighbor
-                  ! If this is the same point, also transfer point there
-                  if (nbe > 0 .and. nbn > 0) then
-                     if   (      blocks(b) % boundary_cond(EAST) % permutation == 1  & 
-                           .and. blocks(b) % boundary_cond(NORTH) % permutation == 1) then
-                        nben = blocks(nbe) % boundary_cond(NORTH) % bc_type
-                        nbne = blocks(nbn) % boundary_cond(EAST) % bc_type
-                        if (nben > 0 .and. nbne > 0 .and. nben == nbne) then
-                           if   (      blocks(nbn) % boundary_cond(EAST) % permutation == 1  & 
-                                 .and. blocks(nbe) % boundary_cond(NORTH) % permutation == 1) then
-                              write(*,*) "Transfering Point to diagonal Block:",b,i,j,k, " to ", nben,1,1,k
-                              blocks(nben) % refs(1,1,k) = np
-
-                           else
-                              write(*,*) "Error in UNSTR: Permutation diagonal noch nicht implementiert" &
-                                        ,__LINE__,__FILE__
-                              write(*,*) "Point:",np,"REF:",b,i,j,k,"to",nb,"PERM:", blocks(nbn) % boundary_cond(EAST) % permutation
-                              stop 1
-                           end if
-                        end if
-                     else if   ( blocks(b) % boundary_cond(EAST) % permutation == 2  & 
-                           .and. blocks(b) % boundary_cond(NORTH) % permutation == 1) then
-                        nben = blocks(nbe) % boundary_cond(WEST) % bc_type
-                        nbne = blocks(nbn) % boundary_cond(EAST) % bc_type
-                        if (nbe == nbne .and. nbn == nben) then
-                           write(*,*) "O-Grid Detected"
-                        else if (nben > 0 .and. nbne > 0 .and. nben == nbne) then
-                           if   (      blocks(nbn) % boundary_cond(EAST) % permutation == 1  & 
-                                 .and. blocks(nbe) % boundary_cond(NORTH) % permutation == 1) then
-                              write(*,*) "Transfering Point to diagonal Block:",b,i,j,k, " to ", nben,1,1,k
-                              blocks(nben) % refs(1,1,k) = np
-
-                           else
-                              write(*,*) "Error in UNSTR: Permutation diagonal noch nicht implementiert" &
-                                        ,__LINE__,__FILE__
-                              write(*,*) "Point:",np,"REF:",b,i,j,k,"to",nb,"PERM:", blocks(nbn) % boundary_cond(EAST) % permutation
-                              stop 1
-                           end if
-                        end if
-                     else
-                        write(*,*) "Error in UNSTR: Permutation diagonal noch nicht implementiert" &
-                                  ,__LINE__,__FILE__
-                               write(*,*) "Point:",np,"REF:",b,i,j,k,"to",nb,"PERM:" &
-                                        , blocks(b) % boundary_cond(EAST) % permutation &
-                                        , blocks(b) % boundary_cond(NORTH) % permutation 
-                        stop 1
-                     end if
-                  end if
-               end if
-!                        !!! CASE THAT THE IS A CONNECTION IN WEST SINDE ON UPPER
-!                        !   BLOCK BUT NOT ON THIS BLOCK -> MUST UPDATE THE CORNER
-!                        !   POINT AS WELL
-!                        nbne = blocks(nb) %boundary_cond(WEST) % bc_type 
-!                        nbe  = blocks( b) %boundary_cond(WEST) % bc_type 
-!                        if (nbne > 0 .and. nbe <= 0) then ! this Block has no Neighbor  in west but north neighbor has
-!                           if (blocks(nb) % boundary_cond(WEST) % permutation == 1 ) then
-!                              blocks(nbne) % refs(blocks(nbne) % nPoints(1), 1, k) = np
-!                           else
-!                              write(*,*) "Error in UNSTR: Permutation in WEST-Richtungi des NORTH-BLOCKS noch nicht implementiert" &
-!                                        ,__LINE__,__FILE__
-!                              write(*,*) "Point:",np,"REF:",b,i,j,k,"to",nb,"PERM:", blocks(b) % boundary_cond(EAST) % permutation
-!                              stop 1
-!                           end if
-!                        end if
-               if (i == blocks(b) % nPoints(1)) then
-                  nb = blocks(b) % boundary_cond(EAST) % bc_type
-                  if (nb > 0) then
-                     select case (blocks(b) % boundary_cond(EAST) % permutation) 
-                     case (1)
-                        write(*,*) "Transfering Point to connected Block:",b,i,j,k, " to ", nb,1,j,k
-                        blocks(nb) % refs(1,j,k) = np
-                     case (2)
-                        write(*,*) "Transfering Point to connected Block:",b,i,j,k, " to ", nb,1+blocks(nb) % nPoints(1) - j,1,k
-                        blocks(nb) % refs(1 + blocks(b) % nPoints(1) - j,1,k) = np
-                     case default
-                        write(*,*) "Error in UNSTR: Permutation in EAST-Richtung noch nicht implementiert" &
-                                  ,__LINE__,__FILE__
-                        write(*,*) "Point:",np,"REF:",b,i,j,k,"to",nb,"PERM:", blocks(b) % boundary_cond(EAST) % permutation
-                        stop 1
-                     end select
-                  end if
-               end if
-               if (j == blocks(b) % nPoints(2)) then
-                  nb = blocks(b) % boundary_cond(NORTH) % bc_type
-                  if (nb > 0) then
-                     if (blocks(b) % boundary_cond(NORTH) % permutation == 1) then
-                        write(*,*) "Transfering Point to connected Block:",b,i,j,k, " to ", nb,i,1,k
-                        blocks(nb) % refs(i,1,k) = np
-                     else
-                        write(*,*) "Error in UNSTR: Permutation in NORTH-Richtung noch nicht implementiert" &
-                                  ,__LINE__,__FILE__
-                        write(*,*) "Point:",np,"REF:",b,i,j,k,"to",nb,"PERM:", blocks(b) % boundary_cond(EAST) % permutation
-                        stop 1
-                     end if
-                  end if
-               end if
+               do p = 1, blocks(b) % nSamePoints(i,j,k)
+                  sp = blocks(b) % SamePoints(p,i,j,k)
+                  blocks(sp % b) % refs(sp % i,sp % j, sp % k) = np
+               end do
             end if
 
    !====================================================================================================
@@ -229,7 +150,7 @@ do b = 1, nBlock
                if (    (j == 1                      .and. blocks(b) % boundary_cond(SOUTH) % bc_type > 0)  &       ! at south boundary and a connected block
                   .or. (j == blocks(b) % nPoints(2) .and. blocks(b) % boundary_cond(NORTH) % bc_type > 0)) then    ! at north boundary and a connected block
 
-               write(*,*) "Checking connection from ",i,j,k," to ",i-1,j,k
+               !write(*,*) "Checking connection from ",i,j,k," to ",i-1,j,k
                   ! A connection from p (i,j,k) to ps (i-1,j,k) shall be created
                
                   p = blocks(b) % refs(i,j,k)
@@ -243,7 +164,7 @@ do b = 1, nBlock
                            p1 = git % edge_points(p2,e2)
                            if (ps == p1) then
                               edge_exists = .true.
-                              write(*,*) "Connection exists: ",e2
+                              !write(*,*) "Connection exists: ",e2
                               exit
                            end if
                         end do
@@ -307,8 +228,8 @@ do b = 1, nBlock
                            stop 1
                         end if
 
-                        write(*,*) b,i,j,k, np,e ,p1,ps
-                        write(*,*) "Connecting: ",b,i,j,k," with ",git % point_refs(:,p2)
+                        !write(*,*) b,i,j,k, np,e ,p1,ps
+                        !write(*,*) "Connecting: ",b,i,j,k," with ",git % point_refs(:,p2)
                         nne = git % edge_nneighbor(e) + 1
                         git % edge_nneighbor(e) = nne
                         git % edge_neighbor(nne,e) = ne
@@ -435,33 +356,33 @@ if (e /= git % nEdge) then
    write(*,*) e, git % nEdge
    stop 1
 end if
-write(*,*) "Points"
-do np = 1, git % nPoint
-   pe = git % point_nedges(np)
-   write(*,'("#P ",I4," Ref ",4I4," NEdge ",I2," Edges: ",6I4)' ) &
-            np, git % point_refs(:,np),pe, git % point_edges(1:pe,np)
-end do
-write(*,*) "Edges"
-p1 = 0
-p2 = 0
-do e = 1, git % nedge
-   !write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4)') e, git % edge_points(:,e), git % edge_neighbor(:,e)
-   if (git % edge_nneighbor(e) == 2) then
-      p1 = p1 + 1
-   write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4, " Pointrange: ",4I4)') &
-         e, git % edge_points(:,e), git % edge_neighbor(:,e) &
-         , git % edge_points(1,git % edge_neighbor(1,e)) &
-         , git % edge_points(:,e) &
-         , git % edge_points(2,git % edge_neighbor(2,e)) 
-   else
-      p2 = p2 + 1
-   write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",I4,4X, " Pointrange: ",4I4)') &
-         e, git % edge_points(:,e), git % edge_neighbor(1,e) &
-         , git % edge_points(:,e) &
-         , git % edge_points(:,git % edge_neighbor(1,e)) 
-   end if
-end do
-write(*,*) p1,p2
+!write(*,*) "Points"
+!do np = 1, git % nPoint
+!   pe = git % point_nedges(np)
+!   write(*,'("#P ",I8," Ref ",4I8," NEdge ",I8," Edges: ",6I8)' ) &
+!            np, git % point_refs(:,np),pe, git % point_edges(1:pe,np)
+!end do
+!write(*,*) "Edges"
+!p1 = 0
+!p2 = 0
+!do e = 1, git % nedge
+!   !write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4)') e, git % edge_points(:,e), git % edge_neighbor(:,e)
+!   if (git % edge_nneighbor(e) == 2) then
+!      p1 = p1 + 1
+!   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",2I8, " Pointrange: ",4I8)') &
+!         e, git % edge_points(:,e), git % edge_neighbor(:,e) &
+!         , git % edge_points(1,git % edge_neighbor(1,e)) &
+!         , git % edge_points(:,e) &
+!         , git % edge_points(2,git % edge_neighbor(2,e)) 
+!   else
+!      p2 = p2 + 1
+!   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",I8,8X, " Pointrange: ",4I8)') &
+!         e, git % edge_points(:,e), git % edge_neighbor(1,e) &
+!         , git % edge_points(:,e) &
+!         , git % edge_points(:,git % edge_neighbor(1,e)) 
+!   end if
+!end do
+!write(*,*) p1,p2
 git % edge_springs = 1.0e0_REAL_KIND
 
 git % edge_lengths = -1

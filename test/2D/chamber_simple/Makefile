@@ -25,3 +25,5 @@ clean:
 	@rm -vf *.o *.mod *.dat *.plt *.png *.vtk *.txt *.bin gridgen *.dx stubex *.csv *.h5 *.xdmf fort.*
 	@rm -vf bc.cfg
 	@rm -vrf *~
+
+.PHONY: compile 

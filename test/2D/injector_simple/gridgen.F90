@@ -19,10 +19,10 @@ INTEGER, PARAMETER :: NUM_OF_BLOCKS = 3
 
 !!!!!!!!!!!!!!!! NJ VALUES 
 INTEGER, PARAMETER :: N1 = 10
-INTEGER, PARAMETER :: N2 = 20
+INTEGER, PARAMETER :: N2 = 15
 !!!!!!!!!!!!!!!! NI VALUES 
-INTEGER, PARAMETER :: N3 = 10
-INTEGER, PARAMETER :: N4 = 10
+INTEGER, PARAMETER :: N3 = 12
+INTEGER, PARAMETER :: N4 = 12
 
 REAL(KIND=8), PARAMETER :: xm1 = -1.0D0
 REAL(KIND=8), PARAMETER :: x0  =  0.0D0
@@ -76,8 +76,10 @@ call write_grid()
 
 open(666,file="bc.cfg")
 write(666,'(A)') "! Wall at South of all  and EAST OF BLOCK 1"
-write(666,'(A)') "wall: 1N 3W ! Wall"
-write(666,'(A)') "dn = 5E-2    ! Spacing of first Cell"
+write(666,'(A)') "wall: 1N ! Wall"
+write(666,'(A)') "dn = 3E-2    ! Spacing of first Cell"
+write(666,'(A)') "wall: 3W ! Wall"
+write(666,'(A)') "dn = 3E-2    ! Spacing of first Cell"
 close(666)
 write(*,*) "done"
 
