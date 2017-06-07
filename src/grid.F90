@@ -53,8 +53,6 @@ call h5gopen_f(file_id,GROUP_GRID,group_id_grid,error)
 
 call h5gn_members_f(file_id, GROUP_GRID, nBlock, error)
 allocate(blocks(nBlock))
-write(*,*) "Number of Blocks:", nBlock
-write(*,'(A3,3(1X,A3))') "B#", "NI","NJ","NK"
 do b = 1, nBlock
    write(block_group,'(A,I0)') GROUP_BLOCK, b
    call h5gopen_f(group_id_grid,block_group,group_id_block,error)
@@ -74,7 +72,6 @@ do b = 1, nBlock
    
    !!!! MUSS VERSCHOBEN WERDEN FUER MULTIBLOCK
 !   call allocate_vars(b)
-   write(*,'(I3,3(1X,I3))') b, blocks(b) % nCells
 
    call alloc (data_in, blocks(b)%nPoints)
    allocate ( blocks(b) % coords (blocks(b)%nPoints(1),blocks(b)%nPoints(2),blocks(b)%nPoints(3),3))
@@ -238,8 +235,6 @@ do b = 1, nBlock
       end do
    end do
 end do
-write(*,*) blocks(1) % nSamePoints(11,11,1)
-stop
 end subroutine connect_blocks
 subroutine addSamePoints(b,f,nb,nf,per)
    implicit none
@@ -333,12 +328,13 @@ subroutine addSamePoints(b,f,nb,nf,per)
       stop 1
 end subroutine addSamePoints
 
-recursive subroutine addSamePoint(b,i,j,k,nb,ni,nj,nk)
+subroutine addSamePoint(b,i,j,k,nb,ni,nj,nk)
    implicit none
    integer, intent(in) :: b,i,j,k,nb,ni,nj,nk
 
    integer :: nsp_b,nsp_nb,n,nsp_t
    type(t_same), allocatable :: sp_b(:)
+   type(t_same)              :: temp   
 
    nsp_b = blocks(b) % nSamePoints(i,j,k)
    nsp_nb = blocks(nb) % nSamePoints(ni,nj,nk)
@@ -348,41 +344,49 @@ recursive subroutine addSamePoint(b,i,j,k,nb,ni,nj,nk)
           ni == blocks(b) % SamePoints(n,i,j,k) % i .and. & 
           nj == blocks(b) % SamePoints(n,i,j,k) % j .and. & 
           nk == blocks(b) % SamePoints(n,i,j,k) % k ) then
-         write(*,*) b,i,j,k," is already connected to ",nb,ni,nj,nk,n
+         !write(*,*) b,i,j,k," is already connected to ",nb,ni,nj,nk,n
          return
       end if
    end do
-   write(*,*) "Working @",b,i,j,k
+   !write(*,*) "Working @",b,i,j,k,nsp_b,nsp_nb
    
    if (nsp_b > 0) then
       allocate(sp_b(nsp_b))
       do n =  1, nsp_b 
          sp_b(n) = blocks(b) % SamePoints(n,i,j,k)
-         ! Update all points in k
       end do
    end if
       
    if (nsp_nb > 0) then
       do n =  1, nsp_nb 
+         temp = blocks(nb) % SamePoints(n,ni,nj,nk)
          nsp_b = nsp_b + 1
-         blocks(b) % SamePoints(nsp_b,i,j,k) = blocks(nb) % SamePoints(n,ni,nj,nk)
-         write(*,*) "+Cross-A:", blocks(nb) % SamePoints(n,ni,nj,nk)," to ", b,i,j,k,"@",nsp_b
+         blocks(b) % SamePoints(nsp_b,i,j,k) = temp
+         nsp_t = blocks(temp % b) % nSamePoints(temp % i,temp % j,temp % k)
+         nsp_t = nsp_t + 1
+         blocks(temp % b) % SamePoints(nsp_t,temp % i,temp % j, temp % k) = t_same(b,i,j,k)
+         blocks(temp % b) % nSamePoints(temp % i,temp % j,temp % k) = nsp_t
       end do
    end if
-   nsp_b = nsp_b + 1
-   write(*,*) "+Adding:",nb,ni,nj,nk," to ",b,i,j,k,"@",nsp_b
-   blocks(b) % SamePoints(nsp_b,i,j,k) = t_same(nb,ni,nj,nk)
 
    if (allocated(sp_b)) then
       do n =  1, ubound(sp_b,1) 
-         nsp_nb = nsp_nb + 1
+         nsp_nb = nsp_nb + 1 
          blocks(nb) % SamePoints(nsp_nb,ni,nj,nk) = sp_b(n)
-         write(*,*) "-Cross-A:", sp_b(n)," to ", nb,ni,nj,nk,"@",nsp_nb
+         nsp_t = blocks(sp_b(n) % b) % nSamePoints(sp_b(n) % i,sp_b(n) % j,sp_b(n) % k)
+         nsp_t = nsp_t + 1
+         blocks(sp_b(n) % b) % SamePoints(nsp_t,sp_b(n) % i,sp_b(n) % j, sp_b(n) % k) = t_same(nb,ni,nj,nk)
+         blocks(sp_b(n) % b) % nSamePoints(sp_b(n) % i,sp_b(n) % j,sp_b(n) % k) = nsp_t
       end do
       deallocate(sp_b)
    end if
+
+   nsp_b = nsp_b + 1
+   !write(*,*) "+Adding:",nb,ni,nj,nk," to ",b,i,j,k,"@",nsp_b
+   blocks(b) % SamePoints(nsp_b,i,j,k) = t_same(nb,ni,nj,nk)
+
    nsp_nb = nsp_nb + 1
-   write(*,*) "-Adding:",b,i,j,k," to ",nb,ni,nj,nk,"@",nsp_nb
+   !write(*,*) "-Adding:",b,i,j,k," to ",nb,ni,nj,nk,"@",nsp_nb
    blocks(nb) % SamePoints(nsp_nb,ni,nj,nk) = t_same(b,i,j,k)
 
    ! Updating the Number of Same points

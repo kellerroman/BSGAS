@@ -18,7 +18,7 @@ program BSGAS
 use boundary, only: read_boundary, init_boundary, init_walledges
 use control, only: loop_control, end_adaption, iter
 use config, only: read_config
-use screen_io, only: sw_program_start,sw_program_end, sw_init_residual, sw_residual
+use screen_io, only: sw_program_start,sw_program_end, sw_init_residual, sw_residual, sw_grid_info
 use structured_grid, only: read_grid, blocks
 use unstr, only: strukt2unstr,calc_edge_length,calc_edge_forces, calc_point_forces, move_points, git
 use unstr_output, only: write_output
@@ -32,6 +32,8 @@ call read_config
 
 call read_grid
 call read_boundary(blocks)
+
+call sw_grid_info(blocks)
 
 call strukt2unstr(blocks)
 call init_boundary(git,blocks)

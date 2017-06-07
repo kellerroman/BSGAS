@@ -65,6 +65,20 @@ end if
 write(stdout,*)
 end subroutine sw_full_line
 
+subroutine sw_grid_info(blocks)
+use types
+implicit none
+type(t_block), intent(in) :: blocks(:)
+integer :: nBlock,b
+
+nBlock = ubound(blocks,1)
+write(*,*) "Number of Blocks:", nBlock
+write(*,'(A3,9(1X,A5))') "B#", "NI","NJ","NK","WEST","EAST","SOUTH","NORTH","FRONT","BACK"
+do b = 1, nBlock
+   write(*,'(I3,9(1X,I5))') b, blocks(b) % nCells, blocks(b) % boundary_cond(:) % bc_type
+end do
+end subroutine sw_grid_info
+
 subroutine sw_residual(iter,max_edge_f,max_point_f)
    use control, only:res_out_start, res_out
 implicit none

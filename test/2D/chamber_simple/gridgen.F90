@@ -138,7 +138,7 @@ end do
 call write_grid()
 open(666,file="bc.cfg")
 write(666,'(A)') "! Wall at South of all  and EAST OF BLOCK 1"
-write(666,'(A)') "wall: 1N 3W 4S 4N 6W 6N ! Wall"
+write(666,'(A)') "wall: 1N,3W,4S,4N,6W,6N ! Wall"
 write(666,'(A)') "dn = 5E-2    ! Spacing of first Cell"
 close(666)
 write(*,*) "done"
