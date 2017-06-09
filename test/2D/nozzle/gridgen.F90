@@ -7,7 +7,7 @@ real(kind = 8), parameter :: POS_THROAT = 0.3
 integer, parameter :: NI   = 20
 integer, parameter :: NI_THROAT = int(NI * POS_THROAT)
 
-integer, parameter :: NJ = 10
+integer, parameter :: NJ = 12
 
 real(kind = 8), parameter :: Y_IN     = 2.0D0
 real(kind = 8), parameter :: Y_THROAT = 1.0D0

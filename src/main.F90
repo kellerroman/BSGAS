@@ -4,8 +4,8 @@
 !! AUTHORS:             ROMAN KELLER(RK)
 !===                                                                                                                          ===
 !! START:               13.05.2017               
-!! LAST CHANGE:         05.06.2017
-!! VERSION:             V0.0.1
+!! LAST CHANGE:         07.06.2017
+!! VERSION:             V0.1.0
 !===                                                                                                                          ===
 !! CHANGELOG:
 !!          13.05.2017,RK: Start of Project

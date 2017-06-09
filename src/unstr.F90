@@ -104,6 +104,8 @@ call alloc(git % edge_vectors          , 3, git % nedge)
 call alloc(git % edge_forces           , 3, git % nedge)
 call alloc(git % edge_nneighbor           , git % nedge)
 call alloc(git % edge_neighbor         , 2, git % nedge)
+call alloc(git % edge_nparallel           , git % nedge)
+call alloc(git % edge_parallel         , 2, git % nedge)
 
 
 git % point_forces = 0.0e0_REAL_KIND
@@ -141,7 +143,10 @@ do b = 1, nBlock
             end if
 
    !====================================================================================================
+   !====================================================================================================
    !==========================      CREATE EDGES    ====================================================
+   !==========================      I-DIRECTION     ====================================================
+   !====================================================================================================
    !====================================================================================================
             if (i > 1) then
                edge_exists = .false.
@@ -192,56 +197,105 @@ do b = 1, nBlock
    !====================================================================================================
    !==========================   CONNECT NEIGHBOR EDGES ================================================
    !====================================================================================================
-                  if (i > 1) then
-                     ne = -1
-                     p1 = git % edge_points(1,e) ! Left point of Edge
-                     do_connect = .true.
-                     if (i > 2) then
-                        ps = blocks(b) % refs(i - 2,j,k) ! Point_Soll Point we are looking for
-                     else if (blocks(b) % boundary_cond(WEST) % bc_type > 0) then
-                        ! eventually there is a edge on another blockto connect to
-                        nb = blocks(b) % boundary_cond(WEST) % bc_type
-                        if (blocks(b) % boundary_cond(WEST) % permutation == 1) then
-                           ps = blocks(nb) % refs(blocks(nb) % nCells(1),j,k)
-                        else
-                           do_connect = .false.
-                           write(*,*) "Error in UNSTR: Permutation in i-Richtung noch nicht implementiert" &
-                                     ,__LINE__,__FILE__
-                           stop 1
-                        end if
+                  ne = -1
+                  p1 = git % edge_points(1,e) ! Left point of Edge
+                  do_connect = .true.
+                  if (i > 2) then
+                     ps = blocks(b) % refs(i - 2,j,k) ! Point_Soll Point we are looking for
+                  else if (blocks(b) % boundary_cond(WEST) % bc_type > 0) then
+                     ! eventually there is a edge on another blockto connect to
+                     nb = blocks(b) % boundary_cond(WEST) % bc_type
+                     if (blocks(b) % boundary_cond(WEST) % permutation == 1) then
+                        ps = blocks(nb) % refs(blocks(nb) % nCells(1),j,k)
                      else
                         do_connect = .false.
+                        write(*,*) "Error in UNSTR: Permutation in i-Richtung noch nicht implementiert" &
+                                  ,__LINE__,__FILE__
+                        stop 1
                      end if
-                     if (do_connect) then
-                        do eop = 1, git % point_nedges(p1)
-                           e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
-                           p2 = git % edge_points(1,e2)
-                           if (p2 == ps) then
-                              ne = e2
-                              exit
-                           end if
-                        end do
-                        if (ne == -1) then
-                           write(*,*) "Error Neighbor edge not found"
-                           write(*,*) b,i,j,k
-                           write(*,*) p1, git % point_edges(:,p1)
-                           stop 1
+                  else
+                     do_connect = .false.
+                  end if
+                  if (do_connect) then
+                     do eop = 1, git % point_nedges(p1)
+                        e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                        p2 = git % edge_points(1,e2)
+                        if (p2 == ps) then
+                           ne = e2
+                           exit
                         end if
-
-                        !write(*,*) b,i,j,k, np,e ,p1,ps
-                        !write(*,*) "Connecting: ",b,i,j,k," with ",git % point_refs(:,p2)
-                        nne = git % edge_nneighbor(e) + 1
-                        git % edge_nneighbor(e) = nne
-                        git % edge_neighbor(nne,e) = ne
-                        nne = git % edge_nneighbor(ne) + 1
-                        git % edge_nneighbor(ne) = nne
-                        git % edge_neighbor(nne,ne) = e
+                     end do
+                     if (ne == -1) then
+                        write(*,*) "Error Neighbor edge not found"
+                        write(*,*) b,i,j,k
+                        write(*,*) p1, git % point_edges(:,p1)
+                        stop 1
                      end if
+
+                     !write(*,*) b,i,j,k, np,e ,p1,ps
+                     !write(*,*) "Connecting: ",b,i,j,k," with ",git % point_refs(:,p2)
+                     nne = git % edge_nneighbor(e) + 1
+                     git % edge_nneighbor(e) = nne
+                     git % edge_neighbor(nne,e) = ne
+                     nne = git % edge_nneighbor(ne) + 1
+                     git % edge_nneighbor(ne) = nne
+                     git % edge_neighbor(nne,ne) = e
+                  end if
+   !====================================================================================================
+   !==========================   CONNECT PARALLEL EDGES ================================================
+   !====================================================================================================
+                  ne = -1
+                  do_connect = .true.
+                  if (j > 1) then
+                     p1 = blocks(b) % refs(i-1,j-1,k)
+                     ps = blocks(b) % refs(i,j-1,k) ! Point_Soll Point we are looking for
+                  else if (blocks(b) % boundary_cond(SOUTH) % bc_type > 0) then
+                     ! eventually there is a edge on another blockto connect to
+                     nb = blocks(b) % boundary_cond(SOUTH) % bc_type
+                     if (blocks(b) % boundary_cond(SOUTH) % permutation == 1 .and. &)
+                         blocks(b) % boundary_cond(SOUTH) % permutation == 1) then
+                        ps = blocks(nb) % refs(blocks(nb) % nCells(1),j,k)
+                     else
+                        do_connect = .false.
+                        write(*,*) "Error in UNSTR: Permutation in i-Richtung noch nicht implementiert" &
+                                  ,__LINE__,__FILE__
+                        stop 1
+                     end if
+                  else
+                     do_connect = .false.
+                  end if
+                  if (do_connect) then
+                     do eop = 1, git % point_nedges(p1)
+                        e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                        p2 = git % edge_points(1,e2)
+                        if (p2 == ps) then
+                           ne = e2
+                           exit
+                        end if
+                     end do
+                     if (ne == -1) then
+                        write(*,*) "Error Neighbor edge not found"
+                        write(*,*) b,i,j,k
+                        write(*,*) p1, git % point_edges(:,p1)
+                        stop 1
+                     end if
+
+                     !write(*,*) b,i,j,k, np,e ,p1,ps
+                     !write(*,*) "Connecting: ",b,i,j,k," with ",git % point_refs(:,p2)
+                     nne = git % edge_nneighbor(e) + 1
+                     git % edge_nneighbor(e) = nne
+                     git % edge_neighbor(nne,e) = ne
+                     nne = git % edge_nneighbor(ne) + 1
+                     git % edge_nneighbor(ne) = nne
+                     git % edge_neighbor(nne,ne) = e
                   end if
                end if
             end if
    !====================================================================================================
+   !====================================================================================================
    !==========================      CREATE EDGES    ====================================================
+   !==========================      J-DIRECTION     ====================================================
+   !====================================================================================================
    !====================================================================================================
             if (j > 1) then
                edge_exists = .false.
@@ -289,55 +343,53 @@ do b = 1, nBlock
    !====================================================================================================
    !==========================   CONNECT NEIGHBOR EDGES ================================================
    !====================================================================================================
-                  if (j > 1) then
-                     ne = -1
-                     p1 = git % edge_points(1,e) ! Lower point of Edge
-                     do_connect = .true.
-                     ! if j > 2 there exists another edge in the negative j direction
-                     ! Unfortunatelly there is no direct way to get this edge, thus
-                     ! we compare all edges of the lower point and see if there first point's
-                     ! reference is j-2
-                     if (j > 2) then
-                        ps = blocks(b) % refs(i,j - 2,k) ! Point_Soll Point we are looking for
-                     else if (blocks(b) % boundary_cond(SOUTH) % bc_type > 0) then
-                        ! eventually there is a edge on another blockto connect to
-                        nb = blocks(b) % boundary_cond(SOUTH) % bc_type
-                        if (blocks(b) % boundary_cond(SOUTH) % permutation == 1) then
-                           ps = blocks(nb) % refs(i,blocks(nb) % nCells(2),k)
-                        else if (blocks(b) % boundary_cond(SOUTH) % permutation == 2) then
-                           ps = blocks(nb) % refs(blocks(nb) % nCells(1), 1 + blocks(nb) % nPoints(2) - i,k)
-                        else
-                           do_connect = .false.
-                           write(*,*) "Error in UNSTR: Permutation in i-Richtung noch nicht implementiert" &
-                                     ,__LINE__,__FILE__
-                           stop 1
-                        end if
+                  ne = -1
+                  p1 = git % edge_points(1,e) ! Lower point of Edge
+                  do_connect = .true.
+                  ! if j > 2 there exists another edge in the negative j direction
+                  ! Unfortunatelly there is no direct way to get this edge, thus
+                  ! we compare all edges of the lower point and see if there first point's
+                  ! reference is j-2
+                  if (j > 2) then
+                     ps = blocks(b) % refs(i,j - 2,k) ! Point_Soll Point we are looking for
+                  else if (blocks(b) % boundary_cond(SOUTH) % bc_type > 0) then
+                     ! eventually there is a edge on another blockto connect to
+                     nb = blocks(b) % boundary_cond(SOUTH) % bc_type
+                     if (blocks(b) % boundary_cond(SOUTH) % permutation == 1) then
+                        ps = blocks(nb) % refs(i,blocks(nb) % nCells(2),k)
+                     else if (blocks(b) % boundary_cond(SOUTH) % permutation == 2) then
+                        ps = blocks(nb) % refs(blocks(nb) % nCells(1), 1 + blocks(nb) % nPoints(2) - i,k)
                      else
                         do_connect = .false.
+                        write(*,*) "Error in UNSTR: Permutation in i-Richtung noch nicht implementiert" &
+                                  ,__LINE__,__FILE__
+                        stop 1
                      end if
-                     if (do_connect) then
-                        do eop = 1, git % point_nedges(p1)
-                           e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
-                           p2 = git % edge_points(1,e2)
-                           if (p2 == ps) then
-                              ne = e2
-                              exit
-                           end if
-                        end do
-                        if (ne == -1) then
-                           write(*,*) "Error Neighbor edge not found",__LINE__,__FILE__
-                           write(*,*) b,i,j,k
-                           write(*,*) ps, git % point_edges(:,p1)
-                           stop 1
+                  else
+                     do_connect = .false.
+                  end if
+                  if (do_connect) then
+                     do eop = 1, git % point_nedges(p1)
+                        e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                        p2 = git % edge_points(1,e2)
+                        if (p2 == ps) then
+                           ne = e2
+                           exit
                         end if
-                        
-                        nne = git % edge_nneighbor(e) + 1 ! Increasing neighbor edge count
-                        git % edge_nneighbor(e) = nne     ! Increasing neighbor edge count
-                        git % edge_neighbor(nne,e) = ne   ! Referncing new neighbor edge
-                        nne = git % edge_nneighbor(ne) + 1! Increasing neighbor edge count of neighbor edge
-                        git % edge_nneighbor(ne) = nne
-                        git % edge_neighbor(nne,ne) = e   ! REferenceing current edge in neighbor edge's neighbor edge array
+                     end do
+                     if (ne == -1) then
+                        write(*,*) "Error Neighbor edge not found",__LINE__,__FILE__
+                        write(*,*) b,i,j,k
+                        write(*,*) ps, git % point_edges(:,p1)
+                        stop 1
                      end if
+                     
+                     nne = git % edge_nneighbor(e) + 1 ! Increasing neighbor edge count
+                     git % edge_nneighbor(e) = nne     ! Increasing neighbor edge count
+                     git % edge_neighbor(nne,e) = ne   ! Referncing new neighbor edge
+                     nne = git % edge_nneighbor(ne) + 1! Increasing neighbor edge count of neighbor edge
+                     git % edge_nneighbor(ne) = nne
+                     git % edge_neighbor(nne,ne) = e   ! REferenceing current edge in neighbor edge's neighbor edge array
                   end if
               end if
            end if

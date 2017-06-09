@@ -1,2 +1,8 @@
-13.5.2017, RK:
+13.05.2017, RK:
    Start of project, using main parts from grid_adation.
+07.06.2017, RK (Version V0.1)
+   2D testcases: chamber, injector, o-grid, square work (can be read)
+   2D is read, points with same coords are transfered to single point (not based on coordinate but on block connection)
+   Edges adjecent to a wall are scaled to a given length
+   Edges in line (+-1) are scaled not to differ in length more than a given factor
+   issues: nozzle testcase leads to points outside of boundary

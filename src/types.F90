@@ -82,6 +82,10 @@ type :: t_unstr
       !< Neighbor Edges in same direction (length diff resitrictions)
 
 
+      integer(INT_KIND), allocatable :: edge_nparallel(:)
+      !< NUmber of Neighbor Edges parallel to the edge
+      integer(INT_KIND), allocatable :: edge_parallel(:,:)
+      !< Neighbor Edges parallel to the edge (length diff resitrictions)
       !!!!!! LISTS FOR SPECIAL TYPES:
 
       integer(INT_KIND) :: nWallEdge
