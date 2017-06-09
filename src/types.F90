@@ -13,7 +13,7 @@ type :: t_boundary_condition
       integer(INT_KIND)              :: bc_type
       !< Boundary-Type: >0: Blocknumber of other Block
       !<                 0: Uninitialized
-      integer(INT_KIND)              :: neighbor_face
+      integer(INT_KIND)              :: face
       integer(INT_KIND)              :: permutation
       real(REAL_KIND)                :: dn
 end type t_boundary_condition

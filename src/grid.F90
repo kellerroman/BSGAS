@@ -155,7 +155,7 @@ do b = 1, nBlock
    allocate( blocks(b) % boundary_cond(number_of_face))
 
    blocks(b) % boundary_cond (:) % bc_type         = 0
-   blocks(b) % boundary_cond (:) % neighbor_face   = 0
+   blocks(b) % boundary_cond (:) % face   = 0
    blocks(b) % boundary_cond (:) % permutation     = 0
 
    corner_points (:,1,b) = blocks(b) % coords ( 1, 1, 1,:)
@@ -219,7 +219,7 @@ do b = 1, nBlock
                if (found) then
                   !write(*,*) "found:",b,f,nb,nf,per
                   blocks(b) % boundary_cond(f) % bc_type       = nb
-                  blocks(b) % boundary_cond(f) % neighbor_face = nf
+                  blocks(b) % boundary_cond(f) % face = nf
                   blocks(b) % boundary_cond(f) % permutation   = per
                   call addSamePoints(b,f,nb,nf,per)
                   exit

@@ -114,6 +114,8 @@ git % point_forces = 0.0e0_REAL_KIND
 
 git % edge_nneighbor = 0
 git % edge_neighbor  = -1
+git % edge_nparallel = 0
+git % edge_parallel  = -1
 np = 0
 e = 0
 do b = 1, nBlock
@@ -252,9 +254,10 @@ do b = 1, nBlock
                   else if (blocks(b) % boundary_cond(SOUTH) % bc_type > 0) then
                      ! eventually there is a edge on another blockto connect to
                      nb = blocks(b) % boundary_cond(SOUTH) % bc_type
-                     if (blocks(b) % boundary_cond(SOUTH) % permutation == 1 .and. &)
-                         blocks(b) % boundary_cond(SOUTH) % permutation == 1) then
-                        ps = blocks(nb) % refs(blocks(nb) % nCells(1),j,k)
+                     if (blocks(b) % boundary_cond(SOUTH) % permutation == 1 .and. &
+                         blocks(b) % boundary_cond(SOUTH) % face        == NORTH) then
+                        p1 = blocks(nb) % refs(i-1,blocks(nb) % nCells(2),k)
+                        ps = blocks(nb) % refs(i  ,blocks(nb) % nCells(2),k)
                      else
                         do_connect = .false.
                         write(*,*) "Error in UNSTR: Permutation in i-Richtung noch nicht implementiert" &
@@ -272,22 +275,30 @@ do b = 1, nBlock
                            ne = e2
                            exit
                         end if
+                        p2 = git % edge_points(2,e2)
+                        if (p2 == ps) then
+                           ne = e2
+                           exit
+                        end if
                      end do
                      if (ne == -1) then
-                        write(*,*) "Error Neighbor edge not found"
+                        write(*,*) "Error Parallel Neighbor edge not found"
                         write(*,*) b,i,j,k
+                        write(*,*) git % point_refs(:,p1)
+                        write(*,*) git % point_refs(:,ps)
                         write(*,*) p1, git % point_edges(:,p1)
                         stop 1
                      end if
 
                      !write(*,*) b,i,j,k, np,e ,p1,ps
                      !write(*,*) "Connecting: ",b,i,j,k," with ",git % point_refs(:,p2)
-                     nne = git % edge_nneighbor(e) + 1
-                     git % edge_nneighbor(e) = nne
-                     git % edge_neighbor(nne,e) = ne
-                     nne = git % edge_nneighbor(ne) + 1
-                     git % edge_nneighbor(ne) = nne
-                     git % edge_neighbor(nne,ne) = e
+                     nne = git % edge_nparallel(e) + 1
+                     git % edge_nparallel(e) = nne
+                     git % edge_parallel(nne,e) = ne
+
+                     nne = git % edge_nparallel(ne) + 1
+                     git % edge_nparallel(ne) = nne
+                     git % edge_parallel(nne,ne) = e
                   end if
                end if
             end if
@@ -414,26 +425,22 @@ end if
 !   write(*,'("#P ",I8," Ref ",4I8," NEdge ",I8," Edges: ",6I8)' ) &
 !            np, git % point_refs(:,np),pe, git % point_edges(1:pe,np)
 !end do
-!write(*,*) "Edges"
-!p1 = 0
-!p2 = 0
-!do e = 1, git % nedge
-!   !write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4)') e, git % edge_points(:,e), git % edge_neighbor(:,e)
-!   if (git % edge_nneighbor(e) == 2) then
-!      p1 = p1 + 1
-!   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",2I8, " Pointrange: ",4I8)') &
-!         e, git % edge_points(:,e), git % edge_neighbor(:,e) &
-!         , git % edge_points(1,git % edge_neighbor(1,e)) &
-!         , git % edge_points(:,e) &
-!         , git % edge_points(2,git % edge_neighbor(2,e)) 
-!   else
-!      p2 = p2 + 1
-!   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",I8,8X, " Pointrange: ",4I8)') &
-!         e, git % edge_points(:,e), git % edge_neighbor(1,e) &
-!         , git % edge_points(:,e) &
-!         , git % edge_points(:,git % edge_neighbor(1,e)) 
-!   end if
-!end do
+write(*,*) "Edges"
+p1 = 0
+p2 = 0
+do e = 1, git % nedge
+   !write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4)') e, git % edge_points(:,e), git % edge_neighbor(:,e)
+   if (git % edge_nneighbor(e) == 2) then
+      p1 = p1 + 1
+   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",2I8, " Parallel: ",4I8)') &
+         e, git % edge_points(:,e), git % edge_neighbor(:,e), git % edge_parallel(:,e)
+   else
+      p2 = p2 + 1
+   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",I8,8X, " Parallel: ",4I8)') &
+         e, git % edge_points(:,e), git % edge_neighbor(1,e), git % edge_parallel(:,e)
+   end if
+end do
+stop
 !write(*,*) p1,p2
 git % edge_springs = 1.0e0_REAL_KIND
 
