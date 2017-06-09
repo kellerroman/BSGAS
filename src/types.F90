@@ -16,6 +16,17 @@ type :: t_boundary_condition
       integer(INT_KIND)              :: face
       integer(INT_KIND)              :: permutation
       real(REAL_KIND)                :: dn
+
+      !< Loop variables: do i = is,ie,id
+      integer(INT_KIND)              :: is,ie,id
+      integer(INT_KIND)              :: js,je,jd
+      integer(INT_KIND)              :: ks,ke,kd
+
+      integer(INT_KIND)              :: ci,di
+      !< Values of Neighbor corresponding index 
+      !< can be calculated with ni = ci + di * i
+      integer(INT_KIND)              :: cj,dj
+      integer(INT_KIND)              :: ck,dk
 end type t_boundary_condition
 
 type :: t_block

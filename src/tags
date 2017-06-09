@@ -4,29 +4,38 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.8	//
+666	grid.F90	/^666  continue$/;"	l	subroutine:addSamePoints	file:
+6666	grid.F90	/^6666  continue$/;"	l	subroutine:addSamePoints	file:
 BC_SHORT	boundary.F90	/^   character(len=*), parameter :: BC_SHORT(/;"	v	module:boundary
 BSGAS	main.F90	/^program BSGAS$/;"	p
 CONFIG_FILE_VERSION	config_parser.F90	/^integer, parameter         :: CONFIG_FILE_VERSION /;"	v	module:config_parser
 COORD_NAME	grid.F90	/^character(len=*), parameter :: COORD_NAME(/;"	v	module:structured_grid
 DATATYPE_INT	config_parser.F90	/^integer, parameter         :: DATATYPE_INT /;"	v	module:config_parser
 DATATYPE_REAL	config_parser.F90	/^integer, parameter         :: DATATYPE_REAL /;"	v	module:config_parser
+DATATYPE_STRING	config_parser.F90	/^integer, parameter         :: DATATYPE_STRING /;"	v	module:config_parser
+FACE_NAMES	const.F90	/^character(len = 5) :: FACE_NAMES(/;"	v
 GREEN_END	screen_io.F90	/^character(len=*),parameter :: GREEN_END /;"	v	module:screen_io
 GREEN_START	screen_io.F90	/^character(len=*),parameter :: GREEN_START /;"	v	module:screen_io
 GROUP_BLOCK	grid.F90	/^character(len=*), parameter :: GROUP_BLOCK /;"	v	module:structured_grid
 GROUP_GRID	grid.F90	/^character(len=*), parameter :: GROUP_GRID /;"	v	module:structured_grid
 INT_KIND	const.F90	/^integer, parameter :: INT_KIND /;"	v	module:const
+LENGTH_STRING	config_parser.F90	/^integer, parameter         :: LENGTH_STRING /;"	v	module:config_parser
 N_SPRINGS	spring.F90	/^integer(INT_KIND), parameter :: N_SPRINGS /;"	v	module:spring
 REAL_KIND	const.F90	/^integer, parameter :: REAL_KIND /;"	v	module:const
 RED_END	screen_io.F90	/^character(len=*),parameter :: RED_END /;"	v	module:screen_io
 RED_START	screen_io.F90	/^character(len=*),parameter :: RED_START /;"	v	module:screen_io
+RETURN_CODE_ALREADY_SET	config_parser.F90	/^integer, parameter, public :: RETURN_CODE_ALREADY_SET /;"	v	module:config_parser
 RETURN_CODE_GOOD	config_parser.F90	/^integer, parameter, public :: RETURN_CODE_GOOD /;"	v	module:config_parser
 RETURN_CODE_NOT_A_INT	config_parser.F90	/^integer, parameter, public :: RETURN_CODE_NOT_A_INT /;"	v	module:config_parser
 RETURN_CODE_NOT_A_REAL	config_parser.F90	/^integer, parameter, public :: RETURN_CODE_NOT_A_REAL /;"	v	module:config_parser
 RETURN_CODE_NOT_IN_LIST	config_parser.F90	/^integer, parameter, public :: RETURN_CODE_NOT_IN_LIST /;"	v	module:config_parser
 SCREEN_WIDTH	screen_io.F90	/^integer(INT_KIND), parameter :: SCREEN_WIDTH /;"	v	module:screen_io
 VARNAME_LENGTH	config_parser.F90	/^integer, parameter, public :: VARNAME_LENGTH /;"	v	module:config_parser
+addSamePoint	grid.F90	/^subroutine addSamePoint(/;"	s
+addSamePoints	grid.F90	/^subroutine addSamePoints(/;"	s
 add_int	config_parser.F90	/^subroutine add_int(/;"	s
 add_real	config_parser.F90	/^subroutine add_real(/;"	s
+add_str	config_parser.F90	/^subroutine add_str(/;"	s
 alloc_int_1d	help_routines.F90	/^subroutine alloc_int_1d(/;"	s	module:help_routines
 alloc_int_2d	help_routines.F90	/^subroutine alloc_int_2d(/;"	s	module:help_routines
 alloc_int_3d	help_routines.F90	/^subroutine alloc_int_3d(/;"	s	module:help_routines
@@ -36,6 +45,7 @@ alloc_real_1d	help_routines.F90	/^subroutine alloc_real_1d(/;"	s	module:help_rou
 alloc_real_2d	help_routines.F90	/^subroutine alloc_real_2d(/;"	s	module:help_routines
 alloc_real_3d	help_routines.F90	/^subroutine alloc_real_3d(/;"	s	module:help_routines
 alloc_real_3d_array	help_routines.F90	/^subroutine alloc_real_3d_array(/;"	s	module:help_routines
+b	types.F90	/^      integer(INT_KIND)              :: b$/;"	k	type:t_same
 bc_type	types.F90	/^      integer(INT_KIND)              :: bc_type$/;"	k	type:t_boundary_condition
 boundary	boundary.F90	/^module boundary$/;"	m
 boundary_cond	types.F90	/^      type(t_boundary_condi/;"	k	type:t_block
@@ -52,24 +62,28 @@ control	control.F90	/^module control$/;"	m
 coords	types.F90	/^      real(REAL_KIND)  , allocatable :: coords(/;"	k	type:t_block
 datatype	config_parser.F90	/^   integer :: datatype$/;"	k	type:t_datin_para
 dimension	types.F90	/^      integer(INT_KIND) :: dimension$/;"	k	type:t_unstr
-dw_soll	spring.F90	/^real(REAL_KIND), parameter :: dw_soll /;"	v	module:spring
+dn	types.F90	/^      real(REAL_KIND)                :: dn$/;"	k	type:t_boundary_condition
 edge_forces	types.F90	/^      real(REAL_KIND), allocatable   :: edge_forces(/;"	k	type:t_unstr
 edge_lengths	types.F90	/^      real(REAL_KIND), allocatable   :: edge_lengths(/;"	k	type:t_unstr
 edge_neighbor	types.F90	/^      integer(INT_KIND), allocatable :: edge_neighbor(/;"	k	type:t_unstr
 edge_nneighbor	types.F90	/^      integer(INT_KIND), allocatable :: edge_nneighbor(/;"	k	type:t_unstr
+edge_nparallel	types.F90	/^      integer(INT_KIND), allocatable :: edge_nparallel(/;"	k	type:t_unstr
+edge_parallel	types.F90	/^      integer(INT_KIND), allocatable :: edge_parallel(/;"	k	type:t_unstr
 edge_points	types.F90	/^      integer(INT_KIND), allocatable :: edge_points(/;"	k	type:t_unstr
 edge_springs	types.F90	/^      real(REAL_KIND), allocatable   :: edge_springs(/;"	k	type:t_unstr
 edge_streching	spring.F90	/^subroutine edge_streching$/;"	s	module:spring
 edge_vectors	types.F90	/^      real(REAL_KIND), allocatable   :: edge_vectors(/;"	k	type:t_unstr
 end_adaption	control.F90	/^logical :: end_adaption$/;"	v	module:control
+face	types.F90	/^      integer(INT_KIND)              :: face$/;"	k	type:t_boundary_condition
 filename_config	config.F90	/^character(len=100) :: filename_config /;"	v	module:config
-filename_grid_in	grid.F90	/^character(len=*), parameter :: filename_grid_in /;"	v	module:structured_grid
+filename_grid_in	grid.F90	/^character(len=100)          :: filename_grid_in$/;"	v	module:structured_grid
 first	config_parser.F90	/^type(t_datin_para), pointer :: first /;"	v	module:config_parser
 free_all	config_parser.F90	/^subroutine free_all(/;"	s
 get_unset_para	config_parser.F90	/^function get_unset_para(/;"	f
 get_unset_paras	config_parser.F90	/^subroutine get_unset_paras(/;"	s
 git	unstr.F90	/^type(t_unstr) :: git$/;"	v	module:unstr
 help_routines	help_routines.F90	/^module help_routines$/;"	m
+i	types.F90	/^      in/;"	k	type:t_same
 init_boundary	boundary.F90	/^subroutine init_boundary(/;"	s
 init_springs	spring.F90	/^subroutine init_springs$/;"	s	module:spring
 init_walledges	boundary.F90	/^subroutine init_walledges(/;"	s
@@ -78,6 +92,8 @@ is_integer	config_parser.F90	/^logical function is_integer(/;"	f
 is_real	config_parser.F90	/^logical function is_real(/;"	f
 is_set	config_parser.F90	/^   logical :: is_set$/;"	k	type:t_datin_para
 iter	control.F90	/^integer :: iter /;"	v	module:control
+j	types.F90	/^      integer(INT_KIND)              :: j$/;"	k	type:t_same
+k	types.F90	/^      integer(INT_KIND)              :: k$/;"	k	type:t_same
 list_parameter	config_parser.F90	/^subroutine list_parameter(/;"	s
 loop_control	control.F90	/^subroutine loop_control$/;"	s	module:control
 lower_case	config_parser.F90	/^function lower_case(/;"	f
@@ -88,12 +104,13 @@ move_points	unstr.F90	/^subroutine move_points(/;"	s	module:unstr
 nCells	types.F90	/^      integer(INT_KIND)              :: nCells(/;"	k	type:t_block
 nIter	control.F90	/^integer :: nIter /;"	v	module:control
 nPoints	types.F90	/^      integer(INT_KIND)              :: nPoints(/;"	k	type:t_block
+nSamePoints	types.F90	/^      integer(INT_KIND), allocatable :: nSamePoints(/;"	k	type:t_block
 nWallEdge	types.F90	/^      integer(INT_KIND) :: nWallEdge$/;"	k	type:t_unstr
 nedge	types.F90	/^      integer(INT_KIND) :: nedge$/;"	k	type:t_unstr
-neighbor_face	types.F90	/^      integer(INT_KIND)              :: neighbor_face$/;"	k	type:t_boundary_condition
 next	config_parser.F90	/^   type(t_datin_para), pointer :: next /;"	k	type:t_datin_para
 npoint	types.F90	/^      integer(INT_KIND) :: npoint$/;"	k	type:t_unstr
 output_grid	control.F90	/^logical :: output_grid$/;"	v	module:control
+output_intervall	unstr_output.F90	/^integer :: output_intervall$/;"	v	module:unstr_output
 permutation	types.F90	/^      integer(INT_KIND)              :: permutation$/;"	k	type:t_boundary_condition
 point_coords	types.F90	/^      real(REAL_KIND), allocatable   :: point_coords(/;"	k	type:t_unstr
 point_edge_signs	types.F90	/^      real(REAL_KIND), allocatable   :: point_edge_signs(/;"	k	type:t_unstr
@@ -107,17 +124,20 @@ read_config	config.F90	/^subroutine read_config$/;"	s	module:config
 read_grid_hdf5	grid.F90	/^subroutine read_grid_hdf5(/;"	s
 real_var	config_parser.F90	/^   real(kind=8), pointer :: real_var$/;"	k	type:t_datin_para
 refs	types.F90	/^      integer(INT_KIND), allocatable :: refs(/;"	k	type:t_block
-required	config_parser.F90	/^   logical :: required$/;"	k	type:t_datin_para
+required	config_parser.F90	/^   logical :: required /;"	k	type:t_datin_para
 res_out	control.F90	/^integer :: res_out /;"	v	module:control
 res_out_start	control.F90	/^integer :: res_out_start /;"	v	module:control
+samePoints	types.F90	/^      type(t_same), allocatable :: samePoints(/;"	k	type:t_block
 scalar_product	help_routines.F90	/^real(REAL_KIND) function scalar_product(/;"	f	module:help_routines
 screen_io	screen_io.F90	/^module screen_io$/;"	m
 set_para	config_parser.F90	/^function set_para(/;"	f
 spring	spring.F90	/^module spring$/;"	m
 springs	spring.F90	/^real(REAL_KIND), allocatable :: springs(/;"	v	module:spring
+string_var	config_parser.F90	/^   character(len=LENGTH_STRING), pointer :: string_var$/;"	k	type:t_datin_para
 structured_grid	grid.F90	/^module structured_grid$/;"	m
 strukt2unstr	unstr.F90	/^subroutine strukt2unstr(/;"	s	module:unstr
 sw_full_line	screen_io.F90	/^subroutine sw_full_line(/;"	s	module:screen_io
+sw_grid_info	screen_io.F90	/^subroutine sw_grid_info(/;"	s	module:screen_io
 sw_init_residual	screen_io.F90	/^subroutine sw_init_residual$/;"	s	module:screen_io
 sw_program_end	screen_io.F90	/^subroutine sw_program_end(/;"	s	module:screen_io
 sw_program_start	screen_io.F90	/^subroutine sw_program_start(/;"	s	module:screen_io
@@ -125,6 +145,7 @@ sw_residual	screen_io.F90	/^subroutine sw_residual(/;"	s	module:screen_io
 t_block	types.F90	/^type :: t_block$/;"	t	module:types
 t_boundary_condition	types.F90	/^type :: t_boundary_condition$/;"	t	module:types
 t_datin_para	config_parser.F90	/^type :: t_datin_para$/;"	t	module:config_parser
+t_same	types.F90	/^type :: t_same$/;"	t	module:types
 t_unstr	types.F90	/^type :: t_unstr$/;"	t	module:types
 types	types.F90	/^module types$/;"	m
 unstr	unstr.F90	/^module unstr$/;"	m
@@ -132,6 +153,7 @@ unstr_output	unstr_output.F90	/^module unstr_output$/;"	m
 varname	config_parser.F90	/^   character(len=VARNAME_LENGTH) :: varname$/;"	k	type:t_datin_para
 vec_common	help_routines.F90	/^subroutine vec_common(/;"	s	module:help_routines
 vec_normalize	help_routines.F90	/^subroutine vec_normalize(/;"	s	module:help_routines
+wall_edge_dns	types.F90	/^      real(REAL_KIND)  , allocatable :: wall_edge_dns(/;"	k	type:t_unstr
 wall_edges	types.F90	/^      integer(INT_KIND), allocatable :: wall_edges(/;"	k	type:t_unstr
 wall_refinment	spring.F90	/^subroutine wall_refinment$/;"	s	module:spring
 write_output	unstr_output.F90	/^subroutine write_output(/;"	s	module:unstr_output

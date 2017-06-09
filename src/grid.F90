@@ -14,6 +14,11 @@ integer(INT_KIND)           :: nBlock
 type(t_block), allocatable  :: blocks(:)
 integer(INT_KIND)           :: dimen
 
+integer :: number_of_corner_point
+integer :: number_of_face
+integer :: number_of_points_per_face
+integer :: number_of_permutation
+
 contains
 
 subroutine read_grid()
@@ -110,10 +115,14 @@ real(REAL_KIND),parameter :: EPS = 1.0e-8_REAL_KIND
 integer :: b,f,nb,nf,p,per,d
 integer :: ni,nj,nk
 logical :: is3D 
-integer :: number_of_corner_point
-integer :: number_of_face
-integer :: number_of_points_per_face
-integer :: number_of_permutation
+
+integer :: is,ie
+integer :: js,je
+integer :: ks,ke
+
+integer :: ci,di
+integer :: cj,dj
+integer :: ck,dk
 
 logical :: found
 
@@ -221,7 +230,79 @@ do b = 1, nBlock
                   blocks(b) % boundary_cond(f) % bc_type       = nb
                   blocks(b) % boundary_cond(f) % face = nf
                   blocks(b) % boundary_cond(f) % permutation   = per
-                  call addSamePoints(b,f,nb,nf,per)
+                  if (f == EAST .and. nf == WEST) then
+                        is = blocks(b) % nPoints(1); ie = is                    ; id = 1
+                        js = 1                     ; je = blocks(b) % nPoints(2); jd = 1
+                        ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 1
+                        select case (per) 
+                        case(1)
+                           ci = 1; di = 0
+                           cj = 0; dj = 1
+                           ck = 0; dk = 1
+                        case default 
+                           goto 666
+                        end select
+                  else if (f == WEST .and. nf == EAST) then
+                        is = 1; ie = is                    ; id = -1
+                        js = 1; je = blocks(b) % nPoints(2); jd = 1
+                        ks = 1; ke = blocks(b) % nPoints(3); kd = 1
+                        select case (per) 
+                        case(1)
+                           ci = blocks(nb) % nPoints(1); di = 0
+                           cj = 0                      ; dj = 1
+                           ck = 0                      ; dk = 1
+                        case default 
+                           goto 666
+                        end select
+                  else if (f == NORTH .and. nf == SOUTH) then
+                        is = 1                     ; ie = blocks(b) % nPoints(1); id = 1
+                        js = blocks(b) % nPoints(2); je = js                    ; jd = 1
+                        ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 1
+                        select case (per) 
+                        case(1)
+                           ci = 0; di = 1
+                           cj = 1; dj = 0
+                           ck = 0; dk = 1
+                        case default 
+                           goto 666
+                        end select
+                  else if (f == SOUTH .and. nf == NORTH) then
+                        is = 1; ie = blocks(b) % nPoints(1); id = 1
+                        js = 1; je = js                    ; jd = -1
+                        ks = 1; ke = blocks(b) % nPoints(3); kd = 1
+                        select case (per) 
+                        case(1)
+                           ci = 0                        ; di = 1
+                           cj = blocks(nb) % nPoints(2)  ; dj = 0
+                           ck = 0                        ; dk = 1
+                        case default 
+                           goto 666
+                        end select
+                  else
+                     goto 6666
+                  end if
+                  blocks(b) % boundary_cond(f) % is   = is
+                  blocks(b) % boundary_cond(f) % ie   = ie
+                  blocks(b) % boundary_cond(f) % id   = id
+
+                  blocks(b) % boundary_cond(f) % js   = js
+                  blocks(b) % boundary_cond(f) % je   = je
+                  blocks(b) % boundary_cond(f) % jd   = jd
+
+                  blocks(b) % boundary_cond(f) % ks   = ks
+                  blocks(b) % boundary_cond(f) % ke   = ke
+                  blocks(b) % boundary_cond(f) % kd   = kd
+
+                  blocks(b) % boundary_cond(f) % ci   = ci
+                  blocks(b) % boundary_cond(f) % di   = di
+
+                  blocks(b) % boundary_cond(f) % cj   = cj
+                  blocks(b) % boundary_cond(f) % dj   = dj
+
+                  blocks(b) % boundary_cond(f) % ck   = ck
+                  blocks(b) % boundary_cond(f) % dk   = dk
+
+                  call addSamePoints(b,nb,is,ie,js,je,ks,ke,ci,di,cj,dj,ck,dk)
                   exit
                end if
             end do
@@ -235,79 +316,26 @@ do b = 1, nBlock
       end do
    end do
 end do
+   return
+666  continue
+         write(*,*) "Per: ",per, "for ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"
+         stop 1
+   
+6666  continue
+      write(*,*) "Case ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"
+      stop 1
 end subroutine connect_blocks
-subroutine addSamePoints(b,f,nb,nf,per)
+subroutine addSamePoints(b,nb,is,ie,js,je,ks,ke,ci,di,cj,dj,ck,dk)
    implicit none
-   integer, intent(in)  :: b,f,nb,nf,per
+   integer, intent(in)  :: b,nb
+   integer, intent(in)  :: is,ie
+   integer, intent(in)  :: js,je
+   integer, intent(in)  :: ks,ke
+   integer, intent(in)  :: ci,di
+   integer, intent(in)  :: cj,dj
+   integer, intent(in)  :: ck,dk
    integer :: i,j,k,ni,nj,nk
 
-   integer :: is,ie
-   integer :: js,je
-   integer :: ks,ke
-
-   integer :: ci,di
-   integer :: cj,dj
-   integer :: ck,dk
-   if (f == EAST .and. nf == WEST) then
-         is = blocks(b) % nPoints(1); ie = is
-         js = 1                     ; je = blocks(b) % nPoints(2)
-         ks = 1                     ; ke = blocks(b) % nPoints(3)
-         select case (per) 
-         case(1)
-            ci = 1; di = 0
-            cj = 0; dj = 1
-            ck = 0; dk = 1
-         case default 
-            goto 666
-         end select
-   else if (f == WEST .and. nf == EAST) then
-         is = 1
-         ie = is
-         js = 1
-         je = blocks(b) % nPoints(2)
-         ks = 1
-         ke = blocks(b) % nPoints(3)
-         select case (per) 
-         case(1)
-            ci = blocks(nb) % nPoints(1); di = 0
-            cj = 0                      ; dj = 1
-            ck = 0                      ; dk = 1
-         case default 
-            goto 666
-         end select
-   else if (f == NORTH .and. nf == SOUTH) then
-         is = 1 
-         ie = blocks(b) % nPoints(1)
-         js = blocks(b) % nPoints(2)
-         je = js
-         ks = 1
-         ke = blocks(b) % nPoints(3)
-         select case (per) 
-         case(1)
-            ci = 0; di = 1
-            cj = 1; dj = 0
-            ck = 0; dk = 1
-         case default 
-            goto 666
-         end select
-   else if (f == SOUTH .and. nf == NORTH) then
-         is = 1 
-         ie = blocks(b) % nPoints(1)
-         js = 1
-         je = js
-         ks = 1
-         ke = blocks(b) % nPoints(3)
-         select case (per) 
-         case(1)
-            ci = 0                        ; di = 1
-            cj = blocks(nb) % nPoints(2)  ; dj = 0
-            ck = 0                        ; dk = 1
-         case default 
-            goto 666
-         end select
-   else
-      goto 6666
-   end if
    do k = ks,ke
       nk = ck + dk * k
       do j = js,je
@@ -318,14 +346,6 @@ subroutine addSamePoints(b,f,nb,nf,per)
          end do
       end do
    end do
-   return
-666  continue
-         write(*,*) "Per: ",per, "for ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"
-         stop 1
-   
-6666  continue
-      write(*,*) "Case ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"
-      stop 1
 end subroutine addSamePoints
 
 subroutine addSamePoint(b,i,j,k,nb,ni,nj,nk)
