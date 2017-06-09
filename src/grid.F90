@@ -124,6 +124,8 @@ integer :: ci,di
 integer :: cj,dj
 integer :: ck,dk
 
+integer :: i,j,k
+
 logical :: found
 
 
@@ -302,7 +304,16 @@ do b = 1, nBlock
                   blocks(b) % boundary_cond(f) % ck   = ck
                   blocks(b) % boundary_cond(f) % dk   = dk
 
-                  call addSamePoints(b,nb,is,ie,js,je,ks,ke,ci,di,cj,dj,ck,dk)
+                  do k = ks,ke
+                     nk = ck + dk * k
+                     do j = js,je
+                        nj = cj + dj * j
+                        do i = is,ie
+                           ni = ci + di * i
+                           call addSamePoint(b,i,j,k,nb,ni,nj,nk)
+                        end do
+                     end do
+                  end do
                   exit
                end if
             end do
@@ -325,28 +336,6 @@ end do
       write(*,*) "Case ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"
       stop 1
 end subroutine connect_blocks
-subroutine addSamePoints(b,nb,is,ie,js,je,ks,ke,ci,di,cj,dj,ck,dk)
-   implicit none
-   integer, intent(in)  :: b,nb
-   integer, intent(in)  :: is,ie
-   integer, intent(in)  :: js,je
-   integer, intent(in)  :: ks,ke
-   integer, intent(in)  :: ci,di
-   integer, intent(in)  :: cj,dj
-   integer, intent(in)  :: ck,dk
-   integer :: i,j,k,ni,nj,nk
-
-   do k = ks,ke
-      nk = ck + dk * k
-      do j = js,je
-         nj = cj + dj * j
-         do i = is,ie
-            ni = ci + di * i
-            call addSamePoint(b,i,j,k,nb,ni,nj,nk)
-         end do
-      end do
-   end do
-end subroutine addSamePoints
 
 subroutine addSamePoint(b,i,j,k,nb,ni,nj,nk)
    implicit none
