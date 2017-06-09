@@ -341,44 +341,25 @@ nwe = 0
 do b = 1, nBlock
    do bc = 1,4
       if (blocks(b) % boundary_cond(bc) % bc_type < 0) then
-         is = 1
-         ie = blocks(b) % nPoints(1)
-         js = 1
-         je = blocks(b) % nPoints(2)
-         ks = 1
-         ke = blocks(b) % nPoints(3)
-         di = 0
-         dj = 0
-         dk = 0
-         if (bc == 1) then
-            ie = is
-            di = 1
-         else if (bc == 2) then
-            is = ie
-            di = -1
-         else if (bc == 3) then
-            je = js
-            dj = 1
-         else if (bc == 4) then
-            js = je
-            dj = -1
-         else if (bc == 5) then
-            ke = ks
-            dk = 1
-         else
-            ks = ke
-            dk = -1
-         end if
+         is = blocks(b) % boundary_cond(bc) % is
+         ie = blocks(b) % boundary_cond(bc) % ie
+         js = blocks(b) % boundary_cond(bc) % js
+         je = blocks(b) % boundary_cond(bc) % je
+         ks = blocks(b) % boundary_cond(bc) % ks
+         ke = blocks(b) % boundary_cond(bc) % ke
+         di = -blocks(b) % boundary_cond(bc) % id
+         dj = -blocks(b) % boundary_cond(bc) % jd
+         dk = -blocks(b) % boundary_cond(bc) % kd
          ! ignore edges a boundary if there is a connected block   
-         if (bc <= 2) then
-            ne = 3
-         else if (bc <= 4) then
-            ne = 1
+         if (bc <= EAST) then
+            ne = SOUTH
+         else if (bc <= NORTH) then
+            ne = WEST
          end if
          if (blocks(b) % boundary_cond(ne) % bc_type > 0) then
-            if (bc <= 2) then
+            if (bc <= EAST) then
                js = js + 1
-            else if (bc <= 4) then
+            else if (bc <= NORTH) then
                is = is + 1
             else
                write(*,*) "NOT IMPLEMENTEND YET"

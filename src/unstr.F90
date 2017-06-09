@@ -163,7 +163,7 @@ do b = 1, nBlock
                   p = blocks(b) % refs(i,j,k)
                   ! check all existing edges from point p and if one edge already connects to ps skip creation of this edge
                   ne = git % point_nedges(p)
-                  if (ne >0) then
+                  if (ne > 0) then
                      ps = blocks(b) % refs(i-1,j,k)
                      do pe = 1,ne
                         e2 = git % point_edges(pe,p)
@@ -207,14 +207,10 @@ do b = 1, nBlock
                   else if (blocks(b) % boundary_cond(WEST) % bc_type > 0) then
                      ! eventually there is a edge on another blockto connect to
                      nb = blocks(b) % boundary_cond(WEST) % bc_type
-                     if (blocks(b) % boundary_cond(WEST) % permutation == 1) then
-                        ps = blocks(nb) % refs(blocks(nb) % nCells(1),j,k)
-                     else
-                        do_connect = .false.
-                        write(*,*) "Error in UNSTR: Permutation in i-Richtung noch nicht implementiert" &
-                                  ,__LINE__,__FILE__
-                        stop 1
-                     end if
+                     ps = blocks(nb) % refs( &
+                           blocks(b) % boundary_cond(WEST) % ci + blocks(b) % boundary_cond(WEST) % di * i &
+                          ,blocks(b) % boundary_cond(WEST) % cj + blocks(b) % boundary_cond(WEST) % dj * j &
+                          ,blocks(b) % boundary_cond(WEST) % ck + blocks(b) % boundary_cond(WEST) % dk * k )
                   else
                      do_connect = .false.
                   end if
@@ -254,16 +250,31 @@ do b = 1, nBlock
                   else if (blocks(b) % boundary_cond(SOUTH) % bc_type > 0) then
                      ! eventually there is a edge on another blockto connect to
                      nb = blocks(b) % boundary_cond(SOUTH) % bc_type
-                     if (blocks(b) % boundary_cond(SOUTH) % permutation == 1 .and. &
-                         blocks(b) % boundary_cond(SOUTH) % face        == NORTH) then
-                        p1 = blocks(nb) % refs(i-1,blocks(nb) % nCells(2),k)
-                        ps = blocks(nb) % refs(i  ,blocks(nb) % nCells(2),k)
-                     else
-                        do_connect = .false.
-                        write(*,*) "Error in UNSTR: Permutation in i-Richtung noch nicht implementiert" &
-                                  ,__LINE__,__FILE__
-                        stop 1
-                     end if
+                     p1 = blocks(nb) % refs(i-1,blocks(nb) % nCells(2),k)
+                     p2 = blocks(nb) % refs( &
+                                       blocks(b) % boundary_cond(SOUTH) % ci &
+                                     + blocks(b) % boundary_cond(SOUTH) % di * (i-1) &
+                                     + blocks(b) % boundary_cond(SOUTH) % id &
+                                     , blocks(b) % boundary_cond(SOUTH) % cj &
+                                     + blocks(b) % boundary_cond(SOUTH) % dj * (j-1) &
+                                     + blocks(b) % boundary_cond(SOUTH) % jd & 
+                                     , blocks(b) % boundary_cond(SOUTH) % ck &
+                                     + blocks(b) % boundary_cond(SOUTH) % dk * k  &
+                                     + blocks(b) % boundary_cond(SOUTH) % kd)
+                     write(*,*) p1,p2
+                     ps = blocks(nb) % refs(i  ,blocks(nb) % nCells(2),k)
+                     p2 = blocks(nb) % refs( &
+                                       blocks(b) % boundary_cond(SOUTH) % ci &
+                                     + blocks(b) % boundary_cond(SOUTH) % di * (i  ) &
+                                     + blocks(b) % boundary_cond(SOUTH) % id &
+                                     , blocks(b) % boundary_cond(SOUTH) % cj &
+                                     + blocks(b) % boundary_cond(SOUTH) % dj * (j-1) &
+                                     + blocks(b) % boundary_cond(SOUTH) % jd & 
+                                     , blocks(b) % boundary_cond(SOUTH) % ck &
+                                     + blocks(b) % boundary_cond(SOUTH) % dk * k &
+                                     + blocks(b) % boundary_cond(SOUTH) % kd)
+                       write(*,*) ps,p2
+                       stop
                   else
                      do_connect = .false.
                   end if
