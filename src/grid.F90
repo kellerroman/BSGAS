@@ -116,9 +116,9 @@ integer :: b,f,nb,nf,p,per,d
 integer :: ni,nj,nk
 logical :: is3D 
 
-integer :: is,ie
-integer :: js,je
-integer :: ks,ke
+integer :: is,ie,id
+integer :: js,je,jd
+integer :: ks,ke,kd
 
 integer :: ci,di
 integer :: cj,dj
