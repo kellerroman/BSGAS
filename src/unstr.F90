@@ -126,7 +126,6 @@ do b = 1, nBlock
    !====================================================================================================
    !==========================      CREATE POINT    ====================================================
    !====================================================================================================
-               ! creation of Point
                np = np + 1
                git % point_coords(:,np) = blocks(b) % coords(i,j,k,:)
                git % point_refs(1,np) = b
@@ -156,10 +155,8 @@ do b = 1, nBlock
                ! This can be the case if we are at a block boundary and there is an other block connected
                if (    (j == 1                      .and. blocks(b) % boundary_cond(SOUTH) % bc_type > 0)  &       ! at south boundary and a connected block
                   .or. (j == blocks(b) % nPoints(2) .and. blocks(b) % boundary_cond(NORTH) % bc_type > 0)) then    ! at north boundary and a connected block
-
                !write(*,*) "Checking connection from ",i,j,k," to ",i-1,j,k
                   ! A connection from p (i,j,k) to ps (i-1,j,k) shall be created
-               
                   p = blocks(b) % refs(i,j,k)
                   ! check all existing edges from point p and if one edge already connects to ps skip creation of this edge
                   ne = git % point_nedges(p)
@@ -205,12 +202,14 @@ do b = 1, nBlock
                   if (i > 2) then
                      ps = blocks(b) % refs(i - 2,j,k) ! Point_Soll Point we are looking for
                   else if (blocks(b) % boundary_cond(WEST) % bc_type > 0) then
+                  associate (bc => blocks(b) % boundary_cond(WEST))
                      ! eventually there is a edge on another blockto connect to
-                     nb = blocks(b) % boundary_cond(WEST) % bc_type
+                     nb = bc% bc_type
                      ps = blocks(nb) % refs( &
-                           blocks(b) % boundary_cond(WEST) % ci + blocks(b) % boundary_cond(WEST) % di * (i-2) &
-                          ,blocks(b) % boundary_cond(WEST) % cj + blocks(b) % boundary_cond(WEST) % dj * j &
-                          ,blocks(b) % boundary_cond(WEST) % ck + blocks(b) % boundary_cond(WEST) % dk * k )
+                           bc % ci + bc % dii * (i-2) + bc % dij * j + bc % dik * k &
+                          ,bc % cj + bc % dji * (i-2) + bc % djj * j + bc % djk * k &
+                          ,bc % ck + bc % dki * (i-2) + bc % dkj * j + bc % dkk * k )
+                  end associate
                   else
                      do_connect = .false.
                   end if
@@ -249,32 +248,23 @@ do b = 1, nBlock
                      ps = blocks(b) % refs(i,j-1,k) ! Point_Soll Point we are looking for
                   else if (blocks(b) % boundary_cond(SOUTH) % bc_type > 0) then
                      ! eventually there is a edge on another blockto connect to
-                     nb = blocks(b) % boundary_cond(SOUTH) % bc_type
+                  associate (bc => blocks(b) % boundary_cond(SOUTH))
+                     ! eventually there is a edge on another blockto connect to
+                     nb = bc % bc_type
                      p1 = blocks(nb) % refs(i-1,blocks(nb) % nCells(2),k)
                      p2 = blocks(nb) % refs( &
-                                       blocks(b) % boundary_cond(SOUTH) % ci &
-                                     + blocks(b) % boundary_cond(SOUTH) % di * (i-1) &
-                                     + blocks(b) % boundary_cond(SOUTH) % id &
-                                     , blocks(b) % boundary_cond(SOUTH) % cj &
-                                     + blocks(b) % boundary_cond(SOUTH) % dj * (j-1) &
-                                     + blocks(b) % boundary_cond(SOUTH) % jd & 
-                                     , blocks(b) % boundary_cond(SOUTH) % ck &
-                                     + blocks(b) % boundary_cond(SOUTH) % dk * k  &
-                                     + blocks(b) % boundary_cond(SOUTH) % kd)
+                           bc % ci + bc % dii * (i-1) + bc % dij * (j-1) + bc % dik * k &
+                          ,bc % cj + bc % dji * (i-1) + bc % djj * (j-1) + bc % djk * k &
+                          ,bc % ck + bc % dki * (i-1) + bc % dkj * (j-1) + bc % dkk * k )
                      write(*,*) p1,p2
                      ps = blocks(nb) % refs(i  ,blocks(nb) % nCells(2),k)
                      p2 = blocks(nb) % refs( &
-                                       blocks(b) % boundary_cond(SOUTH) % ci &
-                                     + blocks(b) % boundary_cond(SOUTH) % di * (i  ) &
-                                     + blocks(b) % boundary_cond(SOUTH) % id &
-                                     , blocks(b) % boundary_cond(SOUTH) % cj &
-                                     + blocks(b) % boundary_cond(SOUTH) % dj * (j-1) &
-                                     + blocks(b) % boundary_cond(SOUTH) % jd & 
-                                     , blocks(b) % boundary_cond(SOUTH) % ck &
-                                     + blocks(b) % boundary_cond(SOUTH) % dk * k &
-                                     + blocks(b) % boundary_cond(SOUTH) % kd)
-                       write(*,*) ps,p2
-                       stop
+                           bc % ci + bc % dii * (i  ) + bc % dij * (j-1) + bc % dik * k &
+                          ,bc % cj + bc % dji * (i  ) + bc % djj * (j-1) + bc % djk * k &
+                          ,bc % ck + bc % dki * (i  ) + bc % dkj * (j-1) + bc % dkk * k )
+                     write(*,*) ps,p2
+                     stop
+                  end associate
                   else
                      do_connect = .false.
                   end if
@@ -423,26 +413,22 @@ do b = 1, nBlock
                      ps = blocks(b) % refs(i-1,j,k) ! Point_Soll Point we are looking for
                   else if (blocks(b) % boundary_cond(WEST) % bc_type > 0) then
                      ! eventually there is a edge on another blockto connect to
-                     nb = blocks(b) % boundary_cond(WEST) % bc_type
+                  associate (bc => blocks(b) % boundary_cond(WEST))
+                     nb = bc % bc_type
                      p1 = blocks(nb) % refs(i-1,blocks(nb) % nCells(2),k)
                      p2 = blocks(nb) % refs( &
-                                       blocks(b) % boundary_cond(WEST) % ci &
-                                     + blocks(b) % boundary_cond(WEST) % di * (i-1) &
-                                     , blocks(b) % boundary_cond(WEST) % cj &
-                                     + blocks(b) % boundary_cond(WEST) % dj * (j-1) &
-                                     , blocks(b) % boundary_cond(WEST) % ck &
-                                     + blocks(b) % boundary_cond(WEST) % dk * k  )
+                           bc % ci + bc % dii * (i-1) + bc % dij * (j-1) + bc % dik * k &
+                          ,bc % cj + bc % dji * (i-1) + bc % djj * (j-1) + bc % djk * k &
+                          ,bc % ck + bc % dki * (i-1) + bc % dkj * (j-1) + bc % dkk * k )
                      write(*,*) p1,p2
                      ps = blocks(nb) % refs(i  ,blocks(nb) % nCells(2),k)
                      p2 = blocks(nb) % refs( &
-                                       blocks(b) % boundary_cond(WEST) % ci &
-                                     + blocks(b) % boundary_cond(WEST) % di * (i-1) &
-                                     , blocks(b) % boundary_cond(WEST) % cj &
-                                     + blocks(b) % boundary_cond(WEST) % dj * (j  ) &
-                                     , blocks(b) % boundary_cond(WEST) % ck &
-                                     + blocks(b) % boundary_cond(WEST) % dk * k )
-                       write(*,*) ps,p2
-                       stop
+                           bc % ci + bc % dii * (i-1) + bc % dij * (j  ) + bc % dik * k &
+                          ,bc % cj + bc % dji * (i-1) + bc % djj * (j  ) + bc % djk * k &
+                          ,bc % ck + bc % dki * (i-1) + bc % dkj * (j  ) + bc % dkk * k )
+                     write(*,*) ps,p2
+                     stop
+                  end associate
                   else
                      do_connect = .false.
                   end if

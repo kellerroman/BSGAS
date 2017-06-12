@@ -120,9 +120,9 @@ integer :: is,ie,id
 integer :: js,je,jd
 integer :: ks,ke,kd
 
-integer :: ci,di
-integer :: cj,dj
-integer :: ck,dk
+integer :: ci,dii,dij,dik
+integer :: cj,dji,djj,djk
+integer :: ck,dki,dkj,dkk
 
 integer :: i,j,k
 
@@ -232,54 +232,81 @@ do b = 1, nBlock
                   blocks(b) % boundary_cond(f) % bc_type       = nb
                   blocks(b) % boundary_cond(f) % face = nf
                   blocks(b) % boundary_cond(f) % permutation   = per
+                  dii = 0; dij = 0; dik = 0
+                  dji = 0; djj = 0; djk = 0
+                  dki = 0; dkj = 0; dkk = 0 
                   if (f == EAST .and. nf == WEST) then
-                        is = blocks(b) % nPoints(1); ie = is                    ; id = 1
-                        js = 1                     ; je = blocks(b) % nPoints(2); jd = 0
-                        ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
-                        select case (per) 
-                        case(1)
-                           ci = 1-blocks(b) % nPoints(1); di = 1
-                           cj = 0; dj = 1
-                           ck = 0; dk = 1
-                        case default 
-                           goto 666
-                        end select
+                     is = blocks(b) % nPoints(1); ie = is                    ; id = 1
+                     js = 1                     ; je = blocks(b) % nPoints(2); jd = 0
+                     ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
+                     select case (per) 
+                     case(1)
+                        ci = 1 - blocks(b) % nPoints(1); dii = 1
+                        cj = 0                         ; djj = 1
+                        ck = 0                         ; dkk = 1
+                     case default 
+                        goto 666
+                     end select
+                  else if (f == EAST .and. nf == SOUTH) then
+                     is = blocks(b) % nPoints(1); ie = is                    ; id = 1
+                     js = 1                     ; je = blocks(b) % nPoints(2); jd = 0
+                     ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
+                     select case (per) 
+                     case(2)
+                        ci = 1 + blocks(b) % nPoints(2) ; dij = -1
+                        cj = 1 - blocks(nb) % nPoints(1); dji = 1
+                        ck = 0                          ; dkk = 1
+                     case default 
+                        goto 666
+                     end select
                   else if (f == WEST .and. nf == EAST) then
-                        is = 1; ie = is                    ; id = -1
-                        js = 1; je = blocks(b) % nPoints(2); jd = 0
-                        ks = 1; ke = blocks(b) % nPoints(3); kd = 0
-                        select case (per) 
-                        case(1)
-                           ci = blocks(nb) % nPoints(1)-1; di = 1
-                           cj = 0                      ; dj = 1
-                           ck = 0                      ; dk = 1
-                        case default 
-                           goto 666
-                        end select
+                     is = 1; ie = is                    ; id = -1
+                     js = 1; je = blocks(b) % nPoints(2); jd = 0
+                     ks = 1; ke = blocks(b) % nPoints(3); kd = 0
+                     select case (per) 
+                     case(1)
+                        ci = blocks(nb) % nPoints(1) - 1; dii = 1
+                        cj = 0                          ; djj = 1
+                        ck = 0                          ; dkk = 1
+                     case default 
+                        goto 666
+                     end select
                   else if (f == NORTH .and. nf == SOUTH) then
-                        is = 1                     ; ie = blocks(b) % nPoints(1); id = 0
-                        js = blocks(b) % nPoints(2); je = js                    ; jd = 1
-                        ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
-                        select case (per) 
-                        case(1)
-                           ci = 0; di = 1
-                           cj = 1-blocks(b) % nPoints(2); dj = 1
-                           ck = 0; dk = 1
-                        case default 
-                           goto 666
-                        end select
+                     is = 1                     ; ie = blocks(b) % nPoints(1); id = 0
+                     js = blocks(b) % nPoints(2); je = js                    ; jd = 1
+                     ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
+                     select case (per) 
+                     case(1)
+                        ci = 0                         ; dii = 1
+                        cj = 1 - blocks(b) % nPoints(2); djj = 1
+                        ck = 0                         ; dkk = 1
+                     case default 
+                        goto 666
+                     end select
                   else if (f == SOUTH .and. nf == NORTH) then
-                        is = 1; ie = blocks(b) % nPoints(1); id = 0
-                        js = 1; je = js                    ; jd = -1
-                        ks = 1; ke = blocks(b) % nPoints(3); kd = 0
-                        select case (per) 
-                        case(1)
-                           ci = 0                        ; di = 1
-                           cj = blocks(nb) % nPoints(2)-1; dj = 1
-                           ck = 0                        ; dk = 1
-                        case default 
-                           goto 666
-                        end select
+                     is = 1; ie = blocks(b) % nPoints(1); id = 0
+                     js = 1; je = js                    ; jd = -1
+                     ks = 1; ke = blocks(b) % nPoints(3); kd = 0
+                     select case (per) 
+                     case(1)
+                        ci = 0                        ; dii = 1
+                        cj = blocks(nb) % nPoints(2)-1; djj = 1
+                        ck = 0                        ; dkk = 1
+                     case default 
+                        goto 666
+                     end select
+                  else if (f == SOUTH .and. nf == EAST) then
+                     is = 1; ie = blocks(b) % nPoints(1); id = 0
+                     js = 1; je = js                    ; jd = -1
+                     ks = 1; ke = blocks(b) % nPoints(3); kd = 0
+                     select case (per) 
+                     case(2)
+                        ci = blocks(nb) % nPoints(1) - 1; dij = 1
+                        cj = blocks(nb) % nPoints(2) + 1; dji = -1
+                        ck = 0                          ; dkk = 1
+                     case default 
+                        goto 666
+                     end select
                   else
                      goto 6666
                   end if
@@ -296,20 +323,26 @@ do b = 1, nBlock
                   blocks(b) % boundary_cond(f) % kd   = kd
 
                   blocks(b) % boundary_cond(f) % ci   = ci
-                  blocks(b) % boundary_cond(f) % di   = di
+                  blocks(b) % boundary_cond(f) % dii  = dii
+                  blocks(b) % boundary_cond(f) % dij  = dij
+                  blocks(b) % boundary_cond(f) % dik  = dik
 
                   blocks(b) % boundary_cond(f) % cj   = cj
-                  blocks(b) % boundary_cond(f) % dj   = dj
+                  blocks(b) % boundary_cond(f) % dji  = dji
+                  blocks(b) % boundary_cond(f) % djj  = djj
+                  blocks(b) % boundary_cond(f) % djk  = djk
 
                   blocks(b) % boundary_cond(f) % ck   = ck
-                  blocks(b) % boundary_cond(f) % dk   = dk
+                  blocks(b) % boundary_cond(f) % dki  = dki
+                  blocks(b) % boundary_cond(f) % dkj  = dkj
+                  blocks(b) % boundary_cond(f) % dkk  = dkk
 
                   do k = ks,ke
-                     nk = ck + dk * k
                      do j = js,je
-                        nj = cj + dj * j
                         do i = is,ie
-                           ni = ci + di * i
+                           ni = ci + dii * i + dij * j + dik * k
+                           nj = cj + dji * i + djj * j + djk * k
+                           nk = ck + dki * i + dkj * j + dkk * k
                            call addSamePoint(b,i,j,k,nb,ni,nj,nk)
                         end do
                      end do

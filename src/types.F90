@@ -22,11 +22,11 @@ type :: t_boundary_condition
       integer(INT_KIND)              :: js,je,jd
       integer(INT_KIND)              :: ks,ke,kd
 
-      integer(INT_KIND)              :: ci,di
+      integer(INT_KIND)              :: ci,dii,dij,dik
       !< Values of Neighbor corresponding index 
-      !< can be calculated with ni = ci + di * i
-      integer(INT_KIND)              :: cj,dj
-      integer(INT_KIND)              :: ck,dk
+      !< can be calculated with ni = ci + dii * i + dij * j + dik * k
+      integer(INT_KIND)              :: cj,dji,djj,djk
+      integer(INT_KIND)              :: ck,dki,dkj,dkk
 end type t_boundary_condition
 
 type :: t_block
