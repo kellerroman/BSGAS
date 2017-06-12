@@ -2,7 +2,7 @@ module config
    use const
    use config_parser
    use control, only: nIter, res_out,res_out_start
-   use spring, only: cell_ink
+   use spring, only: cell_inc,cell_parallel_inc
    use structured_grid, only: filename_grid_in
    use unstr_output, only: output_intervall
 implicit none
@@ -24,7 +24,8 @@ call add_parameter("NITER",niter)
 call add_parameter("RES_OUT",res_out,100)
 call add_parameter("RES_OUT_START",res_out_start,50)
 call add_parameter("OUTPUT_INTERVALL",output_intervall,10)
-call add_parameter("CELL_INC",cell_ink,1.25E+0_REAL_KIND)
+call add_parameter("CELL_INC",cell_inc,1.25E+0_REAL_KIND)
+call add_parameter("CELL_PARALLEL_INC",cell_parallel_inc,1.25E+0_REAL_KIND)
 call add_parameter("GRID_IN",filename_grid_in,"grid.h5")
 
 inquire(file=trim(filename_config),exist=fexists)

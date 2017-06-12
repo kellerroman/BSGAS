@@ -279,13 +279,14 @@ do b = 1, nBlock
    end if
 end do
 end subroutine init_boundary
+
 subroutine init_walledges(git, blocks)
 type(t_block) :: blocks(:)
 type(t_unstr) :: git
 integer :: nBlock
 integer :: b,i,j,k
 
-integer :: bc                 ! loop var over block boundaries
+integer :: f                 ! loop var over block boundaries
 integer :: is,ie
 integer :: js,je
 integer :: ks,ke
@@ -304,24 +305,24 @@ nBlock = ubound(blocks,1)
 git % nWallEdge = 0
 write(*,*) "Walledges"
 do b = 1, nBlock
-   do bc = 1,4
-      if (blocks(b) % boundary_cond(bc) % bc_type < 0) then
+   do f = 1,4
+      if (blocks(b) % boundary_cond(f) % bc_type < 0) then
          i = blocks(b) % nPoints(1)
          j = blocks(b) % nPoints(2)
          k = blocks(b) % nPoints(3)
-         if (bc <= 2) then
+         if (f <= 2) then
             i = 1
             ne = 3
-         else if (bc <= 4) then
+         else if (f <= 4) then
             j = 1
             ne = 1
          else
             k = 1
          end if
          if (blocks(b) % boundary_cond(ne) % bc_type > 0) then
-            if (bc <= 2) then
+            if (f <= 2) then
                j = j - 1
-            else if (bc <= 4) then
+            else if (f <= 4) then
                i = i - 1
             else
                write(*,*) "NOT IMPLEMENTEND YET"
@@ -329,7 +330,7 @@ do b = 1, nBlock
             end if
          end if
 
-         write(*,*) b,bc,git % nWallEdge, i,j,k
+         !write(*,*) b,f,git % nWallEdge, i,j,k
          git % nWallEdge = git % nWallEdge + i * j * k
       end if
    end do
@@ -339,27 +340,28 @@ call alloc(git % wall_edges         , git % nWallEdge)
 call alloc(git % wall_edge_dns      , git % nWallEdge)
 nwe = 0
 do b = 1, nBlock
-   do bc = 1,4
-      if (blocks(b) % boundary_cond(bc) % bc_type < 0) then
-         is = blocks(b) % boundary_cond(bc) % is
-         ie = blocks(b) % boundary_cond(bc) % ie
-         js = blocks(b) % boundary_cond(bc) % js
-         je = blocks(b) % boundary_cond(bc) % je
-         ks = blocks(b) % boundary_cond(bc) % ks
-         ke = blocks(b) % boundary_cond(bc) % ke
-         di = -blocks(b) % boundary_cond(bc) % id
-         dj = -blocks(b) % boundary_cond(bc) % jd
-         dk = -blocks(b) % boundary_cond(bc) % kd
+   do f = 1,4
+   associate(bc => blocks(b) % boundary_cond(f))
+      if (bc % bc_type < 0) then
+         is = bc % is
+         ie = bc % ie
+         js = bc % js
+         je = bc % je
+         ks = bc % ks
+         ke = bc % ke
+         di = -bc % id
+         dj = -bc % jd
+         dk = -bc % kd
          ! ignore edges a boundary if there is a connected block   
-         if (bc <= EAST) then
+         if (f <= EAST) then
             ne = SOUTH
-         else if (bc <= NORTH) then
+         else if (f <= NORTH) then
             ne = WEST
          end if
          if (blocks(b) % boundary_cond(ne) % bc_type > 0) then
-            if (bc <= EAST) then
+            if (f <= EAST) then
                js = js + 1
-            else if (bc <= NORTH) then
+            else if (f <= NORTH) then
                is = is + 1
             else
                write(*,*) "NOT IMPLEMENTEND YET"
@@ -377,11 +379,10 @@ do b = 1, nBlock
                      e = git % point_edges(eop,p1)
                      do ep = 1, 2
                         pt = git % edge_points(ep,e)
-
                         if (p2 == pt) then
                            nwe = nwe + 1
                            git % wall_edges(nwe)  = e
-                           git % wall_edge_dns(nwe) = blocks(b) % boundary_cond(bc) % dn
+                           git % wall_edge_dns(nwe) = blocks(b) % boundary_cond(f) % dn
                         end if
                      end do
 
@@ -390,6 +391,7 @@ do b = 1, nBlock
             end do
          end do
       end if
+   end associate
    end do
 end do
 if (nwe /= git % nWallEdge) then

@@ -209,6 +209,41 @@ end if
 
 do b = 1, nBlock
    do f = 1, number_of_face
+   select case(f)
+      case (EAST)
+         is = blocks(b) % nPoints(1); ie = is                    ; id = 1
+         js = 1                     ; je = blocks(b) % nPoints(2); jd = 0
+         ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
+      case(WEST)
+         is = 1; ie = is                    ; id = -1
+         js = 1; je = blocks(b) % nPoints(2); jd = 0
+         ks = 1; ke = blocks(b) % nPoints(3); kd = 0
+      case(SOUTH)
+         is = 1; ie = blocks(b) % nPoints(1); id = 0
+         js = 1; je = js                    ; jd = -1
+         ks = 1; ke = blocks(b) % nPoints(3); kd = 0
+      case(NORTH)
+         is = 1                     ; ie = blocks(b) % nPoints(1); id = 0
+         js = blocks(b) % nPoints(2); je = js                    ; jd = 1
+         ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
+      case default
+         write(*,*) "ERROR face not supported yet"
+         stop 1
+      end select
+      blocks(b) % boundary_cond(f) % is   = is
+      blocks(b) % boundary_cond(f) % ie   = ie
+      blocks(b) % boundary_cond(f) % id   = id
+
+      blocks(b) % boundary_cond(f) % js   = js
+      blocks(b) % boundary_cond(f) % je   = je
+      blocks(b) % boundary_cond(f) % jd   = jd
+
+      blocks(b) % boundary_cond(f) % ks   = ks
+      blocks(b) % boundary_cond(f) % ke   = ke
+      blocks(b) % boundary_cond(f) % kd   = kd
+      dii = 0; dij = 0; dik = 0
+      dji = 0; djj = 0; djk = 0
+      dki = 0; dkj = 0; dkk = 0 
       do nb = 1, nBlock
          found = .false.
          if (b == nb) cycle
@@ -232,13 +267,7 @@ do b = 1, nBlock
                   blocks(b) % boundary_cond(f) % bc_type       = nb
                   blocks(b) % boundary_cond(f) % face = nf
                   blocks(b) % boundary_cond(f) % permutation   = per
-                  dii = 0; dij = 0; dik = 0
-                  dji = 0; djj = 0; djk = 0
-                  dki = 0; dkj = 0; dkk = 0 
                   if (f == EAST .and. nf == WEST) then
-                     is = blocks(b) % nPoints(1); ie = is                    ; id = 1
-                     js = 1                     ; je = blocks(b) % nPoints(2); jd = 0
-                     ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
                      select case (per) 
                      case(1)
                         ci = 1 - blocks(b) % nPoints(1); dii = 1
@@ -248,9 +277,6 @@ do b = 1, nBlock
                         goto 666
                      end select
                   else if (f == EAST .and. nf == SOUTH) then
-                     is = blocks(b) % nPoints(1); ie = is                    ; id = 1
-                     js = 1                     ; je = blocks(b) % nPoints(2); jd = 0
-                     ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
                      select case (per) 
                      case(2)
                         ci = 1 + blocks(b) % nPoints(2) ; dij = -1
@@ -260,9 +286,6 @@ do b = 1, nBlock
                         goto 666
                      end select
                   else if (f == WEST .and. nf == EAST) then
-                     is = 1; ie = is                    ; id = -1
-                     js = 1; je = blocks(b) % nPoints(2); jd = 0
-                     ks = 1; ke = blocks(b) % nPoints(3); kd = 0
                      select case (per) 
                      case(1)
                         ci = blocks(nb) % nPoints(1) - 1; dii = 1
@@ -272,9 +295,6 @@ do b = 1, nBlock
                         goto 666
                      end select
                   else if (f == NORTH .and. nf == SOUTH) then
-                     is = 1                     ; ie = blocks(b) % nPoints(1); id = 0
-                     js = blocks(b) % nPoints(2); je = js                    ; jd = 1
-                     ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
                      select case (per) 
                      case(1)
                         ci = 0                         ; dii = 1
@@ -284,9 +304,6 @@ do b = 1, nBlock
                         goto 666
                      end select
                   else if (f == SOUTH .and. nf == NORTH) then
-                     is = 1; ie = blocks(b) % nPoints(1); id = 0
-                     js = 1; je = js                    ; jd = -1
-                     ks = 1; ke = blocks(b) % nPoints(3); kd = 0
                      select case (per) 
                      case(1)
                         ci = 0                        ; dii = 1
@@ -296,9 +313,6 @@ do b = 1, nBlock
                         goto 666
                      end select
                   else if (f == SOUTH .and. nf == EAST) then
-                     is = 1; ie = blocks(b) % nPoints(1); id = 0
-                     js = 1; je = js                    ; jd = -1
-                     ks = 1; ke = blocks(b) % nPoints(3); kd = 0
                      select case (per) 
                      case(2)
                         ci = blocks(nb) % nPoints(1) - 1; dij = 1
@@ -310,17 +324,6 @@ do b = 1, nBlock
                   else
                      goto 6666
                   end if
-                  blocks(b) % boundary_cond(f) % is   = is
-                  blocks(b) % boundary_cond(f) % ie   = ie
-                  blocks(b) % boundary_cond(f) % id   = id
-
-                  blocks(b) % boundary_cond(f) % js   = js
-                  blocks(b) % boundary_cond(f) % je   = je
-                  blocks(b) % boundary_cond(f) % jd   = jd
-
-                  blocks(b) % boundary_cond(f) % ks   = ks
-                  blocks(b) % boundary_cond(f) % ke   = ke
-                  blocks(b) % boundary_cond(f) % kd   = kd
 
                   blocks(b) % boundary_cond(f) % ci   = ci
                   blocks(b) % boundary_cond(f) % dii  = dii

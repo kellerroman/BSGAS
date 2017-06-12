@@ -12,8 +12,16 @@ type(t_block) :: blocks(:)
 integer :: nBlock
 integer :: i,j,k,np,e,b,nb
 
+integer :: is,ie
+integer :: js,je
+integer :: ks,ke
+integer :: di,dj,dk
 
-integer :: p, p1, pe, eop, e2, p2, ps
+integer :: ci,dii,dij,dik
+integer :: cj,dji,djj,djk
+integer :: ck,dki,dkj,dkk
+
+integer :: p, p1, pe, eop, e2, p2, ps, f
 
 integer :: nne, ne
 
@@ -482,34 +490,108 @@ if (e /= git % nEdge) then
    write(*,*) e, git % nEdge
    stop 1
 end if
+
+
+! special cases of Edge connection
+do b = 1, nBlock
+   do f = 1, 4
+   associate(bc => blocks(b) % boundary_cond(f))
+      if (bc % bc_type > 0) then
+         nb = bc % bc_type
+         is = bc % is
+         ie = bc % ie
+         js = bc % js
+         je = bc % je
+         ks = bc % ks
+         ke = bc % ke
+         di = bc % id
+         dj = bc % jd
+         dk = bc % kd
+         do k = ks,ke
+            do j = js,je
+               do i = is,ie
+                  p1 = blocks(b) % refs(i,j,k)
+                  p2 = blocks(b) % refs(i-di,j-dj,k-dk)
+                  e = -1
+                  do ne = 1, git % point_nedges(p1)
+                     e2 = git % point_edges(ne,p1)
+                     do np = 1,2
+                        if (p2 == git % edge_points(np,e2)) then
+                           e = e2
+                           exit
+                        end if
+                     end do
+                     if (e /= -1) exit
+                  end do
+                  if (e == -1) then
+                     write(*,*) "Edge at boundary not found",b,f,i,j,k,di,dj,dk
+                     stop 1
+                  end if
+                  if (git % edge_nneighbor(e) /= 2) then
+                     ci  = bc % ci; dii = bc % dii; dij = bc % dij; dik = bc % dik
+                     cj  = bc % cj; dji = bc % dji; djj = bc % djj; djk = bc % djk
+                     ck  = bc % ck; dki = bc % dki; dkj = bc % dkj; dkk = bc % dkk
+                     
+                     p2 = blocks(nb) % refs( &
+                                 ci + dii * (i+di) + dij * (j+dj) + dik * (k+dk) &
+                                ,cj + dji * (i+di) + djj * (j+dj) + djk * (k+dk) &
+                                ,ck + dki * (i+di) + dkj * (j+dj) + dkk * (k+dk) )
+                     e2 = -1
+                     do ne = 1, git % point_nedges(p1)
+                        nne = git % point_edges(ne,p1)
+                        do np = 1,2
+                           if (p2 == git % edge_points(np,nne)) then
+                              e2 = nne
+                              exit
+                           end if
+                        end do
+                        if (e2 /= -1) exit
+                     end do
+                     if (e2 == -1) then
+                        write(*,*) "Edge at boundary not found",b,f,i,j,k,p1,p2
+                        stop 1
+                     end if
+                     !write(*,'("Edge ",I0,"@ ",5(I0,1X),"should have two neighbors")') e,b,f,i,j,k,e2
+                     nne = git % edge_nneighbor(e) + 1
+                     git % edge_neighbor(nne,e) = e2
+                     git % edge_nneighbor(e) = nne
+                     nne = git % edge_nneighbor(e2) + 1
+                     git % edge_neighbor(nne,e2) = e
+                     git % edge_nneighbor(e2) = nne
+                  end if
+               end do
+            end do
+         end do
+
+      end if
+   end associate
+   end do
+end do
+
+
 !write(*,*) "Points"
 !do np = 1, git % nPoint
 !   pe = git % point_nedges(np)
 !   write(*,'("#P ",I8," Ref ",4I8," NEdge ",I8," Edges: ",6I8)' ) &
 !            np, git % point_refs(:,np),pe, git % point_edges(1:pe,np)
 !end do
-write(*,*) "Edges"
-p1 = 0
-p2 = 0
-do e = 1, git % nedge
-   !write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4)') e, git % edge_points(:,e), git % edge_neighbor(:,e)
-   if (git % edge_nneighbor(e) == 2) then
-      p1 = p1 + 1
-   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",2I8, " Parallel: ",4I8)') &
-         e, git % edge_points(:,e), git % edge_neighbor(:,e), git % edge_parallel(:,e)
-   else
-      p2 = p2 + 1
-   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",I8,8X, " Parallel: ",4I8)') &
-         e, git % edge_points(:,e), git % edge_neighbor(1,e), git % edge_parallel(:,e)
-   end if
-end do
-stop
-!write(*,*) p1,p2
+!write(*,*) "Edges"
+!do e = 1, git % nedge
+!   !write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4)') e, git % edge_points(:,e), git % edge_neighbor(:,e)
+!   if (git % edge_nneighbor(e) == 2) then
+!   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",2I8, " Parallel: ",4I8)') &
+!         e, git % edge_points(:,e), git % edge_neighbor(:,e), git % edge_parallel(:,e)
+!   else
+!   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",I8,8X, " Parallel: ",4I8)') &
+!         e, git % edge_points(:,e), git % edge_neighbor(1,e), git % edge_parallel(:,e)
+!   end if
+!end do
+
 git % edge_springs = 1.0e0_REAL_KIND
 
 git % edge_lengths = -1
 git % edge_vectors = -1
-git % edge_forces = -1
+git % edge_forces  = -1
 
 end subroutine strukt2unstr
 
