@@ -238,7 +238,7 @@ do b = 1, nBlock
                         ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
                         select case (per) 
                         case(1)
-                           ci = 1; di = 0
+                           ci = 1-blocks(b) % nPoints(1); di = 1
                            cj = 0; dj = 1
                            ck = 0; dk = 1
                         case default 
@@ -250,7 +250,7 @@ do b = 1, nBlock
                         ks = 1; ke = blocks(b) % nPoints(3); kd = 0
                         select case (per) 
                         case(1)
-                           ci = blocks(nb) % nPoints(1); di = 0
+                           ci = blocks(nb) % nPoints(1)-1; di = 1
                            cj = 0                      ; dj = 1
                            ck = 0                      ; dk = 1
                         case default 
@@ -263,7 +263,7 @@ do b = 1, nBlock
                         select case (per) 
                         case(1)
                            ci = 0; di = 1
-                           cj = 1; dj = 0
+                           cj = 1-blocks(b) % nPoints(2); dj = 1
                            ck = 0; dk = 1
                         case default 
                            goto 666
@@ -275,7 +275,7 @@ do b = 1, nBlock
                         select case (per) 
                         case(1)
                            ci = 0                        ; di = 1
-                           cj = blocks(nb) % nPoints(2)  ; dj = 0
+                           cj = blocks(nb) % nPoints(2)-1; dj = 1
                            ck = 0                        ; dk = 1
                         case default 
                            goto 666
