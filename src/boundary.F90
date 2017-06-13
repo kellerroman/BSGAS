@@ -6,6 +6,7 @@ implicit none
 contains
 
 subroutine read_boundary(blocks)
+implicit none
 !================================================================================================================================
 !===      reads boundary conditions file (bc.cfg)                                                                             ===
 !===                                                                                                                          ===
@@ -128,18 +129,31 @@ close(fu)
 end subroutine read_boundary
 
 subroutine init_boundary(git, blocks)
+use structured_grid, only: number_of_face
+implicit none
 type(t_block) :: blocks(:)
 type(t_unstr) :: git
 
+type :: t_norm
+   real(REAL_KIND) :: nv(:,:,:,:)
+end type t_norm
+
+type(t_norm), allocatable :: norms(:)
 integer :: nBlock
 integer :: b,i,j,k
 
 integer :: p,dn
 
+integer :: is,ie,id,ids
+integer :: js,je,jd,jds
+integer :: ks,ke,kd,kds
 
-real(REAL_KIND) :: v1(3), v2(3)
+integer :: i,j,k,d,vid(3),vec_count,vv2(3)
+
+real(REAL_KIND) :: v1(3), v2(3),vec(3,2)
 
 nBlock = ubound(blocks,1)
+allocate(norms(nBlock))
 if (blocks(1) % nPoints(3) > 1) then
    write(*,*) "Boundary: 3D not supported yet",__FILE__,__LINE__
    stop 1
@@ -150,9 +164,43 @@ end if
 git % point_move_rest = .false.
 k = 1
 do b = 1, nBlock
+   allocate(norms(b) % nv(3,blocks(b) % nCells(1), blocks(b) % nCells(2), blocks(b) % nCells(3)))
    !!!!!!!!!!!!!!!!!!!!!!!!!!
    !!!!!     WEST SIDE !!!!!!
    !!!!!!!!!!!!!!!!!!!!!!!!!!
+   do f = 1, number_of_face
+   associate(bc => blocks(b) % boundary_cond(f))
+      if (bc % bc_type <= 0) then
+         is = bc % is
+         ie = bc % ie
+         js = bc % js
+         je = bc % je
+         ks = bc % ks
+         ke = bc % ke
+         di = bc % id
+         dj = bc % jd
+         dk = bc % kd
+         vid(1) = 1-abs(di)
+         vid(2) = 1-abs(dj)
+         vid(3) = 1-abs(dk)
+         do k = ks,ke-vid(3)
+            do j = js,je-vid(2)
+               do i = is,ie-vid(1)
+                  vec_count = 0
+                  do d = 1,3
+                     vv2 = 0
+                     if (vid(d) == 0) cycle
+                     vv2(d) = 1
+                     vec_count = vec_count + 1
+                     vec(:,vec_count) = blocks(b) % coords(i+vv2(d),i+vv2(d),j+vv2(d),:) - blocks(b) % coords(i,j,k,:) 
+                  end do
+                  call cross_product(vec(:,1),vec(:,2),norms(B) % nv(:,i,j,k))
+               end do
+            end do
+         end do
+      end if
+   end associate
+   end do 
    if (blocks(b) % boundary_cond(1) % bc_type <= 0) then !!! NO BLOCK CONNECTION WEST SIDE
       i = 1
       do j = 2, blocks(b) % nCells(2)
