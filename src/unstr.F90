@@ -237,9 +237,14 @@ do b = 1, nBlock
                            ne = e2
                            exit
                         end if
+                        p2 = git % edge_points(2,e2)
+                        if (p2 == ps) then
+                           ne = e2
+                           exit
+                        end if
                      end do
                      if (ne == -1) then
-                        write(*,*) "Error Neighbor edge not found"
+                        write(*,*) "Error Neighbor edge not found",__LINE__,__FILE__
                         write(*,*) b,i,j,k
                         write(*,*) p1, git % point_edges(:,p1)
                         stop 1
@@ -255,36 +260,12 @@ do b = 1, nBlock
                      git % edge_neighbor(nne,ne) = e
                   end if
    !====================================================================================================
-   !==========================   CONNECT PARALLEL EDGES ================================================
+   !==========================   CONNECT PARALLEL EDGES J DIRECTION   ==================================
    !====================================================================================================
                   ne = -1
-                  do_connect = .true.
                   if (j > 1) then
                      p1 = blocks(b) % refs(i-1,j-1,k)
                      ps = blocks(b) % refs(i,j-1,k) ! Point_Soll Point we are looking for
-                  else if (blocks(b) % boundary_cond(SOUTH) % bc_type > 0) then
-                     ! eventually there is a edge on another blockto connect to
-                  associate (bc => blocks(b) % boundary_cond(SOUTH))
-                     ! eventually there is a edge on another blockto connect to
-                     nb = bc % bc_type
-                     p1 = blocks(nb) % refs(i-1,blocks(nb) % nCells(2),k)
-                     p2 = blocks(nb) % refs( &
-                           bc % ci + bc % dii * (i-1) + bc % dij * (j-1) + bc % dik * k &
-                          ,bc % cj + bc % dji * (i-1) + bc % djj * (j-1) + bc % djk * k &
-                          ,bc % ck + bc % dki * (i-1) + bc % dkj * (j-1) + bc % dkk * k )
-                     write(*,*) p1,p2
-                     ps = blocks(nb) % refs(i  ,blocks(nb) % nCells(2),k)
-                     p2 = blocks(nb) % refs( &
-                           bc % ci + bc % dii * (i  ) + bc % dij * (j-1) + bc % dik * k &
-                          ,bc % cj + bc % dji * (i  ) + bc % djj * (j-1) + bc % djk * k &
-                          ,bc % ck + bc % dki * (i  ) + bc % dkj * (j-1) + bc % dkk * k )
-                     write(*,*) ps,p2
-                     stop
-                  end associate
-                  else
-                     do_connect = .false.
-                  end if
-                  if (do_connect) then
                      do eop = 1, git % point_nedges(p1)
                         e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
                         p2 = git % edge_points(1,e2)
@@ -317,6 +298,47 @@ do b = 1, nBlock
                      git % edge_nparallel(ne) = nne
                      git % edge_parallel(nne,ne) = e
                   end if
+   !====================================================================================================
+   !==========================   CONNECT PARALLEL EDGES K DIRECTION   ==================================
+   !====================================================================================================
+                  if (git % dimension == 3) then
+                     if (k > 1) then
+                        ne = -1
+                        p1 = blocks(b) % refs(i-1,j,k-1)
+                        ps = blocks(b) % refs(i  ,j,k-1) ! Point_Soll Point we are looking for
+                        do eop = 1, git % point_nedges(p1)
+                           e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                           p2 = git % edge_points(1,e2)
+                           if (p2 == ps) then
+                              ne = e2
+                              exit
+                           end if
+                           p2 = git % edge_points(2,e2)
+                           if (p2 == ps) then
+                              ne = e2
+                              exit
+                           end if
+                        end do
+                        if (ne == -1) then
+                           write(*,*) "Error Parallel Neighbor edge not found"
+                           write(*,*) b,i,j,k
+                           write(*,*) git % point_refs(:,p1)
+                           write(*,*) git % point_refs(:,ps)
+                           write(*,*) p1, git % point_edges(:,p1)
+                           stop 1
+                        end if
+
+                        !write(*,*) b,i,j,k, np,e ,p1,ps
+                        !write(*,*) "Connecting: ",b,i,j,k," with ",git % point_refs(:,p2)
+                        nne = git % edge_nparallel(e) + 1
+                        git % edge_nparallel(e) = nne
+                        git % edge_parallel(nne,e) = ne
+
+                        nne = git % edge_nparallel(ne) + 1
+                        git % edge_nparallel(ne) = nne
+                        git % edge_parallel(nne,ne) = e
+                     end if
+                  end if
                end if
             end if
    !====================================================================================================
@@ -329,8 +351,12 @@ do b = 1, nBlock
                edge_exists = .false.
                ! check if the edge already exists
                ! This can be the case if we are at a block boundary and there is an other block connected
-               if (    (i == 1                      .and. blocks(b) % boundary_cond(WEST) % bc_type > 0)  &       ! at West boundary and a connected block
-                  .or. (i == blocks(b) % nPoints(1) .and. blocks(b) % boundary_cond(EAST) % bc_type > 0)) then    ! at east boundary and a connected block
+               if (    (i == 1                      .and. blocks(b) % boundary_cond(WEST) % bc_type > 0)  &       
+                  ! at West boundary and a connected block
+                  .or. (i == blocks(b) % nPoints(1) .and. blocks(b) % boundary_cond(EAST) % bc_type > 0)  &      
+                  ! at east boundary and a connected block
+                  .or. (k == 1                      .and. blocks(b) % boundary_cond(FRONT) % bc_type > 0)  &
+                  .or. (k == blocks(b) % nPoints(3) .and. blocks(b) % boundary_cond(BACK) % bc_type > 0)) then    
                   ! A connection from p (i,j,k) to ps (i,j-1,k) shall be created
                   p = blocks(b) % refs(i,j,k)
                   ! check all existing edges from point p and if one edge already connects to ps skip creation of this edge
@@ -381,18 +407,14 @@ do b = 1, nBlock
                   if (j > 2) then
                      ps = blocks(b) % refs(i,j - 2,k) ! Point_Soll Point we are looking for
                   else if (blocks(b) % boundary_cond(SOUTH) % bc_type > 0) then
+                  associate (bc => blocks(b) % boundary_cond(SOUTH))
                      ! eventually there is a edge on another blockto connect to
-                     nb = blocks(b) % boundary_cond(SOUTH) % bc_type
-                     if (blocks(b) % boundary_cond(SOUTH) % permutation == 1) then
-                        ps = blocks(nb) % refs(i,blocks(nb) % nCells(2),k)
-                     else if (blocks(b) % boundary_cond(SOUTH) % permutation == 2) then
-                        ps = blocks(nb) % refs(blocks(nb) % nCells(1), 1 + blocks(nb) % nPoints(2) - i,k)
-                     else
-                        do_connect = .false.
-                        write(*,*) "Error in UNSTR: Permutation in i-Richtung noch nicht implementiert" &
-                                  ,__LINE__,__FILE__
-                        stop 1
-                     end if
+                     nb = bc % bc_type
+                     ps = blocks(nb) % refs( &
+                           bc % ci + bc % dii * (i) + bc % dij * (j-2) + bc % dik * k &
+                          ,bc % cj + bc % dji * (i) + bc % djj * (j-2) + bc % djk * k &
+                          ,bc % ck + bc % dki * (i) + bc % dkj * (j-2) + bc % dkk * k )
+                  end associate
                   else
                      do_connect = .false.
                   end if
@@ -400,6 +422,11 @@ do b = 1, nBlock
                      do eop = 1, git % point_nedges(p1)
                         e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
                         p2 = git % edge_points(1,e2)
+                        if (p2 == ps) then
+                           ne = e2
+                           exit
+                        end if
+                        p2 = git % edge_points(2,e2)
                         if (p2 == ps) then
                            ne = e2
                            exit
@@ -420,35 +447,12 @@ do b = 1, nBlock
                      git % edge_neighbor(nne,ne) = e   ! REferenceing current edge in neighbor edge's neighbor edge array
                   end if
    !====================================================================================================
-   !==========================   CONNECT PARALLEL EDGES ================================================
+   !==========================   CONNECT PARALLEL EDGES I DIRECTION   ==================================
    !====================================================================================================
                   ne = -1
-                  do_connect = .true.
                   if (i > 1) then
                      p1 = blocks(b) % refs(i-1,j-1,k)
                      ps = blocks(b) % refs(i-1,j,k) ! Point_Soll Point we are looking for
-                  else if (blocks(b) % boundary_cond(WEST) % bc_type > 0) then
-                     ! eventually there is a edge on another blockto connect to
-                  associate (bc => blocks(b) % boundary_cond(WEST))
-                     nb = bc % bc_type
-                     p1 = blocks(nb) % refs(i-1,blocks(nb) % nCells(2),k)
-                     p2 = blocks(nb) % refs( &
-                           bc % ci + bc % dii * (i-1) + bc % dij * (j-1) + bc % dik * k &
-                          ,bc % cj + bc % dji * (i-1) + bc % djj * (j-1) + bc % djk * k &
-                          ,bc % ck + bc % dki * (i-1) + bc % dkj * (j-1) + bc % dkk * k )
-                     write(*,*) p1,p2
-                     ps = blocks(nb) % refs(i  ,blocks(nb) % nCells(2),k)
-                     p2 = blocks(nb) % refs( &
-                           bc % ci + bc % dii * (i-1) + bc % dij * (j  ) + bc % dik * k &
-                          ,bc % cj + bc % dji * (i-1) + bc % djj * (j  ) + bc % djk * k &
-                          ,bc % ck + bc % dki * (i-1) + bc % dkj * (j  ) + bc % dkk * k )
-                     write(*,*) ps,p2
-                     stop
-                  end associate
-                  else
-                     do_connect = .false.
-                  end if
-                  if (do_connect) then
                      do eop = 1, git % point_nedges(p1)
                         e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
                         p2 = git % edge_points(1,e2)
@@ -480,6 +484,232 @@ do b = 1, nBlock
                      nne = git % edge_nparallel(ne) + 1
                      git % edge_nparallel(ne) = nne
                      git % edge_parallel(nne,ne) = e
+                  end if
+   !====================================================================================================
+   !==========================   CONNECT PARALLEL EDGES K DIRECTION   ==================================
+   !====================================================================================================
+                  if (git % dimension == 3) then
+                     if (k > 1) then
+                        ne = -1
+                        p1 = blocks(b) % refs(i,j-1,k-1)
+                        ps = blocks(b) % refs(i,j  ,k-1) ! Point_Soll Point we are looking for
+                        do eop = 1, git % point_nedges(p1)
+                           e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                           p2 = git % edge_points(1,e2)
+                           if (p2 == ps) then
+                              ne = e2
+                              exit
+                           end if
+                           p2 = git % edge_points(2,e2)
+                           if (p2 == ps) then
+                              ne = e2
+                              exit
+                           end if
+                        end do
+                        if (ne == -1) then
+                           write(*,*) "Error Parallel Neighbor edge not found"
+                           write(*,*) b,i,j,k
+                           write(*,*) git % point_refs(:,p1)
+                           write(*,*) git % point_refs(:,ps)
+                           write(*,*) p1, git % point_edges(:,p1)
+                           stop 1
+                        end if
+
+                        !write(*,*) b,i,j,k, np,e ,p1,ps
+                        !write(*,*) "Connecting: ",b,i,j,k," with ",git % point_refs(:,p2)
+                        nne = git % edge_nparallel(e) + 1
+                        git % edge_nparallel(e) = nne
+                        git % edge_parallel(nne,e) = ne
+
+                        nne = git % edge_nparallel(ne) + 1
+                        git % edge_nparallel(ne) = nne
+                        git % edge_parallel(nne,ne) = e
+                     end if
+                  end if
+              end if
+           end if
+   !====================================================================================================
+   !====================================================================================================
+   !==========================      CREATE EDGES    ====================================================
+   !==========================      K-DIRECTION     ====================================================
+   !====================================================================================================
+   !====================================================================================================
+            if (git % dimension == 3) then
+               if (k > 1) then
+                  edge_exists = .false.
+                  ! check if the edge already exists
+                  ! This can be the case if we are at a block boundary and there is an other block connected
+                  if (    (i == 1                      .and. blocks(b) % boundary_cond(WEST) % bc_type > 0)  &       
+                     .or. (i == blocks(b) % nPoints(1) .and. blocks(b) % boundary_cond(EAST) % bc_type > 0)  &      
+                     .or. (j == 1                      .and. blocks(b) % boundary_cond(SOUTH) % bc_type > 0)  &
+                     .or. (j == blocks(b) % nPoints(2) .and. blocks(b) % boundary_cond(NORTH) % bc_type > 0)) then    
+                     ! A connection from p (i,j,k) to ps (i,j-1,k) shall be created
+                     p = blocks(b) % refs(i,j,k)
+                     ! check all existing edges from point p and if one edge already connects to ps skip creation of this edge
+                     ne = git % point_nedges(p)
+                     if (ne > 0) then
+                        ps = blocks(b) % refs(i,j,k-1)
+                        ! loop over all edges of p
+                        do pe = 1,ne
+                           e2 = git % point_edges(pe,p)
+                           do p2 = 1,2
+                              p1 = git % edge_points(p2,e2)
+                              if (ps == p1) then
+                                 edge_exists = .true.
+                                 exit
+                              end if
+                           end do
+                           if (edge_exists) exit
+                        end do
+                     end if 
+                  end if
+                  if (.not. edge_exists) then
+                     e = e + 1
+                     ! Add points to edge and edge to points
+                     do p = 1, 2
+                        ! first point j-1, second point j
+                        p1 = blocks(b) % refs(i,j,k-(2-p))
+                        ! Add point to edge
+                        git % edge_points(p,e) = p1
+                        ! Add edge to the first point
+                        !Increase points edge count
+                        pe  = git % point_nedges(p1) + 1
+                        git % point_nedges(p1) = pe
+                        ! add edge to point at current edge count
+                        git % point_edges(pe,p1) = e
+                        ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
+                        git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
+                     end do
+   !====================================================================================================
+   !==========================   CONNECT NEIGHBOR EDGES ================================================
+   !====================================================================================================
+                     ne = -1
+                     p1 = git % edge_points(1,e) ! Lower point of Edge
+                     do_connect = .true.
+                     ! if k > 2 there exists another edge in the negative k direction
+                     ! Unfortunatelly there is no direct way to get this edge, thus
+                     ! we compare all edges of the lower point and see if there first point's
+                     ! reference is k-2
+                     if (k > 2) then
+                        ps = blocks(b) % refs(i,j,k - 2) ! Point_Soll Point we are looking for
+                     else if (blocks(b) % boundary_cond(FRONT) % bc_type > 0) then
+                     associate (bc => blocks(b) % boundary_cond(FRONT))
+                        ! eventually there is a edge on another blockto connect to
+                        nb = bc % bc_type
+                        ps = blocks(nb) % refs( &
+                              bc % ci + bc % dii * (i) + bc % dij * (j) + bc % dik * (k-2) &
+                             ,bc % cj + bc % dji * (i) + bc % djj * (j) + bc % djk * (k-2) &
+                             ,bc % ck + bc % dki * (i) + bc % dkj * (j) + bc % dkk * (k-2) )
+                     end associate
+                     else
+                        do_connect = .false.
+                     end if
+                     if (do_connect) then
+                        do eop = 1, git % point_nedges(p1)
+                           e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                           p2 = git % edge_points(1,e2)
+                           if (p2 == ps) then
+                              ne = e2
+                              exit
+                           end if
+                           p2 = git % edge_points(2,e2)
+                           if (p2 == ps) then
+                              ne = e2
+                              exit
+                           end if
+                        end do
+                        if (ne == -1) then
+                           write(*,*) "Error Neighbor edge not found",__LINE__,__FILE__
+                           write(*,*) b,i,j,k
+                           write(*,*) ps, git % point_edges(:,p1)
+                           stop 1
+                        end if
+                        
+                        nne = git % edge_nneighbor(e) + 1 ! Increasing neighbor edge count
+                        git % edge_nneighbor(e) = nne     ! Increasing neighbor edge count
+                        git % edge_neighbor(nne,e) = ne   ! Referncing new neighbor edge
+                        nne = git % edge_nneighbor(ne) + 1! Increasing neighbor edge count of neighbor edge
+                        git % edge_nneighbor(ne) = nne
+                        git % edge_neighbor(nne,ne) = e   ! REferenceing current edge in neighbor edge's neighbor edge array
+                     end if
+   !====================================================================================================
+   !==========================   CONNECT PARALLEL EDGES I DIRECTION   ==================================
+   !====================================================================================================
+                     ne = -1
+                     if (i > 1) then
+                        p1 = blocks(b) % refs(i-1,j,k-1)
+                        ps = blocks(b) % refs(i-1,j,k  ) ! Point_Soll Point we are looking for
+                        do eop = 1, git % point_nedges(p1)
+                           e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                           p2 = git % edge_points(1,e2)
+                           if (p2 == ps) then
+                              ne = e2
+                              exit
+                           end if
+                           p2 = git % edge_points(2,e2)
+                           if (p2 == ps) then
+                              ne = e2
+                              exit
+                           end if
+                        end do
+                        if (ne == -1) then
+                           write(*,*) "Error Parallel Neighbor edge not found"
+                           write(*,*) b,i,j,k
+                           write(*,*) git % point_refs(:,p1)
+                           write(*,*) git % point_refs(:,ps)
+                           write(*,*) p1, git % point_edges(:,p1)
+                           stop 1
+                        end if
+
+                        !write(*,*) b,i,j,k, np,e ,p1,ps
+                        !write(*,*) "Connecting: ",b,i,j,k," with ",git % point_refs(:,p2)
+                        nne = git % edge_nparallel(e) + 1
+                        git % edge_nparallel(e) = nne
+                        git % edge_parallel(nne,e) = ne
+
+                        nne = git % edge_nparallel(ne) + 1
+                        git % edge_nparallel(ne) = nne
+                        git % edge_parallel(nne,ne) = e
+                     end if
+   !====================================================================================================
+   !==========================   CONNECT PARALLEL EDGES J DIRECTION   ==================================
+   !====================================================================================================
+                     if (j > 1) then
+                        ne = -1
+                        p1 = blocks(b) % refs(i,j-1,k-1)
+                        ps = blocks(b) % refs(i,j-1,k  ) ! Point_Soll Point we are looking for
+                        do eop = 1, git % point_nedges(p1)
+                           e2 = git % point_edges(eop,p1) ! eop'th Edge of Point p1
+                           p2 = git % edge_points(1,e2)
+                           if (p2 == ps) then
+                              ne = e2
+                              exit
+                           end if
+                           p2 = git % edge_points(2,e2)
+                           if (p2 == ps) then
+                              ne = e2
+                              exit
+                           end if
+                        end do
+                        if (ne == -1) then
+                           write(*,*) "Error Parallel Neighbor edge not found"
+                           write(*,*) b,i,j,k
+                           write(*,*) git % point_refs(:,p1)
+                           write(*,*) git % point_refs(:,ps)
+                           write(*,*) p1, git % point_edges(:,p1)
+                           stop 1
+                        end if
+
+                        !write(*,*) b,i,j,k, np,e ,p1,ps
+                        !write(*,*) "Connecting: ",b,i,j,k," with ",git % point_refs(:,p2)
+                        nne = git % edge_nparallel(e) + 1
+                        git % edge_nparallel(e) = nne
+                        git % edge_parallel(nne,e) = ne
+
+                        nne = git % edge_nparallel(ne) + 1
+                        git % edge_nparallel(ne) = nne
+                        git % edge_parallel(nne,ne) = e
+                     end if
                   end if
               end if
            end if
