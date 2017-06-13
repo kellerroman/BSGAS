@@ -210,14 +210,14 @@ end if
 do b = 1, nBlock
    do f = 1, number_of_face
    select case(f)
-      case (EAST)
-         is = blocks(b) % nPoints(1); ie = is                    ; id = 1
-         js = 1                     ; je = blocks(b) % nPoints(2); jd = 0
-         ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
       case(WEST)
          is = 1; ie = is                    ; id = -1
          js = 1; je = blocks(b) % nPoints(2); jd = 0
          ks = 1; ke = blocks(b) % nPoints(3); kd = 0
+      case (EAST)
+         is = blocks(b) % nPoints(1); ie = is                    ; id = 1
+         js = 1                     ; je = blocks(b) % nPoints(2); jd = 0
+         ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
       case(SOUTH)
          is = 1; ie = blocks(b) % nPoints(1); id = 0
          js = 1; je = js                    ; jd = -1
@@ -226,6 +226,14 @@ do b = 1, nBlock
          is = 1                     ; ie = blocks(b) % nPoints(1); id = 0
          js = blocks(b) % nPoints(2); je = js                    ; jd = 1
          ks = 1                     ; ke = blocks(b) % nPoints(3); kd = 0
+      case(FRONT)
+         is = 1                     ; ie = blocks(b) % nPoints(1); id = 0
+         js = 1                     ; je = blocks(b) % nPoints(2); jd = 0
+         ks = 1                     ; ke = ks                    ; kd = -1
+      case(BACK)
+         is = 1                     ; ie = blocks(b) % nPoints(1); id = 0
+         js = 1                     ; je = blocks(b) % nPoints(2); jd = 0
+         ks = blocks(b) % nPoints(3); ke = ks                    ; kd = 1
       case default
          write(*,*) "ERROR face not supported yet"
          stop 1

@@ -75,6 +75,12 @@ do b = 1, nBlock
       git % nEdge = git % nEdge &
                   + blocks(b) % nCells(1) * j &
                   + blocks(b) % nCells(2) * i
+   else if (git % dimension == 3) then
+      git % nEdge = git % nEdge &
+                  + blocks(b) % nCells(1) * j * k&
+                  + blocks(b) % nCells(2) * i * k&
+                  + blocks(b) % nCells(3) * i * j
+
    end if
 
 
@@ -113,7 +119,7 @@ call alloc(git % edge_forces           , 3, git % nedge)
 call alloc(git % edge_nneighbor           , git % nedge)
 call alloc(git % edge_neighbor         , 2, git % nedge)
 call alloc(git % edge_nparallel           , git % nedge)
-call alloc(git % edge_parallel         , 2, git % nedge)
+call alloc(git % edge_parallel         , 4, git % nedge)
 
 
 git % point_forces = 0.0e0_REAL_KIND
@@ -161,8 +167,10 @@ do b = 1, nBlock
                edge_exists = .false.
                ! check if the edge already exists
                ! This can be the case if we are at a block boundary and there is an other block connected
-               if (    (j == 1                      .and. blocks(b) % boundary_cond(SOUTH) % bc_type > 0)  &       ! at south boundary and a connected block
-                  .or. (j == blocks(b) % nPoints(2) .and. blocks(b) % boundary_cond(NORTH) % bc_type > 0)) then    ! at north boundary and a connected block
+               if (    (j == 1                      .and. blocks(b) % boundary_cond(SOUTH) % bc_type > 0)  &       
+                  .or. (j == blocks(b) % nPoints(2) .and. blocks(b) % boundary_cond(NORTH) % bc_type > 0)  &
+                  .or. (k == 1                      .and. blocks(b) % boundary_cond(FRONT) % bc_type > 0)  &
+                  .or. (k == blocks(b) % nPoints(3) .and. blocks(b) % boundary_cond(BACK) % bc_type > 0)) then    
                !write(*,*) "Checking connection from ",i,j,k," to ",i-1,j,k
                   ! A connection from p (i,j,k) to ps (i-1,j,k) shall be created
                   p = blocks(b) % refs(i,j,k)
