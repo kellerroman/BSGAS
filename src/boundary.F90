@@ -135,20 +135,20 @@ type(t_block) :: blocks(:)
 type(t_unstr) :: git
 
 type :: t_norm
-   real(REAL_KIND) :: nv(:,:,:,:)
+   real(REAL_KIND),allocatable :: nv(:,:,:,:)
 end type t_norm
 
 type(t_norm), allocatable :: norms(:)
 integer :: nBlock
-integer :: b,i,j,k
+integer :: b,i,j,k,f
 
 integer :: p,dn
 
-integer :: is,ie,id,ids
-integer :: js,je,jd,jds
-integer :: ks,ke,kd,kds
+integer :: is,ie,id
+integer :: js,je,jd
+integer :: ks,ke,kd
 
-integer :: i,j,k,d,vid(3),vec_count,vv2(3)
+integer :: d,vid(3),vec_count,vv2(3)
 
 real(REAL_KIND) :: v1(3), v2(3),vec(3,2)
 
@@ -177,22 +177,28 @@ do b = 1, nBlock
          je = bc % je
          ks = bc % ks
          ke = bc % ke
-         di = bc % id
-         dj = bc % jd
-         dk = bc % kd
-         vid(1) = 1-abs(di)
-         vid(2) = 1-abs(dj)
-         vid(3) = 1-abs(dk)
-         do k = ks,ke-vid(3)
-            do j = js,je-vid(2)
-               do i = is,ie-vid(1)
+         id = bc % id
+         jd = bc % jd
+         kd = bc % kd
+         ! dimension not normal to surface are 
+         vid(1) = 1-abs(id)
+         vid(2) = 1-abs(jd)
+         vid(3) = 1-abs(kd)
+         do k = ks,ke
+            do j = js,je
+               do i = is,ie
                   vec_count = 0
                   do d = 1,3
-                     vv2 = 0
                      if (vid(d) == 0) cycle
+                     vv2 = 0
                      vv2(d) = 1
-                     vec_count = vec_count + 1
-                     vec(:,vec_count) = blocks(b) % coords(i+vv2(d),i+vv2(d),j+vv2(d),:) - blocks(b) % coords(i,j,k,:) 
+                     if (vv2(1) * i + vv2(2) * j + vv2(3) * k > vv2(1) * is + vv2(2) * js + vv2(3) * ks) then
+                     end if
+                     ! not last cell
+                     if (vv2(1) * i + vv2(2) * j + vv2(3) * k < vv2(1) * ie + vv2(2) * je + vv2(3) * ke) then
+                        vec_count = vec_count + 1
+                        vec(:,vec_count) = blocks(b) % coords(i+vv2(d),i+vv2(d),j+vv2(d),:) - blocks(b) % coords(i,j,k,:) 
+                     end if
                   end do
                   call cross_product(vec(:,1),vec(:,2),norms(B) % nv(:,i,j,k))
                end do

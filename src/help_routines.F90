@@ -2,7 +2,8 @@ module help_routines
 use const
 implicit none
 private
-public :: alloc, vec_common, vec_normalize, lower_case
+public :: alloc, vec_common, vec_normalize, lower_case,cross_product
+
 interface alloc
    module procedure alloc_real_1d
    module procedure alloc_real_2d

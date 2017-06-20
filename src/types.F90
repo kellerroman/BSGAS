@@ -71,6 +71,9 @@ type :: t_unstr
       logical, allocatable           :: point_move_rest(:)
       !< Logical if the Point has Movement restrictions
 
+      integer(INT_KIND), allocatable :: point_move_rest_type(:)
+      !< type of Movement restrictions
+
       real(REAL_KIND), allocatable   :: point_move_rest_vector(:,:)
       !< Vector with the movement restriction
 
