@@ -308,6 +308,7 @@ do b = 1, nBlock
             call vec_normalize(v1)
             git % point_move_rest_vector(:,p) = v1
          end if
+         git % point_move_rest_type(p) = 2
       end do
    end if
    if (blocks(b) % boundary_cond(2) % bc_type <= 0) then !!! NO BLOCK CONNECTION EAST SIDE
@@ -339,6 +340,7 @@ do b = 1, nBlock
             call vec_normalize(v1)
             git % point_move_rest_vector(:,p) = v1
          end if
+         git % point_move_rest_type(p) = 2
       end do
    end if
    if (blocks(b) % boundary_cond(3) % bc_type <= 0) then !!! NO BLOCK CONNECTION SOUTH SIDE
@@ -370,6 +372,7 @@ do b = 1, nBlock
             call vec_normalize(v1)
             git % point_move_rest_vector(:,p) = v1
          end if
+         git % point_move_rest_type(p) = 2
       end do
    end if
    if (blocks(b) % boundary_cond(4) % bc_type <= 0) then !!! NO BLOCK CONNECTION NORTH SIDE
@@ -401,6 +404,7 @@ do b = 1, nBlock
             call vec_normalize(v1)
             git % point_move_rest_vector(:,p) = v1
          end if
+         git % point_move_rest_type(p) = 2
       end do
    end if
    end if !is_3D

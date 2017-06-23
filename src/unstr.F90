@@ -893,12 +893,20 @@ do np = 1, git % nPoint
    end do
    !write(*,*) tmp, git % point_move_rest_vector(:,np)
    if (git % point_move_rest(np)) then
-
+      select case (git % point_move_rest_type(np))
+      case (3)
       sp = tmp(1)*git % point_move_rest_vector(1,np) &
          + tmp(2)*git % point_move_rest_vector(2,np) &
          + tmp(3)*git % point_move_rest_vector(3,np)
-
+      tmp = tmp - git % point_move_rest_vector(:,np) * sp
+      case (2)
+      sp = tmp(1)*git % point_move_rest_vector(1,np) &
+         + tmp(2)*git % point_move_rest_vector(2,np) &
+         + tmp(3)*git % point_move_rest_vector(3,np)
       tmp = git % point_move_rest_vector(:,np) * sp
+   case (1) 
+      tmp = 0.0D0
+   end select
 !      write(*,*) "restricting:",np,git % point_refs(2:4,np),sp,tmp
    end if
       
