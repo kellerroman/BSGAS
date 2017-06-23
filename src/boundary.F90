@@ -255,8 +255,13 @@ do b = 1, nBlock
                            case (3) 
                               if (.NOT. vec_same(v1,v2)) then   
                                  git % point_move_rest_type(p) = 2
+                                 call cross_product(v1,v2,git % point_move_rest_vector(:,p))
                               end if
                            case (2)
+                              if (abs(scalar_product(v1,v2)) >= 10E-8) then
+                                 git % point_move_rest_type(p) = 1
+                                 git % point_move_rest_vector(:,p) = [0,0,0]
+                              end if
                            case (1)
                            end select
                         else

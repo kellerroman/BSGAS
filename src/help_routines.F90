@@ -3,7 +3,7 @@ use const
 implicit none
 private
 real(REAL_KIND), parameter :: EPS = 1.0E-9_REAL_KIND
-public :: alloc, vec_common, vec_normalize, lower_case,cross_product, vec_same
+public :: alloc, vec_common, vec_normalize, lower_case,cross_product, vec_same,scalar_product
 
 interface alloc
    module procedure alloc_real_1d
