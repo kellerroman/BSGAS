@@ -73,6 +73,7 @@ type :: t_unstr
 
       integer(INT_KIND), allocatable :: point_move_rest_type(:)
       !< type of Movement restrictions
+      !< 3 = THree dimensional restriction, vector is the normal vector of movement surface
 
       real(REAL_KIND), allocatable   :: point_move_rest_vector(:,:)
       !< Vector with the movement restriction

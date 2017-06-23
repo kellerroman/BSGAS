@@ -156,12 +156,13 @@ nBlock = ubound(blocks,1)
 allocate(norms(nBlock))
 if (blocks(1) % nPoints(3) > 1) then
    write(*,*) "Boundary: 3D not supported yet",__FILE__,__LINE__
-   stop 1
+   !stop 1
 end if
 !====================================================================================================
 !==========================      CREATE MOVEMENT RESTRICTION INFORMATION  ===========================
 !====================================================================================================
 git % point_move_rest = .false.
+git % point_move_rest_type = 0
 k = 1
 do b = 1, nBlock
    allocate(norms(b) % nv(3,blocks(b) % nCells(1), blocks(b) % nCells(2), blocks(b) % nCells(3)))
@@ -184,16 +185,14 @@ do b = 1, nBlock
          vid(1) = 1-abs(id)
          vid(2) = 1-abs(jd)
          vid(3) = 1-abs(kd)
-         do k = ks,ke
-            do j = js,je
-               do i = is,ie
+         do k = ks,ke - vid(3)
+            do j = js,je - vid(2)
+               do i = is,ie - vid(1)
                   vec_count = 0
                   do d = 1,3
                      if (vid(d) == 0) cycle
                      vv2 = 0
                      vv2(d) = 1
-                     if (vv2(1) * i + vv2(2) * j + vv2(3) * k > vv2(1) * is + vv2(2) * js + vv2(3) * ks) then
-                     end if
                      ! not last cell
                      if (vv2(1) * i + vv2(2) * j + vv2(3) * k < vv2(1) * ie + vv2(2) * je + vv2(3) * ke) then
                         vec_count = vec_count + 1
@@ -201,6 +200,39 @@ do b = 1, nBlock
                      end if
                   end do
                   call cross_product(vec(:,1),vec(:,2),norms(B) % nv(:,i,j,k))
+               end do
+            end do
+         end do
+         do k = ks,ke
+            do j = js,je
+               do i = is,ie
+                  p = blocks(b) % refs(i,j,k)
+                  do d = 1,3
+                     if (vid(d) == 0) cycle
+                     vv2 = 0
+                     vv2(d) = 1
+                     if (vv2(1) * i + vv2(2) * j + vv2(3) * k > vv2(1) * is + vv2(2) * js + vv2(3) * ks) then
+                        v1 = norms(b) % nv(:,i-vv2(1),j-vv2(2),k-vv2(3))
+                        if (git % point_move_rest(p)) then
+                           v2 = git % point_move_rest_vector(:,p)
+                           select case (git % point_move_rest_type(p) ) 
+                           case (3) 
+                              if (.NOT. vec_same(v1,v2)) then   
+                                 git % point_move_rest_type(p) = 2
+                              end if
+                           case (2)
+                           case (1)
+                           end select
+                        else
+                           git % point_move_rest(p) = .true.
+                           git % point_move_rest_type(p) = 3
+                           git % point_move_rest_vector(:,p) = v1
+                        end if
+                     end if
+                     ! not last cell
+                     if (vv2(1) * i + vv2(2) * j + vv2(3) * k < vv2(1) * ie + vv2(2) * je + vv2(3) * ke) then
+                     end if
+                  end do
                end do
             end do
          end do

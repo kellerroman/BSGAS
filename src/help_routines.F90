@@ -2,7 +2,8 @@ module help_routines
 use const
 implicit none
 private
-public :: alloc, vec_common, vec_normalize, lower_case,cross_product
+real(REAL_KIND), parameter :: EPS = 1.0E-9_REAL_KIND
+public :: alloc, vec_common, vec_normalize, lower_case,cross_product, vec_same
 
 interface alloc
    module procedure alloc_real_1d
@@ -114,9 +115,9 @@ l = sqrt(vec(1) * vec(1) + vec(2) * vec(2) + vec(3) * vec(3) )
 vec = vec / l
 
 end subroutine vec_normalize
+
 subroutine vec_common(v1,v2)
 implicit none
-real(REAL_KIND),parameter :: EPS = 1.0E-9_REAL_KIND
 real(REAL_KIND), intent(inout) :: v1(3)
 real(REAL_KIND), intent(in)    :: v2(3)
 real(REAL_KIND) :: sp
@@ -133,6 +134,7 @@ if (abs(abs(sp)-1.0D0) > EPS) then
 end if
 
 end subroutine vec_common
+
 real(REAL_KIND) function scalar_product(v1,v2)
 implicit none
 real(REAL_KIND), intent(in) :: v1(3) , v2(3)
@@ -148,7 +150,22 @@ real(REAL_KIND), dimension(3), intent(in)  :: v1,v2
 v3(1) = v1(2) * v2(3) - v1(3) * v2(2)
 v3(2) = v1(3) * v2(1) - v1(1) * v2(3)
 v3(3) = v1(1) * v2(2) - v1(2) * v2(1)
+call vec_normalize(v3)
 end subroutine
+
+function vec_same(v1,v2) result (are_same)
+implicit none
+real(REAL_KIND), intent(in)      :: v1(3)
+real(REAL_KIND), intent(in)      :: v2(3)
+logical                          :: are_same
+if (abs(v1(1) - v2(1)) < EPS .and. &
+    abs(v1(2) - v2(2)) < EPS .and. &
+    abs(v1(3) - v2(3)) < EPS ) then
+   are_same = .true.
+else
+   are_same = .false.
+end if
+end function vec_same
 
 function lower_case( input_string ) result ( output_string )
    implicit none
