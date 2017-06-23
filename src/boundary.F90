@@ -131,6 +131,12 @@ end subroutine read_boundary
 subroutine init_boundary(git, blocks)
 use structured_grid, only: number_of_face
 implicit none
+integer, parameter :: NV_dir(2,4) = reshape([-1,-1,0,-1,0,0,-1,0],[2,4])
+!< Discribes the relative position of the 4 neighbor NormalVectors with respect
+!to two Vectors. Example n-t NORMAL VECTOR Position:
+! fi = i + NV_dir(1,n) * d1(1) + NV_dir(2,n) * d2(1)
+! fj = j + NV_dir(1,n) * d1(2) + NV_dir(2,n) * d2(2)
+! fk = k + NV_dir(1,n) * d1(3) + NV_dir(2,n) * d2(3)
 type(t_block) :: blocks(:)
 type(t_unstr) :: git
 
@@ -148,15 +154,22 @@ integer :: is,ie,id
 integer :: js,je,jd
 integer :: ks,ke,kd
 
-integer :: d,vid(3),vec_count,vv2(3)
+integer :: fi,fj,fk,n
+
+integer :: d,vid(3),vec_count,vv2(3),d1(3),d2(3)
 
 real(REAL_KIND) :: v1(3), v2(3),vec(3,2)
+
+logical :: is_3D
 
 nBlock = ubound(blocks,1)
 allocate(norms(nBlock))
 if (blocks(1) % nPoints(3) > 1) then
    write(*,*) "Boundary: 3D not supported yet",__FILE__,__LINE__
+   is_3D = .true.
    !stop 1
+else
+   is_3D = .false.
 end if
 !====================================================================================================
 !==========================      CREATE MOVEMENT RESTRICTION INFORMATION  ===========================
@@ -165,10 +178,9 @@ git % point_move_rest = .false.
 git % point_move_rest_type = 0
 k = 1
 do b = 1, nBlock
-   allocate(norms(b) % nv(3,blocks(b) % nCells(1), blocks(b) % nCells(2), blocks(b) % nCells(3)))
-   !!!!!!!!!!!!!!!!!!!!!!!!!!
-   !!!!!     WEST SIDE !!!!!!
-   !!!!!!!!!!!!!!!!!!!!!!!!!!
+   if (is_3D) then
+   
+   allocate(norms(b) % nv(3,blocks(b) % nPoints(1), blocks(b) % nPoints(2), blocks(b) % nPoints(3)))
    do f = 1, number_of_face
    associate(bc => blocks(b) % boundary_cond(f))
       if (bc % bc_type <= 0) then
@@ -196,23 +208,47 @@ do b = 1, nBlock
                      ! not last cell
                      if (vv2(1) * i + vv2(2) * j + vv2(3) * k < vv2(1) * ie + vv2(2) * je + vv2(3) * ke) then
                         vec_count = vec_count + 1
-                        vec(:,vec_count) = blocks(b) % coords(i+vv2(d),i+vv2(d),j+vv2(d),:) - blocks(b) % coords(i,j,k,:) 
+                        vec(:,vec_count) = blocks(b) % coords(i+vv2(1),j+vv2(2),k+vv2(3),:) &
+                                         - blocks(b) % coords(i       ,j       ,k       ,:) 
                      end if
                   end do
                   call cross_product(vec(:,1),vec(:,2),norms(B) % nv(:,i,j,k))
                end do
             end do
          end do
+         d1 = vid
+         d2 = vid
+         ! vid has to dimensions with 1 , d1 and d2 should only face in one
+         ! direction each -> d1, last "1" is deleted, d2 first "1" is deleted
+         ! example: vid =[1,0,1] -> d1 = [1,0,0]; d2 = [0,0,1]
+         do d = 3,1,-1
+            if (d1(d) == 1) then
+               d1 (d) = 0
+               exit
+            end if
+         end do
+         do d = 1,3
+            if (d2(d) == 1) then
+               d2 (d) = 0
+               exit
+            end if
+         end do
+         write(*,*) vid,d1,d2
          do k = ks,ke
             do j = js,je
                do i = is,ie
                   p = blocks(b) % refs(i,j,k)
-                  do d = 1,3
-                     if (vid(d) == 0) cycle
-                     vv2 = 0
-                     vv2(d) = 1
-                     if (vv2(1) * i + vv2(2) * j + vv2(3) * k > vv2(1) * is + vv2(2) * js + vv2(3) * ks) then
-                        v1 = norms(b) % nv(:,i-vv2(1),j-vv2(2),k-vv2(3))
+                  ! loop over the 4 neighbor Faces
+                  write(*,*) b,f,i,j,k,p
+                  do n = 1,4
+                     fi = i + NV_dir(1,n) * d1(1) + NV_dir(2,n) * d2(1)
+                     fj = j + NV_dir(1,n) * d1(2) + NV_dir(2,n) * d2(2)
+                     fk = k + NV_dir(1,n) * d1(3) + NV_dir(2,n) * d2(3)
+                     if (  fi <= ie - vid(1) .and. fi >= is &
+                     .and. fj <= je - vid(2) .and. fj >= js &
+                     .and. fk <= ke - vid(3) .and. fk >= ks ) then
+                        write(*,*) "======",n,fi,fj,fk
+                        v1 = norms(b) % nv(:,fi,fj,fk)
                         if (git % point_move_rest(p)) then
                            v2 = git % point_move_rest_vector(:,p)
                            select case (git % point_move_rest_type(p) ) 
@@ -229,9 +265,6 @@ do b = 1, nBlock
                            git % point_move_rest_vector(:,p) = v1
                         end if
                      end if
-                     ! not last cell
-                     if (vv2(1) * i + vv2(2) * j + vv2(3) * k < vv2(1) * ie + vv2(2) * je + vv2(3) * ke) then
-                     end if
                   end do
                end do
             end do
@@ -239,6 +272,8 @@ do b = 1, nBlock
       end if
    end associate
    end do 
+   else !is_3D
+
    if (blocks(b) % boundary_cond(1) % bc_type <= 0) then !!! NO BLOCK CONNECTION WEST SIDE
       i = 1
       do j = 2, blocks(b) % nCells(2)
@@ -363,6 +398,7 @@ do b = 1, nBlock
          end if
       end do
    end if
+   end if !is_3D
 end do
 end subroutine init_boundary
 
@@ -383,7 +419,7 @@ integer :: e, eop
 integer :: ne                 ! Number of edges
 integer :: nwe ! NUMBER WALL EDGES
 
-real(REAL_KIND) :: ref(4)
+!real(REAL_KIND) :: ref(4)
 nBlock = ubound(blocks,1)
 !====================================================================================================
 !====================    CREATE LIST OF WALL EDGES WITH SPECIFIC REQUIRED LENGTH   ==================
@@ -485,12 +521,12 @@ if (nwe /= git % nWallEdge) then
    write(*,*) nwe, git % nWallEdge
    stop 1
 end if
-do nwe = 1, git % nWallEdge
-   e = git%wall_edges(nwe)
-   p1 = git % edge_points(1,e)
-   p2 = git % edge_points(2,e)
-   ref = dble(git % point_refs(:,p1)+git % point_refs(:,p2)) / 2.0E0_REAL_KIND
-   write(*,'("# ",I4," #E: ",I4," p: ",2I4," Ref:",4(1X,F5.1))') nwe,e,git % edge_points(:,e),ref
-end do
+!do nwe = 1, git % nWallEdge
+!   e = git%wall_edges(nwe)
+!   p1 = git % edge_points(1,e)
+!   p2 = git % edge_points(2,e)
+!   ref = dble(git % point_refs(:,p1)+git % point_refs(:,p2)) / 2.0E0_REAL_KIND
+!   write(*,'("# ",I4," #E: ",I4," p: ",2I4," Ref:",4(1X,F5.1))') nwe,e,git % edge_points(:,e),ref
+!end do
 end subroutine init_walledges
 end module boundary
