@@ -95,9 +95,9 @@ open(666,file="bc.cfg")
 write(666,'(A)') "! Wall at South of all  and EAST OF BLOCK 1"
 select case(square_case) 
 case(1,4)
-write(666,'(A)') "wall: 1S, 1E ! Wall"
+write(666,'(A)') "wall: 1S, 1E, 1B! Wall"
 case(2)
-write(666,'(A)') "wall: 1S, 2S, 2E ! Wall"
+write(666,'(A)') "wall: 1S, 2S, 2E, 1B,2B ! Wall"
 case(3)
 write(666,'(A)') "wall: 1S, 2S, 2E, 4E ! Wall"
 case default

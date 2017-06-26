@@ -412,6 +412,8 @@ end do
 end subroutine init_boundary
 
 subroutine init_walledges(git, blocks)
+use structured_grid, only: number_of_face
+implicit none
 type(t_block) :: blocks(:)
 type(t_unstr) :: git
 integer :: nBlock
@@ -425,7 +427,7 @@ integer :: di,dj,dk
 integer :: p1,p2,pt,ep
 integer :: e, eop
 
-integer :: ne                 ! Number of edges
+integer :: ne                ! Number of edges
 integer :: nwe ! NUMBER WALL EDGES
 
 !real(REAL_KIND) :: ref(4)
@@ -436,32 +438,29 @@ nBlock = ubound(blocks,1)
 git % nWallEdge = 0
 write(*,*) "Walledges"
 do b = 1, nBlock
-   do f = 1,4
+   do f = 1,number_of_face
       if (blocks(b) % boundary_cond(f) % bc_type < 0) then
          i = blocks(b) % nPoints(1)
          j = blocks(b) % nPoints(2)
          k = blocks(b) % nPoints(3)
-         if (f <= 2) then
+         if (f <= EAST) then
             i = 1
-            ne = 3
-         else if (f <= 4) then
+         else if (f <= NORTH) then
             j = 1
-            ne = 1
-         else
+         else if (f <= BACK) then
             k = 1
          end if
-         if (blocks(b) % boundary_cond(ne) % bc_type > 0) then
-            if (f <= 2) then
-               j = j - 1
-            else if (f <= 4) then
-               i = i - 1
-            else
-               write(*,*) "NOT IMPLEMENTEND YET"
-               stop 1
+         do ne = 1,number_of_face,2
+            if (blocks(b) % boundary_cond(ne) % bc_type > 0) then
+               if      (ne <= EAST ) then
+                  i = max(i - 1,1)
+               else if (ne <= NORTH) then
+                  j = max(j - 1,1)
+               else if (ne <= BACK ) then
+                  k = max(k - 1,1)
+               end if
             end if
-         end if
-
-         !write(*,*) b,f,git % nWallEdge, i,j,k
+         end do
          git % nWallEdge = git % nWallEdge + i * j * k
       end if
    end do
@@ -471,7 +470,7 @@ call alloc(git % wall_edges         , git % nWallEdge)
 call alloc(git % wall_edge_dns      , git % nWallEdge)
 nwe = 0
 do b = 1, nBlock
-   do f = 1,4
+   do f = 1,number_of_face
    associate(bc => blocks(b) % boundary_cond(f))
       if (bc % bc_type < 0) then
          is = bc % is
@@ -484,21 +483,20 @@ do b = 1, nBlock
          dj = -bc % jd
          dk = -bc % kd
          ! ignore edges a boundary if there is a connected block   
-         if (f <= EAST) then
-            ne = SOUTH
-         else if (f <= NORTH) then
-            ne = WEST
-         end if
-         if (blocks(b) % boundary_cond(ne) % bc_type > 0) then
-            if (f <= EAST) then
-               js = js + 1
-            else if (f <= NORTH) then
-               is = is + 1
-            else
-               write(*,*) "NOT IMPLEMENTEND YET"
-               stop 1
+         do ne = 1, number_of_face,2
+            if (blocks(b) % boundary_cond(ne) % bc_type > 0) then
+               if (ne <= EAST) then
+                  if (is /= ie) &
+                  is = is + 1
+               else if (ne <= NORTH) then
+                  if (js /= je) &
+                  js = js + 1
+               else if (ne <= BACK) then
+                  if (ks /= ke) &
+                  ks = ks + 1
+               end if
             end if
-         end if
+         end do
          do k = ks,ke
             do j = js,je
                do i = is,ie
