@@ -163,7 +163,7 @@ do b = 1, nBlock
    nj = blocks(b) % nPoints(2)
    nk = blocks(b) % nPoints(3)
 
-   allocate( blocks(b) % boundary_cond(number_of_face))
+   allocate( blocks(b) % boundary_cond(6))
 
    blocks(b) % boundary_cond (:) % bc_type         = 0
    blocks(b) % boundary_cond (:) % face   = 0
@@ -271,7 +271,6 @@ do b = 1, nBlock
                   end if
                end do
                if (found) then
-                  !write(*,*) "found:",b,f,nb,nf,per
                   blocks(b) % boundary_cond(f) % bc_type       = nb
                   blocks(b) % boundary_cond(f) % face = nf
                   blocks(b) % boundary_cond(f) % permutation   = per
@@ -288,7 +287,7 @@ do b = 1, nBlock
                      select case (per) 
                      case(2)
                         ci = 1 + blocks(b) % nPoints(2) ; dij = -1
-                        cj = 1 - blocks(nb) % nPoints(1); dji = 1
+                        cj = 1 - blocks(b) % nPoints(1) ; dji = 1
                         ck = 0                          ; dkk = 1
                      case default 
                         goto 666
@@ -326,6 +325,42 @@ do b = 1, nBlock
                         ci = blocks(nb) % nPoints(1) - 1; dij = 1
                         cj = blocks(nb) % nPoints(2) + 1; dji = -1
                         ck = 0                          ; dkk = 1
+                     case default 
+                        goto 666
+                     end select
+                  else if (f == SOUTH .and. nf == BACK) then
+                     select case (per) 
+                     case(3)
+                        ci = 0                          ; dii = 1
+                        cj = blocks(nb) % nPoints(2) + 1; djk = -1
+                        ck = blocks(nb) % nPoints(3) - 1; dkj = 1
+                     case default 
+                        goto 666
+                     end select
+                  else if (f == BACK .and. nf == FRONT) then
+                     select case (per) 
+                     case(1)
+                        ci = 0                         ; dii = 1
+                        cj = 0                         ; djj = 1
+                        ck = 1 - blocks(b) % nPoints(3); dkk = 1
+                     case default 
+                        goto 666
+                     end select
+                  else if (f == BACK .and. nf == SOUTH) then
+                     select case (per) 
+                     case(3)
+                        ci = 0                          ; dii = 1
+                        cj = 1 - blocks(b) % nPoints(3) ; djk = 1
+                        ck = 1 + blocks(b) % nPoints(2) ; dkj = -1
+                     case default 
+                        goto 666
+                     end select
+                  else if (f == FRONT .and. nf == BACK) then
+                     select case (per) 
+                     case(1)
+                        ci = 0                          ; dii = 1
+                        cj = 0                          ; djj = 1
+                        ck = blocks(nb) % nPoints(3) - 1; dkk = 1
                      case default 
                         goto 666
                      end select

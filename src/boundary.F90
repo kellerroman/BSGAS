@@ -165,9 +165,7 @@ logical :: is_3D
 nBlock = ubound(blocks,1)
 allocate(norms(nBlock))
 if (blocks(1) % nPoints(3) > 1) then
-   write(*,*) "Boundary: 3D not supported yet",__FILE__,__LINE__
    is_3D = .true.
-   !stop 1
 else
    is_3D = .false.
 end if
@@ -233,13 +231,11 @@ do b = 1, nBlock
                exit
             end if
          end do
-         write(*,*) vid,d1,d2
          do k = ks,ke
             do j = js,je
                do i = is,ie
                   p = blocks(b) % refs(i,j,k)
                   ! loop over the 4 neighbor Faces
-                  write(*,*) b,f,i,j,k,p
                   do n = 1,4
                      fi = i + NV_dir(1,n) * d1(1) + NV_dir(2,n) * d2(1)
                      fj = j + NV_dir(1,n) * d1(2) + NV_dir(2,n) * d2(2)
@@ -247,7 +243,6 @@ do b = 1, nBlock
                      if (  fi <= ie - vid(1) .and. fi >= is &
                      .and. fj <= je - vid(2) .and. fj >= js &
                      .and. fk <= ke - vid(3) .and. fk >= ks ) then
-                        write(*,*) "======",n,fi,fj,fk
                         v1 = norms(b) % nv(:,fi,fj,fk)
                         if (git % point_move_rest(p)) then
                            v2 = git % point_move_rest_vector(:,p)
@@ -284,6 +279,7 @@ do b = 1, nBlock
       do j = 2, blocks(b) % nCells(2)
          p = blocks(b) % refs(i,j,k)
          git % point_move_rest(p) = .true.
+         git % point_move_rest_type(p) = 2
          v1 = blocks(b) % coords(i,j+1,k,:) - git % point_coords(:,p)
          v2 = git % point_coords(:,p) - blocks(b) % coords(i,j-1,k,:)
          call vec_common(v1,v2)
@@ -316,6 +312,7 @@ do b = 1, nBlock
       do j = 2, blocks(b) % nCells(2)
          p = blocks(b) % refs(i,j,k)
          git % point_move_rest(p) = .true.
+         git % point_move_rest_type(p) = 2
          v1 = blocks(b) % coords(i,j+1,k,:) - git % point_coords(:,p)
          v2 = git % point_coords(:,p) - blocks(b) % coords(i,j-1,k,:)
          call vec_common(v1,v2)
@@ -348,6 +345,7 @@ do b = 1, nBlock
       do i = 2, blocks(b) % nCells(1)
          p = blocks(b) % refs(i,j,k)
          git % point_move_rest(p) = .true.
+         git % point_move_rest_type(p) = 2
          v1 = blocks(b) % coords(i+1,j,k,:) - git % point_coords(:,p)
          v2 = git % point_coords(:,p) - blocks(b) % coords(i-1,j,k,:)
          call vec_common(v1,v2)
@@ -380,6 +378,7 @@ do b = 1, nBlock
       do i = 2, blocks(b) % nCells(1)
          p = blocks(b) % refs(i,j,k)
          git % point_move_rest(p) = .true.
+         git % point_move_rest_type(p) = 2
          v1 = blocks(b) % coords(i+1,j,k,:) - git % point_coords(:,p)
          v2 = git % point_coords(:,p) - blocks(b) % coords(i-1,j,k,:)
          call vec_common(v1,v2)
@@ -436,7 +435,7 @@ nBlock = ubound(blocks,1)
 !====================    CREATE LIST OF WALL EDGES WITH SPECIFIC REQUIRED LENGTH   ==================
 !====================================================================================================
 git % nWallEdge = 0
-write(*,*) "Walledges"
+!write(*,*) "Walledges"
 do b = 1, nBlock
    do f = 1,number_of_face
       if (blocks(b) % boundary_cond(f) % bc_type < 0) then

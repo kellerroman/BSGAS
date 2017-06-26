@@ -6,6 +6,7 @@ implicit none
 type(t_unstr) :: git
 contains
 subroutine strukt2unstr(blocks)
+use structured_grid, only: number_of_face
 implicit none
 type(t_block) :: blocks(:)
 
@@ -53,21 +54,24 @@ do b = 1, nBlock
    i = blocks(b) % nPoints(1)
    j = blocks(b) % nPoints(2)
    k = blocks(b) % nPoints(3)
+   
+   !Remove Points which are double, this must be done only once which is ensured
+   !by only removing it for the block with the higher block-number
 
-   if (blocks(b) % boundary_cond(WEST) % bc_type > 0) then
-      i = i - 1
-   end if
-   if (blocks(b) % boundary_cond(SOUTH) % bc_type > 0) then
-      j = j - 1
-   end if
-   if (git % dimension ==3) then
-      if (blocks(b) % boundary_cond(FRONT) % bc_type > 0) then
-         k = k - 1
+   do f = 1, number_of_face
+      if (blocks(b) % boundary_cond(f) % bc_type > 0 .and. &
+          blocks(b) % boundary_cond(f) % bc_type < b) then
+         if (f <= WEST) then
+            i = i - 1
+         else if (f <= NORTH) then
+            j = j - 1
+         else if (f <= BACK) then
+            k = k - 1
+         end if
       end if
-   end if
+   end do
 
    git % nPoint = git % nPoint + i * j * k
-   !write(*,*) blocks(b) % nPoints,i,j,k
 
    if (git % dimension == 1) then
       git % nEdge = git % npoint - 1
@@ -80,10 +84,7 @@ do b = 1, nBlock
                   + blocks(b) % nCells(1) * j * k&
                   + blocks(b) % nCells(2) * i * k&
                   + blocks(b) % nCells(3) * i * j
-
    end if
-
-
 end do
 
 p = 0
@@ -118,7 +119,7 @@ call alloc(git % edge_springs             , git % nedge)
 call alloc(git % edge_vectors          , 3, git % nedge)
 call alloc(git % edge_forces           , 3, git % nedge)
 call alloc(git % edge_nneighbor           , git % nedge)
-call alloc(git % edge_neighbor         , 2, git % nedge)
+call alloc(git % edge_neighbor         , 3, git % nedge)
 call alloc(git % edge_nparallel           , git % nedge)
 call alloc(git % edge_parallel         , 4, git % nedge)
 
@@ -730,10 +731,9 @@ if (e /= git % nEdge) then
    stop 1
 end if
 
-
 ! special cases of Edge connection
 do b = 1, nBlock
-   do f = 1, 4
+   do f = 1, number_of_face
    associate(bc => blocks(b) % boundary_cond(f))
       if (bc % bc_type > 0) then
          nb = bc % bc_type
@@ -766,7 +766,7 @@ do b = 1, nBlock
                      write(*,*) "Edge at boundary not found",b,f,i,j,k,di,dj,dk
                      stop 1
                   end if
-                  if (git % edge_nneighbor(e) /= 2) then
+                  if (git % edge_nneighbor(e) < 2) then
                      ci  = bc % ci; dii = bc % dii; dij = bc % dij; dik = bc % dik
                      cj  = bc % cj; dji = bc % dji; djj = bc % djj; djk = bc % djk
                      ck  = bc % ck; dki = bc % dki; dkj = bc % dkj; dkk = bc % dkk
@@ -792,9 +792,31 @@ do b = 1, nBlock
                      end if
                      !write(*,'("Edge ",I0,"@ ",5(I0,1X),"should have two neighbors")') e,b,f,i,j,k,e2
                      nne = git % edge_nneighbor(e) + 1
+                     if (nne > 3) then
+                        write(*,*) "Edge has too many Neighbors",b,f,i,j,k,e
+                        stop 1
+                     end if
                      git % edge_neighbor(nne,e) = e2
                      git % edge_nneighbor(e) = nne
                      nne = git % edge_nneighbor(e2) + 1
+                     if (nne > 3) then
+                        write(*,*) "Edge has too many Neighbors",b,f,i,j,k,e2
+                        write(*,*) e
+                        write(*,*) git % point_refs(:,git % edge_points(1,e)),"==>" &
+                                 , git % point_refs(:,git % edge_points(2,e))
+                        write(*,*) e2
+                        write(*,*) git % point_refs(:,git % edge_points(1,e2)),"==>" &
+                                 , git % point_refs(:,git % edge_points(2,e2))
+                        ne = git % edge_neighbor(1,e2)
+                        write(*,*) ne
+                        write(*,*) git % point_refs(:,git % edge_points(1,ne)),"==>" &
+                                  ,git % point_refs(:,git % edge_points(2,ne))
+                        ne = git % edge_neighbor(2,e2)
+                        write(*,*) ne
+                        write(*,*) git % point_refs(:,git % edge_points(1,ne)),"==>" &
+                                  ,git % point_refs(:,git % edge_points(2,ne))
+                        stop 1
+                     end if
                      git % edge_neighbor(nne,e2) = e
                      git % edge_nneighbor(e2) = nne
                   end if

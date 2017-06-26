@@ -17,11 +17,11 @@ real(kind=8) :: winkel = 90.0D0
 
 character(len = 100) :: arg
 
-integer :: i,j,k,b,ir,jr,di,dj
+integer :: i,j,k,b,ir,jr,kr,di,dj,dk
 
 integer :: square_case, nBlock
 debug = .true.
-write(*,'(A)') "GRID GEN for 2D test grid"
+write(*,'(A)') "GRID GEN for 3D square test case"
 i = 1
 square_case = -1
 do
@@ -48,6 +48,16 @@ case(3)
    call add_block((imax-1)/2,(jmax-1)/2,kmax-1)
    nBlock = 4
 case(4)
+   call add_block((imax-1)/2,(jmax-1)/2,(kmax-1)/2)
+   call add_block((imax-1)/2,(jmax-1)/2,(kmax-1)/2)
+   call add_block((imax-1)/2,(jmax-1)/2,(kmax-1)/2)
+   call add_block((imax-1)/2,(jmax-1)/2,(kmax-1)/2)
+   call add_block((imax-1)/2,(jmax-1)/2,(kmax-1)/2)
+   call add_block((imax-1)/2,(jmax-1)/2,(kmax-1)/2)
+   call add_block((imax-1)/2,(jmax-1)/2,(kmax-1)/2)
+   call add_block((imax-1)/2,(jmax-1)/2,(kmax-1)/2)
+   nBlock = 8
+case(5)
    call add_block(imax-1,jmax-1,kmax-1)
    nBlock = 1
 case default
@@ -65,16 +75,18 @@ mat(2,2) = + cos(winkel)
 
 di = 0
 dj = 0
+dk = 0
 do b = 1, nBlock
    do k = 1, blocks(b) % nPkts(3)
       do j = 1, blocks(b) % npkts(2)
          do i = 1,blocks(b) % npkts(1)
             ir = i + di
             jr = j + dj
+            kr = k + dk
             blocks(b) % xyzs(i,j,k,1) = length/dble(imax-1) * dble(ir-1)!* dble(i-1)
             blocks(b) % xyzs(i,j,k,2) = length/dble(jmax-1) * dble(jr-1)
-            blocks(b) % xyzs(i,j,k,3) = length/dble(kmax-1) * dble(k -1)
-            if (square_case == 4) then
+            blocks(b) % xyzs(i,j,k,3) = length/dble(kmax-1) * dble(kr-1)
+            if (square_case == 5) then
                temp = blocks(1) % xyzs(i,j,k,1:2)
                blocks(b) % xyzs(i,j,k,1) = mat(1,1) * temp(1) + mat(2,1) * temp(2)
                blocks(b) % xyzs(i,j,k,2) = mat(1,2) * temp(1) + mat(2,2) * temp(2)
@@ -84,9 +96,14 @@ do b = 1, nBlock
       end do
    end do
    di = di + blocks(b) % nCells(1)
-   if (b == 2) then
+   if (b == 2 .or. b == 6) then
       di = 0
       dj = dj + blocks(b) % nCells(2)
+   end if
+   if (b == 4) then
+      di = 0
+      dj = 0
+      dk = dk + blocks(b) % nCells(3)
    end if
 end do
 
@@ -94,12 +111,14 @@ call write_grid()
 open(666,file="bc.cfg")
 write(666,'(A)') "! Wall at South of all  and EAST OF BLOCK 1"
 select case(square_case) 
-case(1,4)
+case(1,5)
 write(666,'(A)') "wall: 1S, 1E, 1B! Wall"
 case(2)
 write(666,'(A)') "wall: 1S, 2S, 2E, 1B,2B ! Wall"
 case(3)
-write(666,'(A)') "wall: 1S, 2S, 2E, 4E ! Wall"
+write(666,'(A)') "wall: 1S,2S,2E,4E,1F,2F,3F,4F ! Wall"
+case(4)
+write(666,'(A)') "wall: 1S,2S,5S,6S,2E,4E,6E,8E,1F,2F,3F,4F ! Wall"
 case default
    write(*,*) "Case unknown"
    stop 1

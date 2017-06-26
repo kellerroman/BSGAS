@@ -12,9 +12,11 @@ compile:
 	@$(MAKE) -C ../ gridgen
 
 grid.h5: ../gridgen
-	@$< 3
+	@$< 1
 
 clean:
-	@rm -vf *.o *.mod *.dat *.plt *.png *.vtk *.txt *.bin gridgen *.dx stubex *.csv *.h5 *.xdmf fort.*
+	@rm -vf *.o *.mod *.dat *.plt *.png *.vtk *.txt *.bin *.dx stubex *.csv *.h5 *.xdmf fort.*
 	@rm -vf bc.cfg
 	@rm -vrf *~
+
+.PHONY: ../gridgen

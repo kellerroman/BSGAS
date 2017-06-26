@@ -8,7 +8,7 @@ run: compile grid.h5
 compile:
 	@$(MAKE) -C $(HOMEDIR) --no-print-directory
 
-../gridgen:
+../gridgen: ../gridgen.F90
 	@$(MAKE) -C ../ gridgen
 
 grid.h5: ../gridgen
