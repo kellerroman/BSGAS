@@ -1,2 +1,1 @@
-3D
-paralell edges
+solution gradient adaption
