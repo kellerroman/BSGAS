@@ -84,7 +84,7 @@ do e = 1, git % nedge
    end do
    fkt = el / nel
    fkt = fkt - cell_parallel_inc
-   !springs(3,e) = max(springs(3,e) * exp(1E-2 * fkt), SPRING_MIN)
+   springs(3,e) = max(springs(3,e) * exp(1E-2 * fkt), SPRING_MIN)
 end do
 end subroutine edge_parallel_streching
 end module spring

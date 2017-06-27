@@ -5,6 +5,7 @@ contains
 subroutine write_output(iter)
    use types
    use unstr, only: git
+   use spring, only: springs
 implicit none
 
 integer, intent(in) :: iter
@@ -54,6 +55,11 @@ if (mod(iter,output_intervall) == 0) then
    write(10,"(A)") 'LOOKUP_TABLE Default'
    do i = 1, git % nedge
       write(10,*) git % edge_lengths(i)
+   end do
+   write(10,"(A)") 'SCALARS Wall_Spring double'
+   write(10,"(A)") 'LOOKUP_TABLE Default'
+   do i = 1, git % nedge
+      write(10,*) springs(1,i)
    end do
    write(10,"(A)") 'SCALARS KantenSteifigkeit double'
    write(10,"(A)") 'LOOKUP_TABLE Default'

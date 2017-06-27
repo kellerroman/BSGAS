@@ -57,7 +57,6 @@ do b = 1, nBlock
    
    !Remove Points which are double, this must be done only once which is ensured
    !by only removing it for the block with the higher block-number
-
    do f = 1, number_of_face
       if (blocks(b) % boundary_cond(f) % bc_type > 0 .and. &
           blocks(b) % boundary_cond(f) % bc_type < b) then
@@ -84,6 +83,7 @@ do b = 1, nBlock
                   + blocks(b) % nCells(1) * j * k&
                   + blocks(b) % nCells(2) * i * k&
                   + blocks(b) % nCells(3) * i * j
+               write(*,*) b,blocks(b) % nPoints(:), i,j,k, git % nEdge
    end if
 end do
 
@@ -391,10 +391,13 @@ do b = 1, nBlock
                      !Increase points edge count
                      pe  = git % point_nedges(p1) + 1
                      if (pe > 6) then
+                        write(*,*) b,i,j,k
                         write(*,*) p1, git % point_refs(:,p1)
                         do ne = 1, 6
-                           write(*,*) git % point_edges(ne,p1)
-                           write(*,*) git % point_refs(:,git % edge_points(1,git % point_edges(ne,p1))),"===>" &
+                           write(*,*) git % point_edges(ne,p1) &
+                                    , git % edge_points(1,git % point_edges(ne,p1)) &
+                                    , git % point_refs(:,git % edge_points(1,git % point_edges(ne,p1))),"===>" &
+                                    , git % edge_points(2,git % point_edges(ne,p1)) &
                                     , git % point_refs(:,git % edge_points(2,git % point_edges(ne,p1)))
 
                         end do
@@ -738,7 +741,8 @@ end if
 if (e /= git % nEdge) then
    write(*,*) "Number of Edges wrongly approximated"
    write(*,*) e, git % nEdge
-   stop 1
+   git % nEdge = e
+   !stop 1
 end if
 
 ! special cases of Edge connection

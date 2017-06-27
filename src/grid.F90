@@ -111,7 +111,7 @@ end subroutine read_grid_hdf5
 
 subroutine connect_blocks()
 implicit none
-real(REAL_KIND),parameter :: EPS = 1.0e-8_REAL_KIND
+real(REAL_KIND),parameter :: EPS = 1.0E-6_REAL_KIND
 integer :: b,f,nb,nf,p,per,d
 integer :: ni,nj,nk
 logical :: is3D 
@@ -271,9 +271,9 @@ do b = 1, nBlock
                   end if
                end do
                if (found) then
-                  blocks(b) % boundary_cond(f) % bc_type       = nb
-                  blocks(b) % boundary_cond(f) % face = nf
-                  blocks(b) % boundary_cond(f) % permutation   = per
+                  blocks(b) % boundary_cond(f) % bc_type     = nb
+                  blocks(b) % boundary_cond(f) % face        = nf
+                  blocks(b) % boundary_cond(f) % permutation = per
                   if (f == EAST .and. nf == WEST) then
                      select case (per) 
                      case(1)
