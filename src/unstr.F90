@@ -390,6 +390,16 @@ do b = 1, nBlock
                      ! Add edge to the first point
                      !Increase points edge count
                      pe  = git % point_nedges(p1) + 1
+                     if (pe > 6) then
+                        write(*,*) p1, git % point_refs(:,p1)
+                        do ne = 1, 6
+                           write(*,*) git % point_edges(ne,p1)
+                           write(*,*) git % point_refs(:,git % edge_points(1,git % point_edges(ne,p1))),"===>" &
+                                    , git % point_refs(:,git % edge_points(2,git % point_edges(ne,p1)))
+
+                        end do
+                        stop 1
+                     end if
                      git % point_nedges(p1) = pe
                      ! add edge to point at current edge count
                      git % point_edges(pe,p1) = e

@@ -9,8 +9,8 @@ INTEGER, PARAMETER :: NUM_OF_BLOCKS = 14
 !!!!!!!!!!!!!!!! NJ VALUES 
 integer, parameter :: NJ1 = 15
 integer, parameter :: NJ2 = 20
-!integer, parameter :: NJ3 = 15
-!integer, parameter :: NJ4 = 30
+integer, parameter :: NJ3 = 15
+integer, parameter :: NJ4 = 30
 !!!!!!!!!!!!!!!! NI VALUES 
 integer, parameter :: NI1 = 12
 integer, parameter :: NI2 = 50
@@ -26,8 +26,8 @@ real(kind=8), parameter :: X1  =  6.0D0
 !real(kind=8), parameter :: Y0 = 0.0D0
 real(kind=8), parameter :: Y1 = 1.0D0
 real(kind=8), parameter :: Y2 = 2.0D0
-!real(kind=8), parameter :: Y3 = 2.5D0
-!real(kind=8), parameter :: Y4 = 5.0D0
+real(kind=8), parameter :: Y3 = 2.5D0
+real(kind=8), parameter :: Y4 = 5.0D0
 
 TYPE(t_roundblock) :: block_start_end(NUM_OF_BLOCKS)
 integer :: im, jm, km
@@ -60,10 +60,66 @@ block_start_end(b) % ystart =  Y1
 block_start_end(b) % yend   =  Y2
 block_start_end(b) % le_re  = 1
 
+b = b + 1
+call add_block(NI2, NJ2,       NK / 2)
+block_start_end(b) % xstart =  X0 
+block_start_end(b) % xend   =  X1
+block_start_end(b) % ystart =  Y1 
+block_start_end(b) % yend   =  Y2
+block_start_end(b) % le_re  = 2
 
+b = b + 1
+call add_block(NI1, NJ3,       NK / 2)
+block_start_end(b) % xstart =  XM1 
+block_start_end(b) % xend   =  X0
+block_start_end(b) % ystart =  Y2 
+block_start_end(b) % yend   =  Y3
+block_start_end(b) % le_re  = 1
+
+b = b + 1
+call add_block(NI1, NJ3,       NK / 2)
+block_start_end(b) % xstart =  XM1 
+block_start_end(b) % xend   =  X0
+block_start_end(b) % ystart =  Y2 
+block_start_end(b) % yend   =  Y3
+block_start_end(b) % le_re  = 2
+
+b = b + 1
+call add_block(NI2, NJ3,       NK / 2)
+block_start_end(b) % xstart =  X0  
+block_start_end(b) % xend   =  X1
+block_start_end(b) % ystart =  Y2 
+block_start_end(b) % yend   =  Y3
+block_start_end(b) % le_re  = 1
+
+b = b + 1
+call add_block(NI2, NJ3,       NK / 2)
+block_start_end(b) % xstart =  X0  
+block_start_end(b) % xend   =  X1
+block_start_end(b) % ystart =  Y2 
+block_start_end(b) % yend   =  Y3
+block_start_end(b) % le_re  = 2
+
+b = b + 1
+call add_block(NI2, NJ4,       NK / 2)
+block_start_end(b) % xstart =  X0  
+block_start_end(b) % xend   =  X1
+block_start_end(b) % ystart =  Y3 
+block_start_end(b) % yend   =  Y4
+block_start_end(b) % le_re  = 1
+
+b = b + 1
+call add_block(NI2, NJ4,       NK / 2)
+block_start_end(b) % xstart =  X0  
+block_start_end(b) % xend   =  X1
+block_start_end(b) % ystart =  Y3 
+block_start_end(b) % yend   =  Y4
+block_start_end(b) % le_re  = 2
 call allocate_blocks(nVar)
 
+do b = 7, NUM_OF_BLOCKS
 call make_block_grid(block_start_end(b) , blocks(b) )
+end do
 
 do b = 1,4,3
    im = blocks(b) % nPkts(1)
@@ -141,12 +197,10 @@ end do
 call write_grid()
 open(666,file="bc.cfg")
 write(666,'(A)') "! Wall at South of all  and EAST OF BLOCK 1"
-write(666,'(A)') "wall: 2N, 3N ! Wall"
-write(666,'(A)') "dn = 1E-2    ! Spacing of first Cell"
-write(666,'(A)') "inflow: 2E, 3E ! INFLOW"
-write(666,'(A)') "dn = 8E-2    ! Spacing of first Cell"
+write(666,'(A)') "wall: 2N, 3N ,7W,8W,9S,9N,10S,10N,13E,13N,14E,14N"
+write(666,'(A)') "dn = 2E-2    ! Spacing of first Cell"
 close(666)
-write(*,*) "done"
+write(*,*) "fdone"
 
 
 contains
@@ -158,19 +212,19 @@ TYPE(tblock) :: block
 
 
 integer :: i,j,k
-real(kind=8) :: dx,dy, angle, pos
+real(kind=8) :: dx,dy, angle, pos,aa
 
 dx = ( se % xend - se % xstart ) / block % nCells(1)
 dy = ( se % yend - se % ystart ) / block % nCells(2)
 
 if (se % le_re == 1) then
-   angle = 90.0D0
+   aa = 90.0D0
 else
-   angle = 45.0D0
+   aa = 45.0D0
 end if
 
 do k = 1, block % nPkts(3) 
-   angle = (angle - 45.0D0  * dble(k-1)/dble(block % nCells(3))) * PI
+   angle = (aa - 45.0D0  * dble(k-1)/dble(block % nCells(3))) * PI
    do j = 1, block % nPkts(2)
       pos = se % ystart + dy * (j-1)
       do i = 1, block % nPkts(1)

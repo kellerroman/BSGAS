@@ -2,7 +2,7 @@ module mod_gridgen
 use hdf5
 implicit none
 private
-integer         , parameter :: MAX_BLOCK             = 10 !Maximale Anzahl Bloecke (Dimension des temp block arrays)
+integer         , parameter :: MAX_BLOCK             = 50 !Maximale Anzahl Bloecke (Dimension des temp block arrays)
 integer         , parameter :: VARNAME_LENGTH        = 20
 character(len=*), parameter :: FILENAME              = "grid.h5"  ! file name HDF5
 character(len=*), parameter :: GROUP_GRID            = "grid"

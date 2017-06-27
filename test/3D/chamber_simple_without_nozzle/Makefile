@@ -13,7 +13,7 @@ gridgen: gridgen.F90 $(TOOLS_OBJ)/module_gridgen.o
 
 
 run: compile grid.h5
-#	@$(HOMEDIR)/bin/BSGAS
+	@$(HOMEDIR)/bin/BSGAS
 
 compile:
 	@$(MAKE) -C $(HOMEDIR) --no-print-directory
