@@ -6,11 +6,13 @@ use help_routines, only: alloc
 implicit none
 
 character(len=100)          :: filename_grid_in
+character(len=100)          :: filename_grid_out
 character(len=*), parameter :: GROUP_GRID            = "grid"
 character(len=*), parameter :: GROUP_BLOCK           = "block"
 character(len=*), parameter :: COORD_NAME(3)      = [ "CoordinateX","CoordinateY","CoordinateZ" ]
 
 integer(INT_KIND)           :: nBlock
+integer(INT_KIND)           :: nCell
 type(t_block), allocatable  :: blocks(:)
 integer(INT_KIND)           :: dimen
 
@@ -49,6 +51,7 @@ if (.not. fexists) then
    stop 1
 end if
 ! Initialize FORTRAN interface.
+nCell = 0
 call h5open_f(error)
 
 ! Open an existing file.
@@ -73,7 +76,7 @@ do b = 1, nBlock
    blocks(b) % nPoints = INT(dims,INT_KIND)
 
    blocks(b) % nCells = max(1,blocks(b) % nPoints - 1)
-   !nCell = nCell + product(blocks(b) % nCells)
+   nCell = nCell + product(blocks(b) % nCells)
    
    !!!! MUSS VERSCHOBEN WERDEN FUER MULTIBLOCK
 !   call allocate_vars(b)
@@ -481,4 +484,56 @@ subroutine addSamePoint(b,i,j,k,nb,ni,nj,nk)
    blocks(b) % nSamePoints(i,j,k) = nsp_b
    blocks(nb) % nSamePoints(ni,nj,nk) = nsp_nb
    end subroutine addSamePoint
+subroutine write_grid()
+implicit none
+
+integer, parameter                :: RANK = 3
+character(len=len(GROUP_BLOCK)+2) :: block_group
+
+integer     ::   error ! Error flag
+integer(hid_t) :: file_id       ! file identifier
+integer(hid_t) :: group_id_grid      ! dataset identifier
+integer(hid_t) :: group_id_block      ! dataset identifier
+integer(hid_t) :: dset_id       ! dataset identifier
+integer(hid_t) :: dspace_id     ! dataspace identifier
+integer(HSIZE_T) :: dims(3)
+integer :: b,d
+
+! Initialize FORTRAN interface.
+nCell = 0
+call h5open_f(error)
+
+! create a new file using default properties.
+call h5fcreate_f(filename_grid_out, h5f_acc_trunc_f, file_id, error)
+
+! Create a group grid in the file.
+call h5gcreate_f(file_id,  GROUP_GRID, group_id_grid,  error)
+
+!   Write Coordinates into grid/blockN/
+do b = 1, nBlock
+   write(block_group,'(A,I0)') GROUP_BLOCK,b
+   dims  = blocks(b) % nPoints 
+
+   ! create the dataspace.
+   call h5screate_simple_f(RANK, dims, dspace_id, error)
+
+   ! Create a group named for block1 in the file.
+   call h5gcreate_f(group_id_grid, block_group, group_id_block, error)
+   
+   do d = 1, RANK
+      call h5dcreate_f(group_id_block, COORD_NAME(d), h5t_native_double, dspace_id, &
+                      dset_id, error)
+      call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, blocks(b) % coords(:,:,:,d), dims, error)
+      call h5dclose_f(dset_id, error)
+   end do
+
+   ! terminate access to the data space of the grid and create a new one for the data
+   call h5sclose_f(dspace_id, error)
+   ! Close the group.
+   call h5gclose_f(group_id_block, error)
+end do
+call h5gclose_f(group_id_grid, error) ! CLOSE GRID GROUP
+
+call h5fclose_f(file_id, error)
+end subroutine write_grid
 end module structured_grid  

@@ -6,10 +6,12 @@ subroutine write_output(iter)
    use types
    use unstr, only: git
    use spring, only: springs
+   !use structured_grid, only: nBlock,nCell,blocks
 implicit none
 
 integer, intent(in) :: iter
 integer :: i
+!integer :: b,j,k
 character(len=20) :: filename
 
 if (mod(iter,output_intervall) == 0) then
@@ -26,6 +28,28 @@ if (mod(iter,output_intervall) == 0) then
       write(10,'(3(f20.13,1X))') git % point_coords(:,i)
    end do
    write(10,*)
+!   write(10,"(a,1X,i0,1X,i0)") "CELLS", nCell, nCell * 9
+!   do b = 1, nBlock
+!      do k = 1, blocks(b) % nCells(3)
+!         do j = 1, blocks(b) % nCells(2)
+!            do i = 1, blocks(b) % nCells(1)
+!               write(10,'(3(i0,1X))') 8, blocks(b) % refs(i  ,j  ,k  ) - 1 &
+!                                       , blocks(b) % refs(i+1,j  ,k  ) - 1 &
+!                                       , blocks(b) % refs(i+1,j+1,k  ) - 1 &
+!                                       , blocks(b) % refs(i  ,j+1,k  ) - 1 &
+!                                       , blocks(b) % refs(i  ,j  ,k+1) - 1 &
+!                                       , blocks(b) % refs(i+1,j  ,k+1) - 1 &
+!                                       , blocks(b) % refs(i+1,j+1,k+1) - 1 &
+!                                       , blocks(b) % refs(i  ,j+1,k+1) - 1
+!            end do
+!         end do
+!      end do
+!   end do
+!   write(10,*)
+!   write(10,"(a,1X,i0)") "CELL_TYPES", nCell
+!   do i = 1, nCell
+!      write(10,'(i0)') 12
+!   end do
    write(10,"(a,1X,i0,1X,i0)") "CELLS", git % nedge, git % nedge*3
    do i = 1, git % nedge
       write(10,'(3(i0,1X))') 2,git % edge_points(1,i)-1,git % edge_points(2,i)-1

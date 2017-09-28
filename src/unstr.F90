@@ -4,6 +4,7 @@ use types
 use help_routines, only: alloc, vec_common
 implicit none
 type(t_unstr) :: git
+integer :: wall_move_rest
 contains
 subroutine strukt2unstr(blocks)
 use structured_grid, only: number_of_face
@@ -83,7 +84,7 @@ do b = 1, nBlock
                   + blocks(b) % nCells(1) * j * k&
                   + blocks(b) % nCells(2) * i * k&
                   + blocks(b) % nCells(3) * i * j
-               write(*,*) b,blocks(b) % nPoints(:), i,j,k, git % nEdge
+               !write(*,*) b,blocks(b) % nPoints(:), i,j,k, git % nEdge
    end if
 end do
 
@@ -870,11 +871,15 @@ git % edge_forces  = -1
 
 end subroutine strukt2unstr
 
-subroutine calc_edge_length()
+subroutine calc_edge_length(max_len,min_len)
 implicit none
+real(REAL_KIND), intent(out) :: max_len, min_len
 integer :: e,p1,p2
 real(REAL_KIND) :: x1,x2,y1,y2,z1,z2
 real(REAL_KIND) :: dx,dy,dz
+
+max_len = 0.0E+00_REAL_KIND
+min_len = 1.0E+10_REAL_KIND
 do e = 1, git % nedge
    p1 = git % edge_points(1,e)
    p2 = git % edge_points(2,e)
@@ -893,64 +898,105 @@ do e = 1, git % nedge
    git % edge_lengths(e) = sqrt( dx * dx &
                                + dy * dy &
                                + dz * dz )
-   !write(*,*) e, git % edge_lengths(e), git % edge_vectors(:,e)
+   max_len = max(max_len,git % edge_lengths(e))
+   min_len = min(min_len,git % edge_lengths(e))
 end do
 end subroutine calc_edge_length
 
 subroutine calc_edge_forces(max_f)
 implicit none
 real(REAL_KIND), intent(out) :: max_f
+real(REAL_KIND):: f
 
 integer :: e
+!integer :: en
 
 max_f = 0.0E0_REAL_KIND
 do e = 1, git % nedge
    git % edge_forces(:,e) = git % edge_springs(e) * git % edge_vectors(:,e)
-   max_f = max(max_f,sqrt( git % edge_forces(1,e) * git % edge_forces(1,e) &
-                         + git % edge_forces(2,e) * git % edge_forces(2,e) &
-                         + git % edge_forces(3,e) * git % edge_forces(3,e) ))
+   f = sqrt( git % edge_forces(1,e) * git % edge_forces(1,e) &
+           + git % edge_forces(2,e) * git % edge_forces(2,e) &
+           + git % edge_forces(3,e) * git % edge_forces(3,e) )
+   max_f = max(max_f,f)
 end do
+
 end subroutine calc_edge_forces
 
-subroutine calc_point_forces(max_f)
+subroutine calc_point_forces(max_f,sum_f)
 implicit none
-real(REAL_KIND), intent(out) :: max_f
+
+real(REAL_KIND), intent(out) :: max_f, sum_f
+real(REAL_KIND):: f
 
 integer :: np, e, edge
 real(REAL_KIND) :: tmp(3), sp
 max_f = 0.0E0_REAL_KIND
-do np = 1, git % nPoint
-    tmp = 0.0E0_REAL_KIND
-    !write(*,*) np
-   do e = 1, git % point_nedges(np)
-      edge = git % point_edges(e,np)
-      tmp = tmp + git % edge_forces(:,edge) * git % point_edge_signs(e,np)
-      !write(*,*) "->   ",e,edge,git % edge_forces(:,edge) , git % point_edge_signs(e,np)
+sum_f = 0.0E0_REAL_KIND
+if (wall_move_rest == 1) then
+   do np = 1, git % nPoint
+       tmp = 0.0E0_REAL_KIND
+       !write(*,*) np
+      do e = 1, git % point_nedges(np)
+         edge = git % point_edges(e,np)
+         tmp = tmp + git % edge_forces(:,edge) * git % point_edge_signs(e,np)
+      end do
+      if (git % point_move_rest(np)) then
+         select case (git % point_move_rest_type(np))
+         case (3)
+            sp = tmp(1)*git % point_move_rest_vector(1,np) &
+               + tmp(2)*git % point_move_rest_vector(2,np) &
+               + tmp(3)*git % point_move_rest_vector(3,np)
+            tmp = tmp - git % point_move_rest_vector(:,np) * sp
+         case (2)
+            sp = tmp(1)*git % point_move_rest_vector(1,np) &
+               + tmp(2)*git % point_move_rest_vector(2,np) &
+               + tmp(3)*git % point_move_rest_vector(3,np)
+            tmp = git % point_move_rest_vector(:,np) * sp
+         case (1) 
+            tmp = 0.0D0
+         end select
+      end if
+         
+      git % point_forces(:,np) = tmp
+      f = sqrt(tmp(1)*tmp(1)+tmp(2)*tmp(2)+tmp(3)*tmp(3))
+      sum_f = sum_f + f
+      max_f = max(max_f,f)
    end do
-   !write(*,*) tmp, git % point_move_rest_vector(:,np)
-   if (git % point_move_rest(np)) then
-      select case (git % point_move_rest_type(np))
-      case (3)
-      sp = tmp(1)*git % point_move_rest_vector(1,np) &
-         + tmp(2)*git % point_move_rest_vector(2,np) &
-         + tmp(3)*git % point_move_rest_vector(3,np)
-      tmp = tmp - git % point_move_rest_vector(:,np) * sp
-      case (2)
-      sp = tmp(1)*git % point_move_rest_vector(1,np) &
-         + tmp(2)*git % point_move_rest_vector(2,np) &
-         + tmp(3)*git % point_move_rest_vector(3,np)
-      tmp = git % point_move_rest_vector(:,np) * sp
-   case (1) 
-      tmp = 0.0D0
-   end select
-!      write(*,*) "restricting:",np,git % point_refs(2:4,np),sp,tmp
-   end if
-      
-   git % point_forces(:,np) = tmp
-   max_f = max(max_f,sqrt(tmp(1)*tmp(1)+tmp(2)*tmp(2)+tmp(3)*tmp(3)))
-   !write(*,*) np,git % point_nedges(np), git % point_forces(:,np)
-end do
+else if (wall_move_rest == 2) then
+   do np = 1, git % nPoint
+      tmp = 0.0E0_REAL_KIND
+      !write(*,*) np
+      do e = 1, git % point_nedges(np)
+         edge = git % point_edges(e,np)
+         if (git % point_move_rest(np)) then
+            select case (git % point_move_rest_type(np))
+            case (3)
+            sp = git % edge_forces(1,edge)*git % point_move_rest_vector(1,np) &
+               + git % edge_forces(2,edge)*git % point_move_rest_vector(2,np) &
+               + git % edge_forces(3,edge)*git % point_move_rest_vector(3,np)
+            if (abs(sp ) < 1E-10) then
+               tmp = tmp + git % edge_forces(:,edge) * git % point_edge_signs(e,np)
+            end if
+            case (2)
+            sp = git % edge_forces(1,edge)*git % point_move_rest_vector(1,np) &
+               + git % edge_forces(2,edge)*git % point_move_rest_vector(2,np) &
+               + git % edge_forces(3,edge)*git % point_move_rest_vector(3,np)
+            tmp = tmp + git % point_move_rest_vector(:,np) * sp * git % point_edge_signs(e,np)
+            case (1) 
+            end select
+         else
+            tmp = tmp + git % edge_forces(:,edge) * git % point_edge_signs(e,np)
+         end if
+      end do
+      git % point_forces(:,np) = tmp
+      f = sqrt(tmp(1)*tmp(1)+tmp(2)*tmp(2)+tmp(3)*tmp(3))
+      sum_f = sum_f + f
+      max_f = max(max_f,f)
+   end do
+end if
+sum_f = sum_f / git % nPoint
 end subroutine calc_point_forces
+
 subroutine move_points(max_f)
 implicit none
 real(REAL_KIND), parameter :: POINT_WEIGTH =  2.5E0_REAL_KIND
@@ -961,9 +1007,29 @@ integer :: np
 
 min_l = minval(git % edge_lengths)
 fk = min(1.0E0_REAL_KIND,min_l / max_f)
-!write(*,*) "FK",min_l,max_f,fk
 do np = 1, git % npoint
    git % point_coords(:,np) = git % point_coords(:,np) + git % point_forces(:,np) / POINT_WEIGTH * fk
 end do
 end subroutine move_points
+
+subroutine unstr2struct(blocks)
+implicit none
+type(t_block), intent(inout) :: blocks(:)
+
+integer :: nBlock
+integer :: i,j,k,p,b
+
+nBlock = ubound(blocks,1)
+
+do b = 1, nBlock
+   do k = 1, blocks(b) % nPoints(3)
+      do j = 1, blocks(b) % nPoints(2)
+         do i = 1, blocks(b) % nPoints(1)
+            p = blocks(b) % refs(i,j,k)
+            blocks(b) % coords(i,j,k,:) = git % point_coords(:,p)
+         end do
+      end do
+   end do
+end do
+end subroutine unstr2struct
 end module unstr

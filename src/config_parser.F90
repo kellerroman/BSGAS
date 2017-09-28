@@ -125,7 +125,7 @@ new % varname = lower_case(str)
 new % datatype = DATATYPE_STRING
 new % string_var => var_pointer
 new % is_set   = .false.
-write(*,*) str
+!write(*,*) str
 if ( present(init_value) ) then
    new % string_var = init_value
    new % required = .false.

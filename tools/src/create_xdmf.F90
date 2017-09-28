@@ -30,6 +30,7 @@
 
    character(len = 100) :: arg
    
+   i = 1
    DO
       CALL get_command_argument(i, arg)
       IF (LEN_TRIM(arg) == 0) EXIT

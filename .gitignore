@@ -42,3 +42,4 @@ obj/
 .*.swp
 *.h5
 gridgen
+bc.cfg

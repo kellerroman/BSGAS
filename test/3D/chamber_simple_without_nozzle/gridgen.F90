@@ -7,8 +7,8 @@ type :: t_roundblock
 end type
 INTEGER, PARAMETER :: NUM_OF_BLOCKS = 14
 !!!!!!!!!!!!!!!! NJ VALUES 
-integer, parameter :: NJ1 = 20
-integer, parameter :: NJ2 = 20
+integer, parameter :: NJ1 = 30
+integer, parameter :: NJ2 = 15
 !integer, parameter :: NJ3 = 12
 !integer, parameter :: NJ4 = 30
 !!!!!!!!!!!!!!!! NI VALUES 
@@ -35,7 +35,7 @@ integer :: im, jm, km
 integer :: i, j, k, b
 real(kind = 8) :: spkty,epkty,spktz,epktz,lx,ly, winkel, length
 
-WRITE(*,*) "GRIDGEN FÜR EIN EINFACHES O_GRID"
+WRITE(*,*) "GridGenerator for simplified single injector combustion chamber"
 
 call set_dimension(3)
 
@@ -201,10 +201,10 @@ end do
 
 call write_grid()
 open(666,file="bc.cfg")
-write(666,'(A)') "wall: 2N,3N !,7W,8W,9S,9N,10S,10N,13W,13N,14W,14N "
-write(666,'(A)') "dn = 5E-2    ! Spacing of first Cell"
+write(666,'(A)') "wall: 2N,3N,7W,8W !,9S,9N,10S,10N,13W,13N,14W,14N "
+write(666,'(A)') "dn = 2E-2    ! Spacing of first Cell"
 close(666)
-write(*,*) "fdone"
+write(*,*) " -- done"
 
 
 contains

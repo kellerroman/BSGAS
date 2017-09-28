@@ -96,8 +96,8 @@ open(666,file="bc.cfg")
 write(666,'(A)') "! Wall at South of all  and EAST OF BLOCK 1"
 write(666,'(A)') "wall: 2N, 3N ! Wall"
 write(666,'(A)') "dn = 1E-2    ! Spacing of first Cell"
-write(666,'(A)') "inflow: 2E, 3E ! INFLOW"
-write(666,'(A)') "dn = 8E-2    ! Spacing of first Cell"
+write(666,'(A)') "inflow: 1E, 2E, 3E ! INFLOW"
+write(666,'(A)') "dn = 5E-2    ! Spacing of first Cell"
 close(666)
 write(*,*) "done"
 
