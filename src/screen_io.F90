@@ -90,18 +90,21 @@ real(REAL_KIND), intent(in) :: max_spring, min_spring &
                              , max_edge_len,min_edge_len
 
 if (iter <= res_out_start .or. mod(iter,res_out) == 0) then
-   write(*,'(I10,7(1X,ES10.3))') iter &
-            , max_spring, min_spring & 
-            , max_edge_f,max_point_f,sum_point_f &
-            , max_edge_len,min_edge_len
+   write(*,'(I10,7(1X,ES10.3))') iter                                                     &
+                               , max_point_f,sum_point_f                                  &
+                               , max_spring, min_spring                                   & 
+                               , max_edge_f                                               &
+                               , max_edge_len,min_edge_len
 end if
 
 end subroutine sw_residual
 
 subroutine sw_init_residual
 implicit none
-write(*,'(8(A10,1X))') "ITERATION","MAX SPRING", "MIN SPRING" &
-                     , "F MAX EDGE","F MAX POINT","F AVG POINT" &
+write(*,'(8(A10,1X))') "ITERATION"                       &
+                     , "F MAX POINT","F AVG POINT"       &
+                     , "MAX SPRING", "MIN SPRING"        &
+                     , "F MAX EDGE"                      &
                      , "LEN MAX","LEN MIN"
 end subroutine sw_init_residual
 

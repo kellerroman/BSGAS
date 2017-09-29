@@ -1,5 +1,7 @@
 HOMEDIR=../../../../
 
+
+.PHONY: ../gridgen
 all: run
 
 run: compile grid.h5

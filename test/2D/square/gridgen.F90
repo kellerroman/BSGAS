@@ -102,7 +102,7 @@ case default
    write(*,*) "Case unknown"
    stop 1
 end select
-write(666,'(A)') "dn = 5E-2    ! Spacing of first Cell"
+write(666,'(A)') "dn = 4E-2    ! Spacing of first Cell"
 close(666)
 
 write(*,'(A)') "done"
