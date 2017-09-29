@@ -20,5 +20,5 @@ gridgen: gridgen.F90 $(TOOLS_OBJ)/module_gridgen.o
 	$(FC) $(CFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
 
 clean:
-	@rm -vf *.o *.mod *.dat *.plt *.png *.vtk *.txt *.bin gridgen *.dx stubex *.csv *.h5 *.xdmf fort.*
+	@rm -vf *.o *.mod *.dat *.plt *.png *.vtk *.txt *.bin gridgen *.dx stubex *.csv *.h5 *.xdmf fort.* bc.cfg
 	@rm -vrf *~

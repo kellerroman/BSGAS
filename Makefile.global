@@ -1,4 +1,7 @@
 FC=gfortran
+#FC=ifort
+
+DEBUG ?= 0
 
 OBJECT_DIR=obj
 EXECUTABLE_DIR=bin
@@ -6,21 +9,33 @@ TOOLS_DIR=tools
 
 REALMAKEFILE=../Makefile.in
 
-
-
-
-
-LIBS = -lhdf5 -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lm
+LIBS = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lm
 
 INCLUDE = -I/usr/include/
+#INCLUDE = -I/media/LDS/module/software/libs/hdf5/1.8.17_gnu/include/static/
 
+ifneq (,$(findstring $(FC),gfortran))
+   CFLAGS = -std=f2008
+   CFLAGS += -Wconversion -Wall -Wextra -Warray-temporaries -Werror
 
-CFLAGS = -std=f2008
+#   INCLUDE = -I/media/LDS/module/software/libs/hdf5/1.8.17_gnu/include/static/
+   ifeq ($(DEBUG), 0)
+      CFLAGS += -O3
+   else
+      CFLAGS += -g -fbacktrace -ffpe-trap=invalid,zero,overflow -fcheck=all -fbounds-check
+   endif
+endif
 
-CFLAGS += -Wconversion -Wall -Wextra -Warray-temporaries -Werror
-
-CFLAGS += -O3
-#CFLAGS += -g -fbacktrace -ffpe-trap=invalid,zero,overflow -fcheck=all -fbounds-check
-
+ifneq (,$(findstring $(FC),ifort))
+   CFLAGS += -assume buffered_io
+   ifeq ($(DEBUG), 0)
+      CFLAGS += -O3
+   else
+      CFLAGS += -g
+   endif
+   LIBS+=-static-intel
+#   LIBS+=-L/media/LDS/module/software/libs/hdf5/1.8.17_intel/lib/
+#   INCLUDE = -I/media/LDS/module/software/libs/hdf5/1.8.17_intel/include/static/
+endif
 
 #CFLAGS += -DDEBUG #Unnecessary comments are oppressed

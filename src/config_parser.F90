@@ -159,7 +159,7 @@ do
       end if
    else if ( tmp % datatype == DATATYPE_REAL) then
       if (tmp % is_set .or. .not. tmp % required) then 
-         write(*,'(A20," = ",ES10.4)') tmp % varname, tmp % real_var
+         write(*,'(A20," = ",ES11.4)') tmp % varname, tmp % real_var
       else
          write(*,'(A20,1A       )') tmp % varname
       end if

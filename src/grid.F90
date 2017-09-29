@@ -5,6 +5,8 @@ use types
 use help_routines, only: alloc
 implicit none
 
+real(REAL_KIND),parameter :: EPS = 1.0E-6_REAL_KIND
+
 character(len=100)          :: filename_grid_in
 character(len=100)          :: filename_grid_out
 character(len=*), parameter :: GROUP_GRID            = "grid"
@@ -114,7 +116,6 @@ end subroutine read_grid_hdf5
 
 subroutine connect_blocks()
 implicit none
-real(REAL_KIND),parameter :: EPS = 1.0E-6_REAL_KIND
 integer :: b,f,nb,nf,p,per,d
 integer :: ni,nj,nk
 logical :: is3D 

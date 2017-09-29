@@ -113,16 +113,16 @@ subroutine sw_edge_info(e)
    implicit none
    integer, intent(in) :: e
    integer :: ne
-   write(*,'("Edge: ",I0)') e
-   write(*,'(2X,"From",4(1X,I0)," to",4(1X,I0))') git % point_refs(:,git % edge_points(1,e)) &
+   write(*,'("Edge: ",I0," Length: ",ES11.4)') e, git % edge_lengths(e)
+   write(*,'(2X,"From",4(1X,I4)," to",4(1X,I4))') git % point_refs(:,git % edge_points(1,e)) &
                                               ,git % point_refs(:,git % edge_points(2,e))
    ne = git % edge_neighbor(1,e)
-   write(*,'(2X,"Neighbors: ",I0)') ne
-   write(*,'(4X,"From",4(1X,I0)," to",4(1X,I0))') git % point_refs(:,git % edge_points(1,ne)) &
+   write(*,'(2X,"Neighbors: ",I0," Length: ",ES11.4)') ne, git % edge_lengths(ne)
+   write(*,'(4X,"From",4(1X,I4)," to",4(1X,I4))') git % point_refs(:,git % edge_points(1,ne)) &
                                               ,git % point_refs(:,git % edge_points(2,ne))
    ne = git % edge_neighbor(2,e)
-   write(*,'(2X,"Neighbors: ",I0)') ne
-   write(*,'(4X,"From",4(1X,I0)," to",4(1X,I0))') git % point_refs(:,git % edge_points(1,ne)) &
+   write(*,'(2X,"Neighbors: ",I0," Length: ",ES11.4)') ne, git % edge_lengths(ne)
+   write(*,'(4X,"From",4(1X,I4)," to",4(1X,I4))') git % point_refs(:,git % edge_points(1,ne)) &
                                               ,git % point_refs(:,git % edge_points(2,ne))
 
    end subroutine

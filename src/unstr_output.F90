@@ -5,7 +5,7 @@ contains
 subroutine write_output(iter)
    use types
    use unstr, only: git
-   use spring, only: springs
+   use spring, only: springs, edge_values
    !use structured_grid, only: nBlock,nCell,blocks
 implicit none
 
@@ -84,6 +84,36 @@ if (mod(iter,output_intervall) == 0) then
    write(10,"(A)") 'LOOKUP_TABLE Default'
    do i = 1, git % nedge
       write(10,*) springs(1,i)
+   end do
+   write(10,"(A)") 'SCALARS Edge_Strech_Spring double'
+   write(10,"(A)") 'LOOKUP_TABLE Default'
+   do i = 1, git % nedge
+      write(10,*) springs(2,i)
+   end do
+   write(10,"(A)") 'SCALARS Edge_Parallel_Spring double'
+   write(10,"(A)") 'LOOKUP_TABLE Default'
+   do i = 1, git % nedge
+      write(10,*) springs(3,i)
+   end do
+   write(10,"(A)") 'SCALARS Wall_Value double'
+   write(10,"(A)") 'LOOKUP_TABLE Default'
+   do i = 1, git % nedge
+      write(10,*) edge_values(1,i)
+   end do
+   write(10,"(A)") 'SCALARS Edge_Strech_Value double'
+   write(10,"(A)") 'LOOKUP_TABLE Default'
+   do i = 1, git % nedge
+      write(10,*) edge_values(2,i)
+   end do
+   write(10,"(A)") 'SCALARS Edge_Strech_Value2 double'
+   write(10,"(A)") 'LOOKUP_TABLE Default'
+   do i = 1, git % nedge
+      write(10,*) edge_values(4,i)
+   end do
+   write(10,"(A)") 'SCALARS Edge_Parallel_Value double'
+   write(10,"(A)") 'LOOKUP_TABLE Default'
+   do i = 1, git % nedge
+      write(10,*) edge_values(3,i)
    end do
    write(10,"(A)") 'SCALARS KantenSteifigkeit double'
    write(10,"(A)") 'LOOKUP_TABLE Default'

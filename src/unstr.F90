@@ -3,6 +3,7 @@ use const
 use types
 use help_routines, only: alloc, vec_common
 implicit none
+real(REAL_KIND), parameter :: POINT_WEIGTH =  2.5E0_REAL_KIND
 type(t_unstr) :: git
 integer :: wall_move_rest
 contains
@@ -880,6 +881,7 @@ real(REAL_KIND) :: dx,dy,dz
 
 max_len = 0.0E+00_REAL_KIND
 min_len = 1.0E+10_REAL_KIND
+!$OMP PARALLEL DO REDUCTION(MAX:max_len,MIN:min_len)
 do e = 1, git % nedge
    p1 = git % edge_points(1,e)
    p2 = git % edge_points(2,e)
@@ -901,6 +903,7 @@ do e = 1, git % nedge
    max_len = max(max_len,git % edge_lengths(e))
    min_len = min(min_len,git % edge_lengths(e))
 end do
+!$OMP END PARALLEL DO
 end subroutine calc_edge_length
 
 subroutine calc_edge_forces(max_f)
@@ -912,6 +915,7 @@ integer :: e
 !integer :: en
 
 max_f = 0.0E0_REAL_KIND
+!$OMP PARALLEL DO REDUCTION(MAX:max_f)
 do e = 1, git % nedge
    git % edge_forces(:,e) = git % edge_springs(e) * git % edge_vectors(:,e)
    f = sqrt( git % edge_forces(1,e) * git % edge_forces(1,e) &
@@ -919,6 +923,7 @@ do e = 1, git % nedge
            + git % edge_forces(3,e) * git % edge_forces(3,e) )
    max_f = max(max_f,f)
 end do
+!$OMP END PARALLEL DO
 
 end subroutine calc_edge_forces
 
@@ -933,6 +938,7 @@ real(REAL_KIND) :: tmp(3), sp
 max_f = 0.0E0_REAL_KIND
 sum_f = 0.0E0_REAL_KIND
 if (wall_move_rest == 1) then
+   !$OMP PARALLEL DO
    do np = 1, git % nPoint
        tmp = 0.0E0_REAL_KIND
        !write(*,*) np
@@ -962,7 +968,9 @@ if (wall_move_rest == 1) then
       sum_f = sum_f + f
       max_f = max(max_f,f)
    end do
+   !$OMP END PARALLEL DO
 else if (wall_move_rest == 2) then
+   !$OMP PARALLEL DO
    do np = 1, git % nPoint
       tmp = 0.0E0_REAL_KIND
       !write(*,*) np
@@ -993,13 +1001,13 @@ else if (wall_move_rest == 2) then
       sum_f = sum_f + f
       max_f = max(max_f,f)
    end do
+   !$OMP END PARALLEL DO
 end if
 sum_f = sum_f / git % nPoint
 end subroutine calc_point_forces
 
 subroutine move_points(max_f)
 implicit none
-real(REAL_KIND), parameter :: POINT_WEIGTH =  2.5E0_REAL_KIND
 real(REAL_KIND), intent(in) :: max_f
 real(REAL_KIND) :: min_l, fk
 
@@ -1007,9 +1015,11 @@ integer :: np
 
 min_l = minval(git % edge_lengths)
 fk = min(1.0E0_REAL_KIND,min_l / max_f)
+!$OMP PARALLEL DO
 do np = 1, git % npoint
    git % point_coords(:,np) = git % point_coords(:,np) + git % point_forces(:,np) / POINT_WEIGTH * fk
 end do
+!$OMP END PARALLEL DO
 end subroutine move_points
 
 subroutine unstr2struct(blocks)
