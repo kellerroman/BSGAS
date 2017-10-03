@@ -11,7 +11,7 @@ use control, only: nIter, res_out,res_out_start
 use spring, only: cell_inc,cell_parallel_inc
 use structured_grid, only: filename_grid_in,filename_grid_out
 use unstr_output, only: output_intervall
-use unstr, only: wall_move_rest
+use unstr, only: wall_move_rest, point_weight
 implicit none
 logical :: fexists
 integer :: fu
@@ -22,6 +22,7 @@ character(len=VARNAME_LENGTH) :: varname
 character(len=90) :: varvalue
 character(len=VARNAME_LENGTH),allocatable :: unset_paras(:)
 
+call add_parameter("POINT_WEIGHT",point_weight, 2.5E-00_REAL_KIND)
 call add_parameter("NITER",niter)
 call add_parameter("RES_OUT",res_out,100)
 call add_parameter("RES_OUT_START",res_out_start,50)
@@ -90,5 +91,9 @@ end if
 
 call list_parameter()
 call free_all()
+
+! Parameter calculation
+point_weight = 1.0E+00_REAL_KIND / point_weight
 end subroutine read_config
+
 end module config

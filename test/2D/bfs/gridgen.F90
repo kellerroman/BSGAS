@@ -19,24 +19,25 @@ IMPLICIT NONE
 INTEGER, PARAMETER :: NUM_OF_BLOCKS = 3
 
 
-!!!!!!!!!!!!!!!! NJ VALUES 
-INTEGER, PARAMETER :: NJ1 = 100
-INTEGER, PARAMETER :: NJ2 = 200
-!!!!!!!!!!!!!!!! NI VALUES 
-INTEGER, PARAMETER :: NI1 = 100
-INTEGER, PARAMETER :: NI2 = 500
+!!!!!!!!!!!!!!!! nj values 
+integer                 :: nj1
+integer                 :: nj2
+!!!!!!!!!!!!!!!! ni values 
+integer                 :: ni1
+integer                 :: ni2
 
-REAL(KIND=8), PARAMETER :: x1 = -5.08D-2
-REAL(KIND=8), PARAMETER :: x2  =  0.0D0
-REAL(KIND=8), PARAMETER :: x3  =  3.81D-1
+real(kind=8)            :: x1
+real(kind=8), parameter :: x2  =  0.0d0
+real(kind=8)            :: x3
 
-REAL(KIND=8), PARAMETER :: y1 = -1.27D-2
-REAL(KIND=8), PARAMETER :: y2 = 0.0D0
-REAL(KIND=8), PARAMETER :: y3 = 1.016D-1
+real(kind=8)            :: y1
+real(kind=8), parameter :: y2 = 0.0d0
+real(kind=8)            :: y3
 
 TYPE(t_start_end) :: block_start_end(NUM_OF_BLOCKS)
 
-INTEGER :: B
+integer :: b, bfs_case
+character(len = 1) :: arg
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!                                                                                        !!!!!
@@ -48,6 +49,33 @@ INTEGER :: B
 WRITE(*,*) "======================================================" &
           ,"==       GRIDGEN for Backward Facing Step           =="  &
           ,"======================================================"
+bfs_case = 1
+call get_command_argument(1, arg)
+if (len_trim(arg) /= 0) then
+   read(arg,*) bfs_case
+end if
+
+if (bfs_case == 1) then
+   nj1 = 100
+   nj2 = 200
+   ni1 = 100
+   ni2 = 500
+
+   x1 = -5.080d-02
+   x3 =  3.810d-01
+   y1 = -1.270d-02
+   y3 =  1.016d-01
+else
+   nj1 =  50
+   nj2 = 100
+   ni1 =  50
+   ni2 = 100
+
+   x1 = -2.540d-02
+   x3 =  7.620d-02
+   y1 = -6.350d-03
+   y3 =  5.080d-02
+end if
 
 call set_dimension(2)
 call add_block(NI1,NJ2)

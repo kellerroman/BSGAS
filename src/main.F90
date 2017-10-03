@@ -8,8 +8,10 @@ program BSGAS
 ! Version:      V0.1.0
 ! --------------------------------------------------------------------------------------------------
 ! Description:
-!   Fuegt dem 16M Gitter von Markus Lempke weitere Zellen in der
-!   sondern 5E-6 ist.
+!   Transforms Block Structured Grids to obey cell-inc, wall-dist creiteria
+!   Currently three reasons for cell size changes are imlemented: wall-dist, neighbor edge length and
+!   parallel cell length differences
+!   
 ! --------------------------------------------------------------------------------------------------
 ! Comments and Notes:
 !   
@@ -18,8 +20,8 @@ program BSGAS
 !
 ! --------------------------------------------------------------------------------------------------
 ! Author and Change History:
-!   - 2017-05-13: Started of Project by RK
-!   - 2017-09-29: Added ifort as possible compiler
+!   - 2017-05-13,RK : Started of Project
+!   - 2017-09-29,RK : Added ifort as possible compiler
 !
 ! **************************************************************************************************
 use boundary, only: read_boundary, init_boundary, init_walledges

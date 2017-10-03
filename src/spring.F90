@@ -23,7 +23,7 @@ implicit none
 integer :: e
 
 call alloc(springs,N_SPRINGS,git % nedge)
-call alloc(edge_values,N_SPRINGS,git % nedge+1)
+call alloc(edge_values,N_SPRINGS,git % nedge)
 do e = 1, git % nedge
    springs(:,e) = 1.0E+0_REAL_KIND / dble(N_SPRINGS) / git % edge_lengths(e)
 end do
@@ -54,7 +54,7 @@ end subroutine calc_edge_springs
 subroutine wall_refinement
 implicit none
 integer :: e,i
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO PRIVATE(e)
 do i = 1, git % nWallEdge
    e = git % wall_edges(i)
    springs(1,e) = springs(1,e) & 
@@ -74,7 +74,7 @@ integer :: n
 real(REAL_KIND) :: el,nel
 real(REAL_KIND) :: fkt
 real(REAL_KIND) :: delta
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO PRIVATE(el,nel,fkt,delta)
 do e = 1, git % nedge
    el = git % edge_lengths(e)
    nel = 1E10_REAL_KIND
@@ -85,9 +85,8 @@ do e = 1, git % nedge
    fkt = el / nel - cell_inc
    edge_values(2,e) = fkt
    delta = exp(faktor_strech * fkt)
-   edge_values(4,e) = delta
-   !el = max (el,INV_SPRING_INC )
-   !el = min (el,    SPRING_INC )
+   !delta = max (delta,INV_SPRING_INC )
+   !delta = min (delta,    SPRING_INC )
    springs(2,e) = max(springs(2,e) * delta, SPRING_MIN)
 end do
 !$OMP END PARALLEL DO
@@ -101,7 +100,7 @@ integer :: n
 
 real(REAL_KIND) :: el,nel
 real(REAL_KIND) :: fkt
-!$OMP PARALLEL DO
+!$OMP PARALLEL DO PRIVATE(el,nel,fkt)
 do e = 1, git % nedge
    el = git % edge_lengths(e)
    nel = 1E10_REAL_KIND

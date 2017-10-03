@@ -105,11 +105,6 @@ if (mod(iter,output_intervall) == 0) then
    do i = 1, git % nedge
       write(10,*) edge_values(2,i)
    end do
-   write(10,"(A)") 'SCALARS Edge_Strech_Value2 double'
-   write(10,"(A)") 'LOOKUP_TABLE Default'
-   do i = 1, git % nedge
-      write(10,*) edge_values(4,i)
-   end do
    write(10,"(A)") 'SCALARS Edge_Parallel_Value double'
    write(10,"(A)") 'LOOKUP_TABLE Default'
    do i = 1, git % nedge

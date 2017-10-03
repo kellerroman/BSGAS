@@ -3,7 +3,7 @@ use const
 use types
 use help_routines, only: alloc, vec_common
 implicit none
-real(REAL_KIND), parameter :: POINT_WEIGTH =  2.5E0_REAL_KIND
+real(REAL_KIND) :: point_weight ! read in config and calculated invers
 type(t_unstr) :: git
 integer :: wall_move_rest
 contains
@@ -881,7 +881,7 @@ real(REAL_KIND) :: dx,dy,dz
 
 max_len = 0.0E+00_REAL_KIND
 min_len = 1.0E+10_REAL_KIND
-!$OMP PARALLEL DO REDUCTION(MAX:max_len,MIN:min_len)
+!$OMP PARALLEL DO REDUCTION(MAX:max_len) REDUCTION(MIN:min_len) PRIVATE(p1,p2,x1,x2,y1,y2,z1,z2,dx,dy,dz)
 do e = 1, git % nedge
    p1 = git % edge_points(1,e)
    p2 = git % edge_points(2,e)
@@ -915,7 +915,7 @@ integer :: e
 !integer :: en
 
 max_f = 0.0E0_REAL_KIND
-!$OMP PARALLEL DO REDUCTION(MAX:max_f)
+!$OMP PARALLEL DO REDUCTION(MAX:max_f) PRIVATE(f)
 do e = 1, git % nedge
    git % edge_forces(:,e) = git % edge_springs(e) * git % edge_vectors(:,e)
    f = sqrt( git % edge_forces(1,e) * git % edge_forces(1,e) &
@@ -938,7 +938,7 @@ real(REAL_KIND) :: tmp(3), sp
 max_f = 0.0E0_REAL_KIND
 sum_f = 0.0E0_REAL_KIND
 if (wall_move_rest == 1) then
-   !$OMP PARALLEL DO
+   !$OMP PARALLEL DO PRIVATE(tmp,edge,sp,f) REDUCTION(MAX:max_f) REDUCTION(+:sum_f)
    do np = 1, git % nPoint
        tmp = 0.0E0_REAL_KIND
        !write(*,*) np
@@ -970,7 +970,7 @@ if (wall_move_rest == 1) then
    end do
    !$OMP END PARALLEL DO
 else if (wall_move_rest == 2) then
-   !$OMP PARALLEL DO
+   !$OMP PARALLEL DO PRIVATE( tmp,edge,sp,f), REDUCTION(MAX:max_f) REDUCTION(+:sum_f)
    do np = 1, git % nPoint
       tmp = 0.0E0_REAL_KIND
       !write(*,*) np
@@ -1017,7 +1017,7 @@ min_l = minval(git % edge_lengths)
 fk = min(1.0E0_REAL_KIND,min_l / max_f)
 !$OMP PARALLEL DO
 do np = 1, git % npoint
-   git % point_coords(:,np) = git % point_coords(:,np) + git % point_forces(:,np) / POINT_WEIGTH * fk
+   git % point_coords(:,np) = git % point_coords(:,np) + git % point_forces(:,np) * point_weight * fk
 end do
 !$OMP END PARALLEL DO
 end subroutine move_points
