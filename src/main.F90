@@ -4,7 +4,7 @@ program BSGAS
 ! **************************************************************************************************
 ! Author:       Roman Keller(RK)
 ! Start date:   13.05.2017
-! Last changes: 29.09.2017
+! Last changes: 03.10.2017
 ! Version:      V0.1.0
 ! --------------------------------------------------------------------------------------------------
 ! Description:
@@ -22,6 +22,7 @@ program BSGAS
 ! Author and Change History:
 !   - 2017-05-13,RK : Started of Project
 !   - 2017-09-29,RK : Added ifort as possible compiler
+!   - 2017-10-03,RK : Added OpenMP support in gfortran
 !
 ! **************************************************************************************************
 use boundary, only: read_boundary, init_boundary, init_walledges

@@ -1,21 +1,25 @@
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!! BLOCK STRUCUTRED GRID ADAPTION SOLVER SCREEN IO MODULE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!    this module is intendet to manage all output to the screen and in future log file outputs
-!!    ALL routines that can be called are named sw_*
-!!    
-!!
-!! AUTHORS:             ROMAN KELLER(RK)
-!!
-!! START:               13.05.2017               
-!! LAST CHANGE:         13.05.2017
-!! VERSION:             V0.0.1
-!!
-!! CHANGELOG:
-!!          13.05.2017,RK: Start of Project
-!!
-!! TODO:
-!!          
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! **************************************************************************************************
+! ***              BLOCK STRUCUTRED GRID ADAPTION SOLVER SCREEN IO MODULE                        ***
+! **************************************************************************************************
+! Author:       Roman Keller(RK)
+! Start date:   13.05.2017
+! Last changes: 03.10.2017
+! --------------------------------------------------------------------------------------------------
+! Description:
+!    This module is intendet to manage all output to the screen and in future log file outputs
+!    ALL routines that can be called are named sw_*
+!   
+! --------------------------------------------------------------------------------------------------
+! Comments and Notes:
+!   
+! --------------------------------------------------------------------------------------------------
+! References:
+!
+! --------------------------------------------------------------------------------------------------
+! Author and Change History:
+!   - 2017-05-13,RK: Start of Project
+!
+! **************************************************************************************************
 module screen_io
 use, intrinsic :: ISO_FORTRAN_ENV, only: stdout => OUTPUT_UNIT, stderr => ERROR_UNIT
 use const
@@ -26,13 +30,18 @@ character(len=*),parameter :: RED_START            = achar(27)//"[31m"
 character(len=*),parameter :: RED_END              = achar(27)//"[0m"                    
 character(len=*),parameter :: GREEN_START          = achar(27)//"[32m"
 character(len=*),parameter :: GREEN_END            = achar(27)//"[0m"                    
+
 contains
+
 subroutine sw_program_start()
 implicit none
 call sw_full_line("")
-call sw_full_line("")
-call sw_full_line("START OF BSGAS")
-call sw_full_line("")
+call sw_full_line("Block Structured Grid Adaptation Solver")
+call sw_full_line("  ")
+call sw_2_column_line("Author","Roman Keller(RK)")
+call sw_2_column_line("Version",VERSION)
+call sw_2_column_line("Compiled on",__DATE__//" at "//__TIME__)
+call sw_full_line("  ")
 call sw_full_line("")
 end subroutine sw_program_start
 
@@ -46,6 +55,18 @@ call sw_full_line("")
 call sw_full_line("")
 end subroutine sw_program_end
 
+subroutine sw_2_column_line(str1,str2)
+implicit none
+character(len=*), intent(in) :: str1,str2
+integer :: length
+length = SCREEN_WIDTH - 4 - 33 - len_trim(str2) - 3
+   write(stdout,'(A)'         , ADVANCE="NO") "*** "
+   write(stdout,'(A30,":  ")' , ADVANCE="NO") trim(str1)
+   write(stdout,'(A)'         , ADVANCE="NO") trim(str2)
+   write(stdout,'(A)'         , ADVANCE="NO") repeat(" ",length)
+   write(stdout,'(A)'                       ) repeat("*",3)
+
+end subroutine sw_2_column_line
 
 subroutine sw_full_line(str)
 implicit none
@@ -53,14 +74,16 @@ character(len=*), intent(in) :: str
 
 integer :: length
 ! if empty strin make an entire line of "="
-if (len_trim(str) == 0) then
-   write(stdout,'(A)',ADVANCE='NO') repeat("=",SCREEN_WIDTH)
+if (len(str) == 0) then
+   write(stdout,'(A)',ADVANCE='NO') repeat("*",SCREEN_WIDTH)
 else
-   length = SCREEN_WIDTH - 2 - len_trim(str)
-   write(stdout,'(A)'      ,ADVANCE="NO") repeat("=",length/2)
-   write(stdout,'(1X,A,1X)',ADVANCE="NO") trim(str)
-   write(stdout,'(A)'      ,ADVANCE="NO") repeat("=",length/2)
-   if (mod(length,2) /= 0 ) write(stdout,'("=")',ADVANCE="NO")
+   length = SCREEN_WIDTH - 2 - len(str) - 6
+   write(stdout,'(A)'      ,ADVANCE="NO") repeat("*",3)
+   write(stdout,'(A)'      ,ADVANCE="NO") repeat(" ",length/2)
+   write(stdout,'(1X,A,1X)',ADVANCE="NO") str
+   write(stdout,'(A)'      ,ADVANCE="NO") repeat(" ",length/2)
+   if (mod(length,2) /= 0 ) write(stdout,'(" ")',ADVANCE="NO")
+   write(stdout,'(A)'      ,ADVANCE="NO") repeat("*",3)
 end if
 write(stdout,*)
 end subroutine sw_full_line

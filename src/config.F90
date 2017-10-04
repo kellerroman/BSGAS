@@ -6,32 +6,37 @@ implicit none
 character(len=100) :: filename_config = "config.cfg"
 
 contains
-subroutine read_config
-use control, only: nIter, res_out,res_out_start
-use spring, only: cell_inc,cell_parallel_inc
-use structured_grid, only: filename_grid_in,filename_grid_out
-use unstr_output, only: output_intervall
-use unstr, only: wall_move_rest, point_weight
-implicit none
-logical :: fexists
-integer :: fu
-integer :: io_stat
-integer :: pos
-character(len=100) :: line
-character(len=VARNAME_LENGTH) :: varname
-character(len=90) :: varvalue
-character(len=VARNAME_LENGTH),allocatable :: unset_paras(:)
 
-call add_parameter("POINT_WEIGHT",point_weight, 2.5E-00_REAL_KIND)
-call add_parameter("NITER",niter)
-call add_parameter("RES_OUT",res_out,100)
-call add_parameter("RES_OUT_START",res_out_start,50)
-call add_parameter("OUTPUT_INTERVALL",output_intervall,10)
-call add_parameter("CELL_INC",cell_inc,1.25E+0_REAL_KIND)
-call add_parameter("CELL_PARALLEL_INC",cell_parallel_inc,1.25E+0_REAL_KIND)
-call add_parameter("WALL_MOVE_REST",wall_move_rest)
-call add_parameter("GRID_IN",filename_grid_in,"grid.h5")
-call add_parameter("GRID_OUT",filename_grid_out,"grid_out.h5")
+subroutine read_config
+   use control, only: nIter, res_out,res_out_start
+   use spring, only: cell_inc,cell_parallel_inc, faktor_wall, faktor_strech, faktor_para
+   use structured_grid, only: filename_grid_in,filename_grid_out
+   use unstr_output, only: output_intervall
+   use unstr, only: wall_move_rest, point_weight
+
+implicit none
+   logical :: fexists
+   integer :: fu
+   integer :: io_stat
+   integer :: pos
+   character(len=100) :: line
+   character(len=VARNAME_LENGTH) :: varname
+   character(len=90) :: varvalue
+   character(len=VARNAME_LENGTH),allocatable :: unset_paras(:)
+
+call add_parameter("GRID_OUT"          ,filename_grid_out      ,"grid_out.h5"     )
+call add_parameter("GRID_IN"           ,filename_grid_in       ,"grid.h5"         )
+call add_parameter("FAKTOR_PARA"       ,faktor_para            ,1.00E-03_REAL_KIND)
+call add_parameter("FAKTOR_STRECH"     ,faktor_strech          ,1.00E-05_REAL_KIND)
+call add_parameter("FAKTOR_WALL"       ,faktor_wall            ,1.00E+00_REAL_KIND)
+call add_parameter("POINT_WEIGHT"      ,point_weight           ,2.50E-00_REAL_KIND)
+call add_parameter("WALL_MOVE_REST"    ,wall_move_rest                            )
+call add_parameter("CELL_INC"          ,cell_inc               ,1.25E+00_REAL_KIND)
+call add_parameter("CELL_PARALLEL_INC" ,cell_parallel_inc      ,1.25E+00_REAL_KIND)
+call add_parameter("OUTPUT_INTERVALL"  ,output_intervall       ,10                )
+call add_parameter("RES_OUT_START"     ,res_out_start          ,50                )
+call add_parameter("RES_OUT"           ,res_out                ,100               )
+call add_parameter("NITER"             ,niter                                     )
 
 inquire(file=trim(filename_config),exist=fexists)
 if (.not. fexists) then

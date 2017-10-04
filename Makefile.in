@@ -3,6 +3,8 @@ include ../inc_Makefile_src
 OBJECTS=$(_SOURCES:.F90=.o)
 EXECUTABLE = ../bin/BSGAS
 SOURCE_DIR = ../src
+GIT_VERSION := $(shell git describe --abbrev=4 --dirty --always --tags)
+
 
 compile: write $(EXECUTABLE)
 	@true
@@ -16,7 +18,7 @@ $(EXECUTABLE): $(OBJECTS)
 	$(FC) $(CFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
 
 %.o: %.F90
-	$(FC) -c $(CFLAGS) $(INCLUDE) $< -o $@ 
+	$(FC) -c $(CFLAGS) -DVERSION=\"$(GIT_VERSION)\" $(INCLUDE) $< -o $@
 	
 include ../inc_Makefile_dep
 
