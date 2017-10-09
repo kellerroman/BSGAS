@@ -118,6 +118,7 @@ subroutine connect_blocks()
 implicit none
 integer :: b,f,nb,nf,p,per,d
 integer :: ni,nj,nk
+
 logical :: is3D 
 
 integer :: is,ie,id
@@ -141,9 +142,40 @@ integer, allocatable :: point_on_face(:,:)
 integer, allocatable :: permutation(:,:)
 !< Different Point arrangment due to misaligned blocks (point_id,permutation)
 
+is3D = .false.
+
 b = 1
-if  ( blocks(b) % nPoints(3) == 1) then
-   is3D = .false.
+if (blocks(b) % nPoints(2) == 1) then
+   if (nBlock > 1) then
+      write(*,*) "For 1D case only single block supported"
+      stop 1
+   end if
+   number_of_corner_point = 2
+   number_of_face = 2
+   number_of_points_per_face = 2
+   number_of_permutation = 1
+   allocate( blocks(b) % boundary_cond(6))
+   blocks(b) % boundary_cond (:) % bc_type         = 0
+   blocks(b) % boundary_cond (:) % face            = 0
+   blocks(b) % boundary_cond (:) % permutation     = 0
+
+   blocks(b) % boundary_cond(1) % is   = 1
+   blocks(b) % boundary_cond(1) % ie   = 1
+   blocks(b) % boundary_cond(1) % id   = -1 
+
+   blocks(b) % boundary_cond(2) % is   = blocks(b) % nPoints(1)
+   blocks(b) % boundary_cond(2) % ie   = blocks(b) % nPoints(1)
+   blocks(b) % boundary_cond(2) % id   = 1 
+
+   blocks(b) % boundary_cond(:) % js   = 1
+   blocks(b) % boundary_cond(:) % je   = 1
+   blocks(b) % boundary_cond(:) % jd   = 0
+
+   blocks(b) % boundary_cond(:) % ks   = 1
+   blocks(b) % boundary_cond(:) % ke   = 1
+   blocks(b) % boundary_cond(:) % kd   = 0
+   return
+else if  ( blocks(b) % nPoints(3) == 1) then
    number_of_corner_point = 4
    number_of_face = 4
    number_of_points_per_face = 2
@@ -183,14 +215,6 @@ do b = 1, nBlock
    end if
 end do
 
-b = 1
-if (blocks(b) % nPoints(2) == 1) then
-   if (nBlock > 1) then
-      write(*,*) "For 1D case only single block supported"
-      stop 1
-   end if
-   return
-end if
 
 if (is3D) then
    point_on_face(:,1) = [1,3,5,7] !WEST

@@ -164,7 +164,18 @@ logical :: is_3D
 
 nBlock = ubound(blocks,1)
 allocate(norms(nBlock))
-if (blocks(1) % nPoints(3) > 1) then
+if (blocks(1) % nPoints(2) == 1) then
+   do b = 1, nBlock
+      do i = 1,blocks(b) % nPoints(1), blocks(b) % nCells(1)
+         p = blocks(b) % refs(i,1,1)
+         git % point_move_rest(p) = .true.
+         git % point_move_rest_type(p) = 1
+         git % point_move_rest_vector(:,p) = 0.0d0
+         write(*,*) "Restiricting Movement for",i,p
+      end do
+   end do
+   return
+else if (blocks(1) % nPoints(3) > 1) then
    is_3D = .true.
 else
    is_3D = .false.
@@ -527,12 +538,12 @@ if (nwe /= git % nWallEdge) then
    write(*,*) nwe, git % nWallEdge
    stop 1
 end if
-!do nwe = 1, git % nWallEdge
-!   e = git%wall_edges(nwe)
-!   p1 = git % edge_points(1,e)
-!   p2 = git % edge_points(2,e)
-!   ref = dble(git % point_refs(:,p1)+git % point_refs(:,p2)) / 2.0E0_REAL_KIND
-!   write(*,'("# ",I4," #E: ",I4," p: ",2I4," Ref:",4(1X,F5.1))') nwe,e,git % edge_points(:,e),ref
-!end do
+do nwe = 1, git % nWallEdge
+   e = git%wall_edges(nwe)
+   p1 = git % edge_points(1,e)
+   p2 = git % edge_points(2,e)
+   write(*,'("# ",I4," #E: ",I4," p: ",2I4," Ref:",4(1X,F5.1))') nwe,e,git % edge_points(:,e) &
+      ,dble(git % point_refs(:,p1)+git % point_refs(:,p2)) / 2.0E0_REAL_KIND
+end do
 end subroutine init_walledges
 end module boundary

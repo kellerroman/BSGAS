@@ -12,11 +12,11 @@ implicit none
 integer, intent(in) :: iter
 integer :: i
 !integer :: b,j,k
-character(len=20) :: filename
+character(len=25) :: filename
 
 if (mod(iter,output_intervall) == 0) then
    write(filename,'(a,i0,a)') "paraview_",iter,".vtk"
-   open(10,file=filename)
+   open(10,file=trim(filename))
 
    write(10,"(a)") '# vtk DataFile Version 2.0'
    write(10,"(a)") 'GRID-ADAPTION unstructured_grid'
