@@ -9,7 +9,7 @@ contains
 
 subroutine read_config
    use control, only: nIter, res_out,res_out_start
-   use spring, only: cell_inc,cell_parallel_inc, faktor_wall, faktor_strech, faktor_para
+   use spring, only: cell_inc,cell_parallel_inc, faktor_wall, faktor_strech, faktor_para, spring_max
    use structured_grid, only: filename_grid_in,filename_grid_out
    use unstr_output, only: output_intervall
    use unstr, only: wall_move_rest, point_weight
@@ -26,6 +26,7 @@ implicit none
 
 call add_parameter("GRID_OUT"          ,filename_grid_out      ,"grid_out.h5"     )
 call add_parameter("GRID_IN"           ,filename_grid_in       ,"grid.h5"         )
+call add_parameter("SPRING_MAX"        ,spring_max             ,1.00E+04_REAL_KIND)
 call add_parameter("FAKTOR_PARA"       ,faktor_para            ,1.00E-03_REAL_KIND)
 call add_parameter("FAKTOR_STRECH"     ,faktor_strech          ,1.00E-05_REAL_KIND)
 call add_parameter("FAKTOR_WALL"       ,faktor_wall            ,1.00E+00_REAL_KIND)

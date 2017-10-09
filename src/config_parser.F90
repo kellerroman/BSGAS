@@ -142,6 +142,7 @@ else
 end if
 n_datin_para = n_datin_para + 1
 end subroutine add_str
+
 subroutine list_parameter()
 implicit none
 integer :: npara
@@ -153,7 +154,7 @@ do
    npara = npara + 1
    if ( tmp % datatype == DATATYPE_INT) then
       if (tmp % is_set .or. .not. tmp % required) then 
-         write(*,'(A20," = ",I0)') tmp % varname, tmp % int_var
+         write(*,'(A20," =  ",I0)') tmp % varname, tmp % int_var
       else
          write(*,'(A20      )') tmp % varname
       end if
@@ -165,7 +166,7 @@ do
       end if
    else if ( tmp % datatype == DATATYPE_STRING) then
       if (tmp % is_set .or. .not. tmp % required) then 
-         write(*,'(A20," = ",A)') tmp % varname, trim(tmp % string_var)
+         write(*,'(A20," =  ",A)') tmp % varname, trim(tmp % string_var)
       else
          write(*,'(A20,1A       )') tmp % varname
       end if

@@ -142,9 +142,7 @@ integer, allocatable :: permutation(:,:)
 !< Different Point arrangment due to misaligned blocks (point_id,permutation)
 
 b = 1
-if (blocks(b) % nPoints(2) == 1) then
-   return 
-else if  ( blocks(b) % nPoints(3) == 1) then
+if  ( blocks(b) % nPoints(3) == 1) then
    is3D = .false.
    number_of_corner_point = 4
    number_of_face = 4
@@ -184,6 +182,15 @@ do b = 1, nBlock
       corner_points (:,8,b) = blocks(b) % coords (ni,nj,nk,:)
    end if
 end do
+
+b = 1
+if (blocks(b) % nPoints(2) == 1) then
+   if (nBlock > 1) then
+      write(*,*) "For 1D case only single block supported"
+      stop 1
+   end if
+   return
+end if
 
 if (is3D) then
    point_on_face(:,1) = [1,3,5,7] !WEST
@@ -410,10 +417,11 @@ do b = 1, nBlock
       end do
    end do
 end do
-   return
-666  continue
-         write(*,*) "Per: ",per, "for ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"
-         stop 1
+return
+
+666   continue
+      write(*,*) "Per: ",per, "for ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"
+      stop 1
    
 6666  continue
       write(*,*) "Case ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"

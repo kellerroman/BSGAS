@@ -8,6 +8,7 @@ integer(INT_KIND), parameter :: N_SPRINGS      = 3
 real(REAL_KIND)              :: faktor_wall
 real(REAL_KIND)              :: faktor_strech
 real(REAL_KIND)              :: faktor_para
+real(REAL_KIND)              :: spring_max
 real(REAL_KIND), parameter   :: SPRING_MIN     = 1.00E-10_REAL_KIND
 real(REAL_KIND), parameter   :: SPRING_INC     = 1.05E-00_REAL_KIND
 real(REAL_KIND), parameter   :: INV_SPRING_INC = 1.0E0_REAL_KIND / SPRING_INC
@@ -44,7 +45,8 @@ call edge_parallel_streching
 
 !$OMP PARALLEL DO
 do e = 1, git % nedge
-   git % edge_springs(e) = sum(springs(:,e))
+   springs(:,e)          = min(spring_max,springs(:,e))
+   git % edge_springs(e) = sum(           springs(:,e))
 end do
 !$OMP END PARALLEL DO
 max_spring = maxval( git % edge_springs)
@@ -60,7 +62,7 @@ do i = 1, git % nWallEdge
    springs(1,e) = springs(1,e) & 
          * exp(faktor_wall * (git % edge_lengths(e) - git % wall_edge_dns(i)))
    edge_values(1,e) = git % edge_lengths(e) - git % wall_edge_dns(i)
-   springs(1,e) = max(0.0E0_REAL_KIND,springs(1,e))
+   springs(1,e) = max(0.0E0_REAL_KIND ,springs(1,e))
 end do
 !$OMP END PARALLEL DO
 end subroutine wall_refinement
