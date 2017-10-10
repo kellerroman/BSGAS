@@ -4,32 +4,15 @@ integer :: output_intervall
 contains
 subroutine write_output(iter)
    use types
-   use unstr, only: git!, point_weight
+   use unstr, only: git
    use spring, only: springs, edge_values
    !use structured_grid, only: nBlock,nCell,blocks
 implicit none
 
 integer, intent(in) :: iter
 integer :: i
-real(REAL_KIND):: f
 !integer :: b,j,k
 character(len=25) :: filename
-!if (mod(iter,res_out) == 0) then
-if (iter >= 999800) then
-   do i = 1, 2! git % nedge
-      !dx = min(1.0E-6_REAL_KIND,min_wall_len)
-      f = 1.0E-6_REAL_KIND
-      !if (git % edge_lengths(i) < f) then
-         !write(*,*) iter,i,git % edge_lengths(i),springs(2,i),edge_values(:,i)
-      !end if
-   end do
-!write(666,*) iter, git % edge_lengths(1:3),springs(1,1),springs(2,2) 
-end if
-
-if (iter == 999900) then
-   !point_weight = point_weight * 0.5
-
-end if
 
 if (mod(iter,output_intervall) == 0) then
    write(filename,'(a,i0,a)') "paraview_",iter,".vtk"

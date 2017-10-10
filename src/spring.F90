@@ -41,7 +41,7 @@ subroutine calc_edge_springs(max_spring,min_spring)
 implicit none
 real(REAL_KIND), intent(out) :: max_spring
 real(REAL_KIND), intent(out) :: min_spring
-integer :: e,s
+integer :: e
 !integer :: en
 
 !if (mod(iter,spring_intervall) /= 0) return
