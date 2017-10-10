@@ -872,16 +872,20 @@ git % edge_forces  = -1
 
 end subroutine strukt2unstr
 
-subroutine calc_edge_length(max_len,min_len)
+subroutine calc_edge_length(max_len,min_len,max_wall_len, min_wall_len)
 implicit none
 real(REAL_KIND), intent(out) :: max_len, min_len
+real(REAL_KIND), intent(out) :: max_wall_len, min_wall_len
 integer :: e,p1,p2
 real(REAL_KIND) :: x1,x2,y1,y2,z1,z2
 real(REAL_KIND) :: dx,dy,dz
 
 max_len = 0.0E+00_REAL_KIND
 min_len = 1.0E+10_REAL_KIND
-!$OMP PARALLEL DO REDUCTION(MAX:max_len) REDUCTION(MIN:min_len) PRIVATE(p1,p2,x1,x2,y1,y2,z1,z2,dx,dy,dz)
+max_wall_len = 0.0E+00_REAL_KIND
+min_wall_len = 1.0E+10_REAL_KIND
+!$OMP PARALLEL 
+!$OMP DO REDUCTION(MAX:max_len) REDUCTION(MIN:min_len) PRIVATE(p1,p2,x1,x2,y1,y2,z1,z2,dx,dy,dz)
 do e = 1, git % nedge
    p1 = git % edge_points(1,e)
    p2 = git % edge_points(2,e)
@@ -903,7 +907,15 @@ do e = 1, git % nedge
    max_len = max(max_len,git % edge_lengths(e))
    min_len = min(min_len,git % edge_lengths(e))
 end do
-!$OMP END PARALLEL DO
+!$OMP END DO
+!$OMP DO REDUCTION(MAX:max_wall_len) REDUCTION(MIN:min_wall_len) PRIVATE(e)
+do p1 = 1, git % nWallEdge
+   e = git % wall_edges(p1)
+   max_wall_len = max(max_wall_len,git % edge_lengths(e))
+   min_wall_len = min(min_wall_len,git % edge_lengths(e))
+end do
+!$OMP END DO
+!$OMP END PARALLEL
 end subroutine calc_edge_length
 
 subroutine calc_edge_forces(max_f)
@@ -924,7 +936,6 @@ do e = 1, git % nedge
    max_f = max(max_f,f)
 end do
 !$OMP END PARALLEL DO
-
 end subroutine calc_edge_forces
 
 subroutine calc_point_forces(max_f,sum_f)

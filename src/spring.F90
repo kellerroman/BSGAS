@@ -10,13 +10,15 @@ real(REAL_KIND)              :: faktor_strech
 real(REAL_KIND)              :: faktor_para
 real(REAL_KIND)              :: spring_max
 real(REAL_KIND), parameter   :: SPRING_MIN     = 1.00E-10_REAL_KIND
-real(REAL_KIND), parameter   :: SPRING_INC     = 1.05E-00_REAL_KIND
-real(REAL_KIND), parameter   :: INV_SPRING_INC = 1.0E0_REAL_KIND / SPRING_INC
+!real(REAL_KIND), parameter   :: SPRING_INC     = 1.05E-00_REAL_KIND
+!real(REAL_KIND), parameter   :: INV_SPRING_INC = 1.0E0_REAL_KIND / SPRING_INC
 real(REAL_KIND), allocatable :: springs(:,:)
 real(REAL_KIND), allocatable :: edge_values(:,:)
 
 real(REAL_KIND) :: cell_inc
 real(REAL_KIND) :: cell_parallel_inc
+
+!integer(INT_KIND), parameter :: spring_intervall = 1 
 contains
 
 subroutine init_springs
@@ -29,15 +31,20 @@ do e = 1, git % nedge
    springs(:,e) = 1.0E+0_REAL_KIND / dble(N_SPRINGS) / git % edge_lengths(e)
 end do
 
+edge_values(1,:) = 1.0D0
+
 !write(*,*) maxval(git % wall_edge_dns), minval(git % wall_edge_dns)
 end subroutine init_springs
 
 subroutine calc_edge_springs(max_spring,min_spring)
+!use control, only: iter
 implicit none
 real(REAL_KIND), intent(out) :: max_spring
 real(REAL_KIND), intent(out) :: min_spring
-integer :: e
+integer :: e,s
 !integer :: en
+
+!if (mod(iter,spring_intervall) /= 0) return
 
 call wall_refinement
 call edge_streching
@@ -61,6 +68,8 @@ do i = 1, git % nWallEdge
    e = git % wall_edges(i)
    springs(1,e) = springs(1,e) & 
          * exp(faktor_wall * (git % edge_lengths(e) - git % wall_edge_dns(i)))
+!   springs(1,e) = springs(1,e) & 
+!                * (git % edge_lengths(e) / git % wall_edge_dns(i))
    edge_values(1,e) = git % edge_lengths(e) - git % wall_edge_dns(i)
    springs(1,e) = max(0.0E0_REAL_KIND ,springs(1,e))
 end do
@@ -76,7 +85,7 @@ integer :: n
 real(REAL_KIND) :: el,nel
 real(REAL_KIND) :: fkt
 real(REAL_KIND) :: delta
-!$OMP PARALLEL DO PRIVATE(el,nel,fkt,delta)
+!$OMP PARALLEL DO PRIVATE(el,nel,fkt,ne,n,delta)
 do e = 1, git % nedge
    el = git % edge_lengths(e)
    nel = 1E10_REAL_KIND

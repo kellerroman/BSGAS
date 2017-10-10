@@ -35,7 +35,9 @@ use unstr_output, only: write_output
 use spring, only: init_springs,calc_edge_springs!, springs
 use types
 implicit none
-real(REAL_KIND) :: max_point_f, max_edge_f, sum_point_f,max_edge_len,min_edge_len
+real(REAL_KIND) :: max_point_f, max_edge_f, sum_point_f
+real(REAL_KIND) :: max_edge_len,min_edge_len
+real(REAL_KIND) :: max_walledge_len,min_walledge_len
 real(REAL_KIND) :: max_spring, min_spring
 
 call sw_program_start()
@@ -50,7 +52,7 @@ call strukt2unstr(blocks)
 call init_boundary(git,blocks)
 call init_walledges(git,blocks)
 
-call calc_edge_length(max_edge_len,min_edge_len)
+call calc_edge_length(max_edge_len,min_edge_len,max_walledge_len,min_walledge_len)
 call init_springs
 call calc_edge_springs(max_spring,min_spring)
 
@@ -69,7 +71,7 @@ ITER_LOOP: do while (.not. end_adaption)
 
    call loop_control()
 
-   call calc_edge_length(max_edge_len,min_edge_len)
+   call calc_edge_length(max_edge_len,min_edge_len,max_walledge_len,min_walledge_len)
 
    call calc_edge_springs(max_spring,min_spring)
 
@@ -77,7 +79,8 @@ ITER_LOOP: do while (.not. end_adaption)
 
    call calc_point_forces(max_point_f,sum_point_f)
 
-   call sw_residual(iter,max_spring,min_spring,max_edge_f,max_point_f,sum_point_f,max_edge_len,min_edge_len)
+   call sw_residual(iter,max_spring,min_spring,max_edge_f,max_point_f,sum_point_f &
+                   ,max_edge_len,min_edge_len,max_walledge_len,min_walledge_len)
 
    call move_points(max_edge_f)
    

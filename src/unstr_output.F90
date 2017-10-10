@@ -4,15 +4,32 @@ integer :: output_intervall
 contains
 subroutine write_output(iter)
    use types
-   use unstr, only: git
+   use unstr, only: git!, point_weight
    use spring, only: springs, edge_values
    !use structured_grid, only: nBlock,nCell,blocks
 implicit none
 
 integer, intent(in) :: iter
 integer :: i
+real(REAL_KIND):: f
 !integer :: b,j,k
 character(len=25) :: filename
+!if (mod(iter,res_out) == 0) then
+if (iter >= 999800) then
+   do i = 1, 2! git % nedge
+      !dx = min(1.0E-6_REAL_KIND,min_wall_len)
+      f = 1.0E-6_REAL_KIND
+      !if (git % edge_lengths(i) < f) then
+         !write(*,*) iter,i,git % edge_lengths(i),springs(2,i),edge_values(:,i)
+      !end if
+   end do
+!write(666,*) iter, git % edge_lengths(1:3),springs(1,1),springs(2,2) 
+end if
+
+if (iter == 999900) then
+   !point_weight = point_weight * 0.5
+
+end if
 
 if (mod(iter,output_intervall) == 0) then
    write(filename,'(a,i0,a)') "paraview_",iter,".vtk"
@@ -61,18 +78,19 @@ if (mod(iter,output_intervall) == 0) then
    end do
    write(10,*)
    write(10,"(A,1X,I0)") "POINT_DATA",git % nPoint
-   write(10,"(A)") 'VECTORS Point_FORCE float'
+   write(10,"(A)") 'VECTORS Point_FORCE double'
    do i = 1, git % nPoint
-      write(10,'(3(f20.13,1X))') git % point_forces(:,i)
+      write(10,*) git % point_forces(:,i)
    end do
-   write(10,"(A)") 'SCALARS MOVEMENT float'
+   write(10,"(A)") 'SCALARS MOVEMENT double'
    write(10,"(A)") 'LOOKUP_TABLE Default'
    do i = 1, git % nPoint
       write(10,*) git % point_move_rest_type(i)
    end do
-   write(10,"(A)") 'VECTORS MOVEMENT_VECTOR float'
+   write(10,"(A)") 'VECTORS MOVEMENT_VECTOR double'
    do i = 1, git % nPoint
-      write(10,'(3(f20.13,1X))') git % point_move_rest_vector(:,i)
+      !write(10,'(3(D20.13,1X))') git % point_move_rest_vector(:,i)
+      write(10,*) git % point_move_rest_vector(:,i)
    end do
    write(10,"(A,1X,I0)") "CELL_DATA",git % nedge
    write(10,"(A)") 'SCALARS Kantenlaenge double'
