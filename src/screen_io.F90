@@ -127,6 +127,7 @@ end subroutine sw_residual
 
 subroutine sw_init_residual
 implicit none
+write(*,*) 
 write(*,'(10(A10,1X))') "ITERATION"                       &
                       , "F MAX POINT","F AVG POINT"       &
                       , "MAX SPRING", "MIN SPRING"        &

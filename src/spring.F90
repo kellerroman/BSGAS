@@ -31,9 +31,6 @@ do e = 1, git % nedge
    springs(:,e) = 1.0E+0_REAL_KIND / dble(N_SPRINGS) / git % edge_lengths(e)
 end do
 
-edge_values(1,:) = 1.0D0
-
-!write(*,*) maxval(git % wall_edge_dns), minval(git % wall_edge_dns)
 end subroutine init_springs
 
 subroutine calc_edge_springs(max_spring,min_spring)

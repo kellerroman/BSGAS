@@ -538,12 +538,12 @@ if (nwe /= git % nWallEdge) then
    write(*,*) nwe, git % nWallEdge
    stop 1
 end if
-do nwe = 1, git % nWallEdge
-   e = git%wall_edges(nwe)
-   p1 = git % edge_points(1,e)
-   p2 = git % edge_points(2,e)
-   write(*,'("# ",I4," #E: ",I4," p: ",2I4," Ref:",4(1X,F5.1))') nwe,e,git % edge_points(:,e) &
-      ,dble(git % point_refs(:,p1)+git % point_refs(:,p2)) / 2.0E0_REAL_KIND
-end do
+!do nwe = 1, git % nWallEdge
+!   e = git%wall_edges(nwe)
+!   p1 = git % edge_points(1,e)
+!   p2 = git % edge_points(2,e)
+!   write(*,'("# ",I4," #E: ",I4," p: ",2I4," Ref:",4(1X,F5.1))') nwe,e,git % edge_points(:,e) &
+!      ,dble(git % point_refs(:,p1)+git % point_refs(:,p2)) / 2.0E0_REAL_KIND
+!end do
 end subroutine init_walledges
 end module boundary
