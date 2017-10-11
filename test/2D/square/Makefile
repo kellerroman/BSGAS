@@ -11,12 +11,14 @@ all: gridgen
 	@$(MAKE) -C turned
 	@$(MAKE) -C 2blocks
 	@$(MAKE) -C 4blocks
+	@$(MAKE) -C 3x3
 clean:
 	@rm -rf gridgen
 	@$(MAKE) -C 1block clean
 	@$(MAKE) -C turned clean
 	@$(MAKE) -C 2blocks clean
 	@$(MAKE) -C 4blocks clean
+	@$(MAKE) -C 3x3 clean
 
 gridgen: gridgen.F90 $(TOOLS_OBJ)/module_gridgen.o
 	$(FC) $(CFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
