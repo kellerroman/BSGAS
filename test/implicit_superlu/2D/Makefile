@@ -8,10 +8,10 @@ include ../../../superlu/make.inc
 HEADER   = ../../../superlu/SRC
 LIBS	+= -lm
 
-EXE = SuperLU_1D
+EXE = SuperLU_2D
 
 # double real
-DF77EXM	= superlu_1d.o superlu_fortran_wrapper.o
+DF77EXM	= superlu_2d.o superlu_fortran_wrapper.o
 
 
 all:	$(EXE) run
