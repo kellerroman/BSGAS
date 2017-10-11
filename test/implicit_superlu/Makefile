@@ -1,31 +1,15 @@
-include ../../superlu/make.inc
+SUBDIRS := ${shell find ./* -maxdepth 0 -type d -print }
+SUBCLEAN = $(addsuffix .clean,$(SUBDIRS))
+.PHONY: subdirs $(SUBDIRS) clean $(SUBCLEAN)
+subdirs: $(SUBDIRS)
 
-#######################################################################
-#  This makefile creates the Fortran example interface to use the
-#  C routines in SuperLU.
-#######################################################################
+clean: $(SUBCLEAN)
 
-HEADER   = ../../superlu/SRC
-LIBS	+= -lm
+list_targets:
+	@echo $(SUBDIRS)
 
-# double real
-DF77EXM	= f77_main.o c_fortran_dgssv.o
+$(SUBDIRS):
+	@$(MAKE) -C $@ #--no-print-directory
 
-
-all:	df77exm
-
-df77exm: $(DF77EXM) $(SUPERLULIB)
-	$(FORTRAN) $(LOADOPTS) $(DF77EXM) $(LIBS) -o $@
-
-.c.o:
-	$(CC) $(CFLAGS) $(CDEFS) -I$(HEADER) -c $< $(VERBOSE)
-
-.f.o:
-	$(FORTRAN) $(FFLAGS) -c $< $(VERBOSE)
-
-.F.o:
-	$(FORTRAN) $(FFLAGS) -c $< $(VERBOSE)
-
-clean:	
-	rm -f *.o *f77exm
-
+$(SUBCLEAN): %.clean:
+	@$(MAKE) -C $* clean --no-print-directory

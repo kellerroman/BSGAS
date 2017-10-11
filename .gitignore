@@ -35,6 +35,7 @@ inc_Makefile_src
 inc_Makefile_dep
 bin/
 obj/
+superlu/
 
 *.xdmf
 *.vtk
