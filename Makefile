@@ -23,4 +23,13 @@ dep: FORCE
 
 test:
 	@$(MAKE) -C test
+
+
+install_superlu:
+	git clone https://github.com/xiaoyeli/superlu.git
+	(cd superlu && mkdir build && cd build && cmake .. -DCMAKE_INSTALL_PREFIX=../build && make && make install)
+
+clean_superlu:
+	rm -rf superlu
+
 .PHONY: FORCE tools dep test
