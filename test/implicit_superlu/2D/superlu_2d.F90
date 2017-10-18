@@ -1,4 +1,4 @@
-program SuperLu_1D
+program SuperLu_2D
 implicit none
 real(kind = 8) , parameter                   :: LENGTH      = (5.080d-02+6.350d-03)/2.0D0
 real(kind = 8) , parameter                   :: WALL_LENGTH = 1.0d-6
@@ -25,11 +25,15 @@ real(kind = 8) , allocatable, dimension(:,:) :: spring_cell_rhs       ! Position
 real(kind = 8) , allocatable, dimension(:,:) :: spring_dim_rhs        ! Position der Springeintrage im RHS array
 integer        , allocatable, dimension(:)   :: spring_nrhs_entry     ! Number of Entries of the spring in RHS
 
+integer        , allocatable, dimension(:)   :: spring_nneigh         ! Number of Entries of the spring in Matrix
+integer        , allocatable, dimension(:,:) :: spring_neigh          ! Position der Springeintrage im RHS array
+
 integer        , allocatable, dimension(:,:) :: Pkt2D_to_id           ! id des i,j- Punktes
 integer        , allocatable, dimension(:,:) :: Pkt_id_to_ijk              ! 2D Position anhand der Pkt_id 
 integer        , allocatable, dimension(:,:) :: point_pos_mat
 
 integer        , allocatable, dimension(:,:) :: Pkt_springs           ! Ids of springs connected to this point
+integer        , allocatable, dimension(:,:) :: Pkt_connected_Pkt      ! Ids of Pkt connected to this point
 integer        , allocatable, dimension(:)   :: Pkt_nspring           ! Number of springs connected to this point
 integer                                      :: cell_i, cell_j
 integer                                      :: i, j
@@ -41,10 +45,14 @@ integer                                      :: iter
 integer        , parameter                   :: niter = 5000
 
 integer                                      :: pos, c3, eq, found, found_rhs, d, ind
+integer                                      :: p_eq, p_pos
+
+integer                                      :: delta_index
 
 logical                                      :: print_mat
 
-cell_i = 10 
+real(kind = 8)                               :: temp
+cell_i = 1000
 cell_j = 10
  print_mat = .false.
 
@@ -105,12 +113,15 @@ allocate(spring_cell_rhs(8,nspring))
 allocate(spring_dim_rhs(8,nspring))
 allocate(spring_nrhs_entry(nspring))
 
+allocate (spring_nneigh(nspring))
+allocate (spring_neigh(2,nspring))
 
 allocate(Pkt2D_coords (2,cell_i+1,cell_j+1))
 allocate(Pkt2D_to_id(cell_i+1,cell_j+1))
 allocate(Pkt_id_coords(2,(cell_i+1)*(cell_j+1)))
 allocate(Pkt_id_to_ijk(2,ngrid_pkts))
 allocate(Pkt_springs  (4,ngrid_pkts))
+allocate(Pkt_connected_Pkt  (4,ngrid_pkts))
 allocate(Pkt_nspring  (ngrid_pkts))
 
 allocate(point_pos_mat(2,ngrid_pkts))
@@ -119,6 +130,8 @@ allocate(mat_to_id(2,npkts))
 
 springs           = 1.0D0
 point_pos_mat     = -1
+
+spring_nneigh     = 0
 
 spring_nmat_entry = 0
 spring_nrhs_entry = 0
@@ -130,8 +143,8 @@ pos = 0
 do j = 1, cell_j+1
    do i = 1, cell_i+1
       !Pkt2D_coords(1,i,j) = length * dble(i-1) / dble(npkts+1)
-      Pkt2D_coords(1,i,j) = dble(i-1)
-      Pkt2D_coords(2,i,j) = dble(j-1)
+      Pkt2D_coords(1,i,j) = dble(i-1)/dble(cell_i)
+      Pkt2D_coords(2,i,j) = dble(j-1)/dble(cell_j)
       pos = pos + 1
       Pkt2D_to_id(i,j) = pos
       Pkt_id_coords(:,pos) = Pkt2D_coords(:,i,j)
@@ -210,11 +223,28 @@ do j = 1, cell_j + 1
          spring_points(1,pos) = Pkt2D_to_id(i-1,j)
          spring_points(2,pos) = Pkt2D_to_id(i,j)
          do d = 1,2
-            c3 = spring_points(d,pos)
+            c3 = spring_points(d  ,pos)
+            eq = spring_points(3-d,pos)
             ind = Pkt_nspring(c3) + 1
             Pkt_nspring(c3) = ind
             Pkt_springs(ind,c3) = pos
+            Pkt_connected_Pkt(ind,c3) = eq
          end do
+      end if
+      if (i > 2) then
+         if (j > 1 .and. j < cell_j+1) then
+            c3 = 2
+         else
+            c3 = 1
+         end if
+
+         ind = spring_nneigh(pos) + 1
+         spring_nneigh(pos) = ind
+         spring_neigh(ind,pos) = pos - c3
+
+         ind = spring_nneigh(pos-c3) + 1
+         spring_nneigh(pos-c3) = ind
+         spring_neigh(ind,pos - c3) = pos
       end if
       if (j > 1) then
          pos = pos + 1
@@ -222,9 +252,11 @@ do j = 1, cell_j + 1
          spring_points(2,pos) = Pkt2D_to_id(i,j)
          do d = 1,2
             c3 = spring_points(d,pos)
+            eq = spring_points(3-d,pos)
             ind = Pkt_nspring(c3) + 1
             Pkt_nspring(c3) = ind
             Pkt_springs(ind,c3) = pos
+            Pkt_connected_Pkt(ind,c3) = eq
          end do
       end if
    end do
@@ -235,42 +267,52 @@ if (pos /= nspring) then
    stop 1
 end if
 
+delta_index = 0
+do pos = 1, nspring
+   delta_index = max(delta_index, abs(spring_points(2,pos) - spring_points(1,pos)))
+end do
+write(*,*) "Maxiumum Difference", delta_index
+delta_index = delta_index * 2
+
 iter = 0
 do eq = 1, npkts
-      found_rhs = 0
-   do pos = 1, npkts
+   d = mat_to_id(1,eq)
+   p_eq = mat_to_id(2,eq)
+   do pos = max(1,eq-delta_index), min(npkts,eq+delta_index)
       found = 0
-      do i = 1, nspring
-         do c3 = 1, 2
-            do d = 1, 2
-               if ( pos ==  point_pos_mat(d,spring_points(c3,i)) &
-               .and. eq ==  point_pos_mat(d,spring_points(3-c3,i))) then
-                  found = i
-               else if (pos == eq .and. pos == point_pos_mat(d,spring_points(c3,i))) then
-                  found = found + i
-               else if (  -1 ==  point_pos_mat(d,spring_points(c3,i)) &
-                    .and. eq ==  point_pos_mat(d,spring_points(3-c3,i))) then
-                  found_rhs = i
+      if (d == mat_to_id(1,pos)) then
+         p_pos = mat_to_id(2,pos)
+         if (pos == eq) then 
+            do c3 = 1, Pkt_nspring(p_eq)
+               i = Pkt_springs(c3,p_eq)
+               found = found + i
+            end do
+         else 
+            do c3 = 1, Pkt_nspring(p_eq)
+               if (p_pos == Pkt_connected_Pkt(c3,p_eq)) then
+                  found = Pkt_springs(c3,p_eq)
+                  exit
                end if
             end do
-         end do
-      end do
+         end if
+      end if
       if (found /= 0) then
          if (print_mat) &
-         write(*,'(" ",I3.3,1X)',ADVANCE="NO") found
+            write(*,'(" ",I3.3,1X)',ADVANCE="NO") found
          iter = iter + 1
       else  
          if (print_mat) &
-         write(*,'("    ",1X)',ADVANCE="NO")
+            write(*,'("    ",1X)',ADVANCE="NO")
       end if
    end do
-   if (found_rhs /= 0) then
-      if (print_mat) &
-      write(*,'(" ",I3.3,1X)') found_rhs
-   else
-      if (print_mat) &
+   do c3 = 1, Pkt_nspring(p_eq)
+      if (point_pos_mat(d,Pkt_connected_Pkt(c3,p_eq)) == -1) then
+         if (print_mat) &
+            write(*,'(" ",I3.3,1X)',ADVANCE="NO") Pkt_springs(c3,p_eq)
+      end if
+   end do
+   if (print_mat) &
       write(*,'("    ",1X)')
-   end if
 end do
 
 if (nnz /= iter) then
@@ -287,44 +329,51 @@ allocate(mat_dia(npkts))
 
 iter = 0
 do pos = 1, npkts
-   found_rhs = 0
    colptr(pos) = iter + 1
-   do eq = 1, npkts
-      found = 0
-      do i = 1, nspring
-            do d = 1, 2
-         do c3 = 1, 2
-               if (pos == eq .and. pos == point_pos_mat(d,spring_points(c3,i))) then
+   p_pos = mat_to_id(2,pos)
+   d     = mat_to_id(1,pos)
+   do eq = max(1,pos-delta_index), min(npkts,pos+delta_index)
+      p_eq = mat_to_id(2,eq)
+      if (d == mat_to_id(1,eq)) then
+         if (pos == eq) then 
+            iter = iter + 1
+            rowind(iter) = eq
+            mat_dia(eq) = iter
+            do c3 = 1, Pkt_nspring(p_eq)
+               i = Pkt_springs(c3,p_eq)
+               ind = spring_nmat_entry(i) + 1
+               spring_nmat_entry(i) = ind
+               spring_pos_mat(ind,i) = iter
+            end do
+         else 
+            do c3 = 1, Pkt_nspring(p_eq)
+               if (p_pos == Pkt_connected_Pkt(c3,p_eq)) then
+                  iter = iter + 1
+                  rowind(iter) = eq
+                  i = Pkt_springs(c3,p_eq)
                   ind = spring_nmat_entry(i) + 1
                   spring_nmat_entry(i) = ind
-                  spring_pos_mat(ind,i) = iter + 1
-                  found = i
-                  mat_dia(eq) = iter + 1
-               else if ( pos ==  point_pos_mat(d,spring_points(c3,i)) &
-               .and. eq ==  point_pos_mat(d,spring_points(3-c3,i))) then
-                  ind = spring_nmat_entry(i) + 1
-                  spring_nmat_entry(i) = ind
-                  spring_pos_mat(ind,i) = iter + 1
-                  found = i
-               else if (  -1 ==  point_pos_mat(d,spring_points(  c3,i)) &
-                    .and. eq ==  point_pos_mat(d,spring_points(3-c3,i)) &
-                    .and. eq == pos                                     ) then
-                  ind = spring_nrhs_entry(i) + 1
-                  spring_nrhs_entry(i) = ind
-                  spring_pos_rhs(ind,i) = eq
-                  spring_cell_rhs(ind,i) = spring_points(c3,i)
-                  spring_dim_rhs(ind,i) = d
+                  spring_pos_mat(ind,i) = iter
+                  exit
                end if
             end do
-         end do
-      end do
-      if (found /= 0) then
-         iter = iter + 1
-         found_rhs = found_rhs + 1
-         rowind(iter) = eq
+         end if
       end if
    end do
-   !write(*,*) iter, found_rhs
+end do
+do eq = 1, npkts
+   d = mat_to_id(1,eq)
+   p_eq = mat_to_id(2,eq)
+   do c3 = 1, Pkt_nspring(p_eq)
+      if (point_pos_mat(d,Pkt_connected_Pkt(c3,p_eq)) == -1) then
+         i = Pkt_springs(c3,p_eq)
+         ind = spring_nrhs_entry(i) + 1
+         spring_nrhs_entry(i) = ind
+         spring_pos_rhs(ind,i) = eq
+         spring_cell_rhs(ind,i) = Pkt_connected_Pkt(c3,p_eq)
+         spring_dim_rhs(ind,i) = d
+      end if
+   end do
 end do
 colptr(npkts+1) = iter + 1
 !write(*,*) rowind
@@ -337,27 +386,36 @@ colptr(npkts+1) = iter + 1
 !end do
 
 
-   do i = 1,nspring
-      lengths(i) = sqrt ( (Pkt_id_coords(1,spring_points(1,i)) - Pkt_id_coords(1,spring_points(2,i))) &
-                        * (Pkt_id_coords(1,spring_points(1,i)) - Pkt_id_coords(1,spring_points(2,i))) &
-                        + (Pkt_id_coords(2,spring_points(1,i)) - Pkt_id_coords(2,spring_points(2,i))) &
-                        * (Pkt_id_coords(2,spring_points(1,i)) - Pkt_id_coords(2,spring_points(2,i))) )
-   end do
+do i = 1,nspring
+   lengths(i) = sqrt ( (Pkt_id_coords(1,spring_points(1,i)) - Pkt_id_coords(1,spring_points(2,i))) &
+                     * (Pkt_id_coords(1,spring_points(1,i)) - Pkt_id_coords(1,spring_points(2,i))) &
+                     + (Pkt_id_coords(2,spring_points(1,i)) - Pkt_id_coords(2,spring_points(2,i))) &
+                     * (Pkt_id_coords(2,spring_points(1,i)) - Pkt_id_coords(2,spring_points(2,i))) )
+end do
 
-   i = 1
-   springs(i) = springs(i) * lengths(i) / wall_length
-!   do i = 2, npkts !+ 1
-!      if (i > npkts) then
-!         springs(i) = springs(i) * lengths(i) / lengths(i-1) / cell_inc
-!      else if (i == 1) then
-!         springs(i) = springs(i) * lengths(i) / lengths(i+1) / cell_inc
-!      else
-!         springs(i) = springs(i) * lengths(i) / min(lengths(i+1),lengths(i-1)) / cell_inc
-!      end if
-!      springs(i) = max(springs(i), spring_min)
-!   end do
-!   i = npkts + 1
-!   springs(i) = springs(i) * lengths(i) / wall_length
+i = 1
+springs(i) = springs(i) * lengths(i) / wall_length
+do i = 1, nspring
+   if (spring_nneigh(i) > 0) then
+      temp = 1.0D10
+      do ind = 1, spring_nneigh(i)
+         temp = min(temp,lengths(spring_neigh(ind,i)))
+      end do
+      springs(i) = springs(i) * lengths(i) / temp / cell_inc
+   end if
+end do
+!do i = 2, npkts !+ 1
+!   if (i > npkts) then
+!      springs(i) = springs(i) * lengths(i) / lengths(i-1) / cell_inc
+!   else if (i == 1) then
+!      springs(i) = springs(i) * lengths(i) / lengths(i+1) / cell_inc
+!   else
+!      springs(i) = springs(i) * lengths(i) / min(lengths(i+1),lengths(i-1)) / cell_inc
+!   end if
+!   springs(i) = max(springs(i), spring_min)
+!end do
+!i = npkts + 1
+!springs(i) = springs(i) * lengths(i) / wall_length
 iter = 0
 do 
    iter = iter + 1
@@ -414,22 +472,21 @@ do
                         * (Pkt_id_coords(2,spring_points(1,i)) - Pkt_id_coords(2,spring_points(2,i))) )
    end do
 
-   write(*,*) iter, maxval(res), sum(res), lengths(1), springs(1)
+   write(*,*) iter, maxval(res), sum(res), lengths(1:5), springs(1:5)
 
    i = 1
    springs(i) = springs(i) * lengths(i) / wall_length
-!   do i = 2, npkts !+ 1
-!      if (i > npkts) then
-!         springs(i) = springs(i) * lengths(i) / lengths(i-1) / cell_inc
-!      else if (i == 1) then
-!         springs(i) = springs(i) * lengths(i) / lengths(i+1) / cell_inc
-!      else
-!         springs(i) = springs(i) * lengths(i) / min(lengths(i+1),lengths(i-1)) / cell_inc
-!      end if
-!      springs(i) = max(springs(i), spring_min)
-!   end do
-!   i = npkts + 1
-!   springs(i) = springs(i) * lengths(i) / wall_length
+   do i = 1, nspring
+      if (spring_nneigh(i) > 0) then
+         temp = 1.0D10
+         do ind = 1, spring_nneigh(i)
+            temp = min(temp,lengths(spring_neigh(ind,i)))
+         end do
+         if (lengths(i) / temp > cell_inc) then
+            springs(i) = springs(i) * lengths(i) / temp / cell_inc
+         end if
+      end if
+   end do
 
    if (maxval(res) < 1D-14) then
       write(*,*) "Convergent Solution Reached" 
@@ -454,4 +511,4 @@ end do
 iopt = 3
 call c_fortran_dgssv( iopt, npkts, nnz, nrhs, values, rowind, colptr, rhs, ldb, factors, info )
 !
-end program SuperLU_1d
+end program SuperLU_2D
