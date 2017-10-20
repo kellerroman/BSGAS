@@ -184,6 +184,7 @@ end if
 !==========================      CREATE MOVEMENT RESTRICTION INFORMATION  ===========================
 !====================================================================================================
 git % point_move_rest = .false.
+git % point_move_dim_rest = .false.
 git % point_move_rest_type = 0
 k = 1
 do b = 1, nBlock

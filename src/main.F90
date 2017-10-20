@@ -23,6 +23,7 @@ program BSGAS
 !   - 2017-05-13,RK : Started of Project
 !   - 2017-09-29,RK : Added ifort as possible compiler
 !   - 2017-10-03,RK : Added OpenMP support in gfortran
+!   - 2017-10-18,RK : Added Implicit Solver usingn SuperLU
 !
 ! **************************************************************************************************
 use boundary, only: read_boundary, init_boundary, init_walledges
@@ -32,7 +33,7 @@ use screen_io, only: sw_program_start,sw_program_end, sw_init_residual, sw_resid
 use structured_grid, only: read_grid, blocks, write_grid
 use unstr, only: strukt2unstr,calc_edge_length,calc_edge_forces, calc_point_forces, move_points, git, unstr2struct
 use unstr_output, only: write_output
-use spring, only: init_springs,calc_edge_springs!, springs
+use spring, only: init_springs,calc_edge_springs
 use types
 implicit none
 real(REAL_KIND) :: max_point_f, max_edge_f, sum_point_f
@@ -56,15 +57,10 @@ call calc_edge_length(max_edge_len,min_edge_len,max_walledge_len,min_walledge_le
 call init_springs
 call calc_edge_springs(max_spring,min_spring)
 
-!write(*,*) blocks(3) % refs(1,1,1), git % point_edges(:,101)
-!call sw_edge_info(301)
-!write(*,*) blocks(3) % refs(2,1,1), git % point_edges(:,70402)
-!call sw_edge_info(140902)
-
 call write_output(0)
 
-
 call sw_init_residual
+
 end_adaption = .false.
 
 ITER_LOOP: do while (.not. end_adaption)

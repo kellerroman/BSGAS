@@ -15,6 +15,7 @@ interface alloc
    module procedure alloc_int_3d
    module procedure alloc_int_3d_array
    module procedure alloc_log_1d
+   module procedure alloc_log_2d
 end interface alloc
 contains
 
@@ -104,6 +105,15 @@ integer(INT_KIND), intent(in)             :: d1
 allocate (array(d1))
 
 end subroutine alloc_log_1d
+
+subroutine alloc_log_2d(array,d1,d2)
+implicit none
+logical          , allocatable, intent(out) :: array(:,:)
+integer(INT_KIND), intent(in)             :: d1, d2
+
+allocate (array(d1,d2))
+
+end subroutine alloc_log_2d
 
 subroutine vec_normalize(vec)
 implicit none

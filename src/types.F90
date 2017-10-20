@@ -75,6 +75,10 @@ type :: t_unstr
       !< type of Movement restrictions
       !< 3 = THree dimensional restriction, vector is the normal vector of movement surface
 
+      logical, allocatable           :: point_move_dim_rest(:,:)
+      !< Logical if the Dimension of that Point has Movement restrictions
+      !< (dimension [1=x,2=y,3=z] , point_id )
+
       real(REAL_KIND), allocatable   :: point_move_rest_vector(:,:)
       !< Vector with the movement restriction
 
