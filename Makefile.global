@@ -14,6 +14,7 @@ LIBS = -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -lm
 INCLUDE = -I/usr/include/
 #INCLUDE = -I/media/LDS/module/software/libs/hdf5/1.8.17_gnu/include/static/
 
+SUPERLU_HEADER = ../superlu/SRC
 ifneq (,$(findstring $(FC),gfortran))
    CFLAGS = -std=f2008
    CFLAGS += -Wconversion -Wall -Wextra -Warray-temporaries -Werror

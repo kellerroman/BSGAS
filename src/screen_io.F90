@@ -102,23 +102,23 @@ do b = 1, nBlock
 end do
 end subroutine sw_grid_info
 
-subroutine sw_residual(iter,max_spring, min_spring &
-                      ,max_edge_f,max_point_f, sum_point_f &
+subroutine sw_residual(iter &
+                      ,max_res, sum_res            &
+                      ,max_spring, min_spring &
                       ,max_edge_len,min_edge_len &
                       ,max_walledge_len,min_walledge_len)
    use control, only:res_out_start, res_out
 implicit none
 integer, intent(in) :: iter
-real(REAL_KIND), intent(in) :: max_spring, min_spring &
-                             , max_point_f, max_edge_f, sum_point_f &
+real(REAL_KIND), intent(in) :: max_res, sum_res &
+                             , max_spring, min_spring &
                              , max_edge_len,min_edge_len &
                              , max_walledge_len,min_walledge_len
 
 if (iter <= res_out_start .or. mod(iter,res_out) == 0) then
-   write(*,'(I10,9(1X,ES10.3))') iter                                                     &
-                               , max_point_f,sum_point_f                                  &
+   write(*,'(I10,8(1X,ES10.3))') iter                                                     &
+                               , max_res, sum_res &
                                , max_spring, min_spring                                   & 
-                               , max_edge_f                                               &
                                , max_edge_len,min_edge_len                                &
                                , max_walledge_len,min_walledge_len
 end if
@@ -128,10 +128,9 @@ end subroutine sw_residual
 subroutine sw_init_residual
 implicit none
 write(*,*) 
-write(*,'(10(A10,1X))') "ITERATION"                       &
-                      , "F MAX POINT","F AVG POINT"       &
+write(*,'(9(A10,1X))') "ITERATION"                        &
+                      , "MAX RES", "SUM RES"              &
                       , "MAX SPRING", "MIN SPRING"        &
-                      , "F MAX EDGE"                      &
                       , "LEN MAX","LEN MIN"               &
                       , "WALL MAX","WALL MIN"
 end subroutine sw_init_residual
@@ -153,5 +152,18 @@ subroutine sw_edge_info(e)
    write(*,'(4X,"From",4(1X,I4)," to",4(1X,I4))') git % point_refs(:,git % edge_points(1,ne)) &
                                               ,git % point_refs(:,git % edge_points(2,ne))
 
-   end subroutine
+end subroutine
+
+subroutine sw_info_1_int(str,int)
+implicit none
+integer         , intent(in) :: int
+character(len=*), intent(in) :: str
+
+
+write(*,'(A)',ADVANCE="NO") str
+write(*,'(A)',ADVANCE="NO") repeat(" ",30-len_trim(str))
+write(*,*) int
+
+end subroutine sw_info_1_int
+
 end module screen_io

@@ -50,15 +50,21 @@ type :: t_unstr
       integer(INT_KIND) :: npoint
       integer(INT_KIND) :: nedge
 
+      integer(INT_KIND) :: max_id_delta
+      !< Maximum distance of Point Ids connected by an edge
+
       real(REAL_KIND), allocatable   :: point_coords(:,:)
 
       integer(INT_KIND), allocatable :: point_refs(:,:)
       !< Reference Cell in Block struct grid ([b,i,j,k],point_id)
 
       integer(INT_KIND), allocatable :: point_nedges(:)
-      !< Number of edges attached to a point
+      !< Number of edges (Neighbors) attached to a point
 
       integer(INT_KIND), allocatable :: point_edges(:,:)
+      !< Indices of attached edges (edge_id,point_id) 
+
+      integer(INT_KIND), allocatable :: point_Neighbors(:,:)
       !< Indices of attached edges (edge_id,point_id) 
 
       real(REAL_KIND), allocatable   :: point_edge_signs(:,:)
@@ -71,7 +77,7 @@ type :: t_unstr
       logical, allocatable           :: point_move_rest(:)
       !< Logical if the Point has Movement restrictions
 
-      integer(INT_KIND), allocatable :: point_move_rest_type(:)
+!      integer(INT_KIND), allocatable :: point_move_rest_type(:)
       !< type of Movement restrictions
       !< 3 = THree dimensional restriction, vector is the normal vector of movement surface
 
@@ -95,6 +101,9 @@ type :: t_unstr
       real(REAL_KIND), allocatable   :: edge_forces(:,:)
       !< FORCE VECTOR of EDGE (edge_spring * edge_vector)
 
+      integer(INT_KIND), allocatable :: edge_nmat_entry(:)
+      integer(INT_KIND), allocatable :: edge_pos_mat_entry(:,:)
+
       integer(INT_KIND), allocatable :: edge_nneighbor(:)
       !< NUmber of Neighbor Edges in same direction 
       integer(INT_KIND), allocatable :: edge_neighbor(:,:)
@@ -111,6 +120,10 @@ type :: t_unstr
       integer(INT_KIND), allocatable :: wall_edges(:)
       real(REAL_KIND)  , allocatable :: wall_edge_dns(:)
       !< List of all edges that are ajectent to a wall thus having size requirements
+
+      integer(INT_KIND)              :: nWallEquation
+      integer(INT_KIND), allocatable :: wall_equations(:)
+      real(REAL_KIND), allocatable   :: wall_equations_rhs_values(:)
 end type t_unstr
 
 end module types

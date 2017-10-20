@@ -50,8 +50,8 @@ case(4)
    call add_block(imax-1,jmax-1)
    nBlock = 1
 case(5)
-   imax = 3
-   jmax = 3
+   imax = 4
+   jmax = 4
    call add_block(imax-1,jmax-1)
    nBlock = 1
 case default

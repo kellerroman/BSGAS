@@ -65,11 +65,11 @@ if (mod(iter,output_intervall) == 0) then
    do i = 1, git % nPoint
       write(10,*) git % point_forces(:,i)
    end do
-   write(10,"(A)") 'SCALARS MOVEMENT double'
-   write(10,"(A)") 'LOOKUP_TABLE Default'
-   do i = 1, git % nPoint
-      write(10,*) git % point_move_rest_type(i)
-   end do
+!   write(10,"(A)") 'SCALARS MOVEMENT double'
+!   write(10,"(A)") 'LOOKUP_TABLE Default'
+!   do i = 1, git % nPoint
+!      write(10,*) git % point_move_rest_type(i)
+!   end do
    write(10,"(A)") 'VECTORS MOVEMENT_VECTOR double'
    do i = 1, git % nPoint
       !write(10,'(3(D20.13,1X))') git % point_move_rest_vector(:,i)

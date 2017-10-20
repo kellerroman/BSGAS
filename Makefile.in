@@ -14,12 +14,15 @@ VPATH := $(SOURCE_DIR)
 write:
 	@echo "COMPILING PROGRAM:" `pwd`
 
-$(EXECUTABLE): $(OBJECTS)
+$(EXECUTABLE): $(OBJECTS) superlu_fortran_wrapper.o
 	$(FC) $(CFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
 
 %.o: %.F90
 	$(FC) -c $(CFLAGS) -DVERSION=\"$(GIT_VERSION)\" $(INCLUDE) $< -o $@
 	
+.c.o:
+	$(CC) $(CFLAGS) $(CDEFS) -I$(HEADER) -c $< $(VERBOSE)
+
 include ../inc_Makefile_dep
 
 ../inc_Makefile_src ../inc_Makefile_dep:

@@ -2,6 +2,7 @@ module unstr
 use const
 use types
 use help_routines, only: alloc, vec_common
+use screen_io
 implicit none
 real(REAL_KIND) :: point_weight ! read in config and calculated invers
 type(t_unstr) :: git
@@ -50,7 +51,7 @@ else
    git % dimension = 3
 end if
 
-write(*,*) "Grid is of Dimension:", git % dimension
+call sw_info_1_int("Grid is of Dimension:", git % dimension)
 
 do b = 1, nBlock
    i = blocks(b) % nPoints(1)
@@ -103,18 +104,20 @@ do b = 1, nBlock
    end do
 end do
 git % npoint = p-int(temp)
-write(*,*) "Points in structured Grid:             ",p
-write(*,*) "Number of Points & Edges in unstr Grid:",git % npoint, git % nedge
+call sw_info_1_int("Points in structured Grid:",p)
+call sw_info_1_int("Number of Points",git % npoint)
+call sw_info_1_int( "Edges in unstr Grid:", git % nedge)
 
 call alloc(git % point_coords          , 3, git % npoint)
 call alloc(git % point_refs            , 4, git % npoint)
 call alloc(git % point_nedges             , git % npoint)
 call alloc(git % point_edges           , 6, git % npoint)
 call alloc(git % point_edge_signs      , 6, git % npoint)
+call alloc(git % point_neighbors       , 6, git % npoint)
 call alloc(git % point_forces          , 3, git % npoint)
 call alloc(git % point_move_rest          , git % npoint)
 call alloc(git % point_move_dim_rest   , 3, git % npoint)
-call alloc(git % point_move_rest_type     , git % npoint)
+!call alloc(git % point_move_rest_type     , git % npoint)
 call alloc(git % point_move_rest_vector, 3, git % npoint)
 call alloc(git % edge_lengths             , git % nedge)
 call alloc(git % edge_points           , 2, git % nedge)
@@ -135,6 +138,7 @@ git % edge_nneighbor = 0
 git % edge_neighbor  = -1
 git % edge_nparallel = 0
 git % edge_parallel  = -1
+git % max_id_delta = 1
 np = 0
 e = 0
 do b = 1, nBlock
@@ -198,6 +202,9 @@ do b = 1, nBlock
                   end if 
                end if
                if (.not. edge_exists) then
+                  p = blocks(b) % refs(i,j,k)
+                  ps = blocks(b) % refs(i-1,j,k)
+                  git % max_id_delta = max(git % max_id_delta, abs(p-ps))
                   e = e + 1
                   ! Add points to edge and edge to points
                   do p = 1, 2
@@ -213,6 +220,9 @@ do b = 1, nBlock
                      git % point_edges(pe,p1) = e
                      ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
                      git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
+                     ! add point p2 to neighbor list of p1 at possiton of the
+                     ! new edge pe
+                     git % point_neighbors(pe,p1) = blocks(b) % refs(i-(p-1),j,k)
                   end do
    !====================================================================================================
    !==========================   CONNECT NEIGHBOR EDGES ================================================
@@ -383,6 +393,9 @@ do b = 1, nBlock
                   end if 
                end if
                if (.not. edge_exists) then
+                  p = blocks(b) % refs(i,j,k)
+                  ps = blocks(b) % refs(i,j-1,k)
+                  git % max_id_delta = max(git % max_id_delta, abs(p-ps))
                   e = e + 1
                   ! Add points to edge and edge to points
                   do p = 1, 2
@@ -411,6 +424,7 @@ do b = 1, nBlock
                      git % point_edges(pe,p1) = e
                      ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
                      git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
+                     git % point_neighbors(pe,p1) = blocks(b) % refs(i,j-(p-1),k)
                   end do
    !====================================================================================================
    !==========================   CONNECT NEIGHBOR EDGES ================================================
@@ -583,6 +597,9 @@ do b = 1, nBlock
                   end if
                   if (.not. edge_exists) then
                      e = e + 1
+                     p = blocks(b) % refs(i,j,k)
+                     ps = blocks(b) % refs(i,j,k-1)
+                     git % max_id_delta = max(git % max_id_delta, abs(p-ps))
                      ! Add points to edge and edge to points
                      do p = 1, 2
                         ! first point j-1, second point j
@@ -597,6 +614,7 @@ do b = 1, nBlock
                         git % point_edges(pe,p1) = e
                         ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
                         git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
+                        git % point_neighbors(pe,p1) = blocks(b) % refs(i,j,k-(p-1))
                      end do
    !====================================================================================================
    !==========================   CONNECT NEIGHBOR EDGES ================================================
@@ -846,24 +864,7 @@ do b = 1, nBlock
    end do
 end do
 
-
-!write(*,*) "Points"
-!do np = 1, git % nPoint
-!   pe = git % point_nedges(np)
-!   write(*,'("#P ",I8," Ref ",4I8," NEdge ",I8," Edges: ",6I8)' ) &
-!            np, git % point_refs(:,np),pe, git % point_edges(1:pe,np)
-!end do
-!write(*,*) "Edges"
-!do e = 1, git % nedge
-!   !write(*,'("#E ",I4," Points: ",2I4," Neighbors: ",2I4)') e, git % edge_points(:,e), git % edge_neighbor(:,e)
-!   if (git % edge_nneighbor(e) == 2) then
-!   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",2I8, " Parallel: ",4I8)') &
-!         e, git % edge_points(:,e), git % edge_neighbor(:,e), git % edge_parallel(:,e)
-!   else
-!   write(*,'("#E ",I8," Points: ",2I8," Neighbors: ",I8,8X, " Parallel: ",4I8)') &
-!         e, git % edge_points(:,e), git % edge_neighbor(1,e), git % edge_parallel(:,e)
-!   end if
-!end do
+git % max_id_delta = git % max_id_delta * git % dimension
 
 git % edge_springs = 1.0e0_REAL_KIND
 
@@ -918,121 +919,6 @@ end do
 !$OMP END DO
 !$OMP END PARALLEL
 end subroutine calc_edge_length
-
-subroutine calc_edge_forces(max_f)
-implicit none
-real(REAL_KIND), intent(out) :: max_f
-real(REAL_KIND):: f
-
-integer :: e
-!integer :: en
-
-max_f = 0.0E0_REAL_KIND
-!$OMP PARALLEL DO REDUCTION(MAX:max_f) PRIVATE(f)
-do e = 1, git % nedge
-   git % edge_forces(:,e) = git % edge_springs(e) * git % edge_vectors(:,e)
-   f = sqrt( git % edge_forces(1,e) * git % edge_forces(1,e) &
-           + git % edge_forces(2,e) * git % edge_forces(2,e) &
-           + git % edge_forces(3,e) * git % edge_forces(3,e) )
-   max_f = max(max_f,f)
-end do
-!$OMP END PARALLEL DO
-end subroutine calc_edge_forces
-
-subroutine calc_point_forces(max_f,sum_f)
-implicit none
-
-real(REAL_KIND), intent(out) :: max_f, sum_f
-real(REAL_KIND):: f
-
-integer :: np, e, edge
-real(REAL_KIND) :: tmp(3), sp
-max_f = 0.0E0_REAL_KIND
-sum_f = 0.0E0_REAL_KIND
-if (wall_move_rest == 1) then
-   !$OMP PARALLEL DO PRIVATE(tmp,edge,sp,f) REDUCTION(MAX:max_f) REDUCTION(+:sum_f)
-   do np = 1, git % nPoint
-       tmp = 0.0E0_REAL_KIND
-       !write(*,*) np
-      do e = 1, git % point_nedges(np)
-         edge = git % point_edges(e,np)
-         tmp = tmp + git % edge_forces(:,edge) * git % point_edge_signs(e,np)
-      end do
-      if (git % point_move_rest(np)) then
-         select case (git % point_move_rest_type(np))
-         case (3)
-            sp = tmp(1)*git % point_move_rest_vector(1,np) &
-               + tmp(2)*git % point_move_rest_vector(2,np) &
-               + tmp(3)*git % point_move_rest_vector(3,np)
-            tmp = tmp - git % point_move_rest_vector(:,np) * sp
-         case (2)
-            sp = tmp(1)*git % point_move_rest_vector(1,np) &
-               + tmp(2)*git % point_move_rest_vector(2,np) &
-               + tmp(3)*git % point_move_rest_vector(3,np)
-            tmp = git % point_move_rest_vector(:,np) * sp
-         case (1) 
-            tmp = 0.0D0
-         end select
-      end if
-         
-      git % point_forces(:,np) = tmp
-      f = sqrt(tmp(1)*tmp(1)+tmp(2)*tmp(2)+tmp(3)*tmp(3))
-      sum_f = sum_f + f
-      max_f = max(max_f,f)
-   end do
-   !$OMP END PARALLEL DO
-else if (wall_move_rest == 2) then
-   !$OMP PARALLEL DO PRIVATE( tmp,edge,sp,f), REDUCTION(MAX:max_f) REDUCTION(+:sum_f)
-   do np = 1, git % nPoint
-      tmp = 0.0E0_REAL_KIND
-      !write(*,*) np
-      do e = 1, git % point_nedges(np)
-         edge = git % point_edges(e,np)
-         if (git % point_move_rest(np)) then
-            select case (git % point_move_rest_type(np))
-            case (3)
-            sp = git % edge_forces(1,edge)*git % point_move_rest_vector(1,np) &
-               + git % edge_forces(2,edge)*git % point_move_rest_vector(2,np) &
-               + git % edge_forces(3,edge)*git % point_move_rest_vector(3,np)
-            if (abs(sp ) < 1E-10) then
-               tmp = tmp + git % edge_forces(:,edge) * git % point_edge_signs(e,np)
-            end if
-            case (2)
-            sp = git % edge_forces(1,edge)*git % point_move_rest_vector(1,np) &
-               + git % edge_forces(2,edge)*git % point_move_rest_vector(2,np) &
-               + git % edge_forces(3,edge)*git % point_move_rest_vector(3,np)
-            tmp = tmp + git % point_move_rest_vector(:,np) * sp * git % point_edge_signs(e,np)
-            case (1) 
-            end select
-         else
-            tmp = tmp + git % edge_forces(:,edge) * git % point_edge_signs(e,np)
-         end if
-      end do
-      git % point_forces(:,np) = tmp
-      f = sqrt(tmp(1)*tmp(1)+tmp(2)*tmp(2)+tmp(3)*tmp(3))
-      sum_f = sum_f + f
-      max_f = max(max_f,f)
-   end do
-   !$OMP END PARALLEL DO
-end if
-sum_f = sum_f / git % nPoint
-end subroutine calc_point_forces
-
-subroutine move_points(max_f)
-implicit none
-real(REAL_KIND), intent(in) :: max_f
-real(REAL_KIND) :: min_l, fk
-
-integer :: np
-
-min_l = minval(git % edge_lengths)
-fk = min(1.0E0_REAL_KIND,min_l / max_f)
-!$OMP PARALLEL DO
-do np = 1, git % npoint
-   git % point_coords(:,np) = git % point_coords(:,np) + git % point_forces(:,np) * point_weight * fk
-end do
-!$OMP END PARALLEL DO
-end subroutine move_points
 
 subroutine unstr2struct(blocks)
 implicit none

@@ -2,18 +2,19 @@ module boundary
 use help_routines
 use types
 implicit none
+   real(REAL_KIND) , parameter :: EPSI        = 1.0E-8_REAL_KIND
    character(len=*), parameter :: BC_SHORT(6) = ["w","e","s","n","f","b"]
 contains
 
 subroutine read_boundary(blocks)
 implicit none
-!================================================================================================================================
+!===============================================================================================================
 !===      reads boundary conditions file (bc.cfg)                                                                             ===
 !===                                                                                                                          ===
 !===      AUTHORS:      Ronan Keller                                                                                          ===
 !===      START  :      04.06.2017                                                                                            ===
 !===                                                                                                                          ===
-!================================================================================================================================
+!===============================================================================================================
 character(len=*), parameter :: filename_bc = "bc.cfg"
 
 type(t_block) :: blocks(:)
@@ -129,6 +130,36 @@ close(fu)
 end subroutine read_boundary
 
 subroutine init_boundary(git, blocks)
+! **************************************************************************************************
+! ***                          Init_boundary Routine                                             ***
+! **************************************************************************************************
+! Author:       Roman Keller(RK)
+! Start date:   13.05.2017
+! Last changes: 20.10.2017
+! Version:      V0.1.0
+! --------------------------------------------------------------------------------------------------
+! Description:
+!   In this routine boundary points are examined and possible movement
+!   restrictions are initialized. If a point dimension is deemed fixed it is
+!   removed from the matrix by defining point_move_dim_rest(dim,pkt). If a more
+!   general movement restriction (linear) can be applied, a equationi
+!   Ni * Xi = Ni * X0 is added to the matrix system
+!   (Ni=Normalvektor,Xi=Coordinates,X0=Starting Coordinates)
+!   
+!   
+!   
+! --------------------------------------------------------------------------------------------------
+! Comments and Notes:
+!   
+! --------------------------------------------------------------------------------------------------
+! References:
+!
+! --------------------------------------------------------------------------------------------------
+! Author and Change History:
+!   - 2017-05-13,RK : Started of Project
+!   - 2017-10-20,RK : Added handeling of boundary points for the Implicit Solver
+!
+! **************************************************************************************************
 use structured_grid, only: number_of_face
 implicit none
 integer, parameter :: NV_dir(2,4) = reshape([-1,-1,0,-1,0,0,-1,0],[2,4])
@@ -163,13 +194,15 @@ real(REAL_KIND) :: v1(3), v2(3),vec(3,2)
 logical :: is_3D
 
 nBlock = ubound(blocks,1)
-allocate(norms(nBlock))
+git % point_move_rest = .false.
+git % point_move_dim_rest = .false.
+!git % point_move_rest_type = 0
 if (blocks(1) % nPoints(2) == 1) then
    do b = 1, nBlock
       do i = 1,blocks(b) % nPoints(1), blocks(b) % nCells(1)
          p = blocks(b) % refs(i,1,1)
          git % point_move_rest(p) = .true.
-         git % point_move_rest_type(p) = 1
+         !git % point_move_rest_type(p) = 1
          git % point_move_rest_vector(:,p) = 0.0d0
          write(*,*) "Restiricting Movement for",i,p
       end do
@@ -183,9 +216,7 @@ end if
 !====================================================================================================
 !==========================      CREATE MOVEMENT RESTRICTION INFORMATION  ===========================
 !====================================================================================================
-git % point_move_rest = .false.
-git % point_move_dim_rest = .false.
-git % point_move_rest_type = 0
+allocate(norms(nBlock))
 k = 1
 do b = 1, nBlock
    if (is_3D) then
@@ -258,22 +289,22 @@ do b = 1, nBlock
                         v1 = norms(b) % nv(:,fi,fj,fk)
                         if (git % point_move_rest(p)) then
                            v2 = git % point_move_rest_vector(:,p)
-                           select case (git % point_move_rest_type(p) ) 
-                           case (3) 
-                              if (.NOT. vec_same(v1,v2)) then   
-                                 git % point_move_rest_type(p) = 2
-                                 call cross_product(v1,v2,git % point_move_rest_vector(:,p))
-                              end if
-                           case (2)
-                              if (abs(scalar_product(v1,v2)) >= 10E-8) then
-                                 git % point_move_rest_type(p) = 1
-                                 git % point_move_rest_vector(:,p) = [0,0,0]
-                              end if
-                           case (1)
-                           end select
+!                           select case (git % point_move_rest_type(p) ) 
+!                           case (3) 
+!                              if (.NOT. vec_same(v1,v2)) then   
+!                                 git % point_move_rest_type(p) = 2
+!                                 call cross_product(v1,v2,git % point_move_rest_vector(:,p))
+!                              end if
+!                           case (2)
+!                              if (abs(scalar_product(v1,v2)) >= 10E-8) then
+!                                 git % point_move_rest_type(p) = 1
+!                                 git % point_move_rest_vector(:,p) = [0,0,0]
+!                              end if
+!                           case (1)
+!                           end select
                         else
                            git % point_move_rest(p) = .true.
-                           git % point_move_rest_type(p) = 3
+                           !git % point_move_rest_type(p) = 3
                            git % point_move_rest_vector(:,p) = v1
                         end if
                      end if
@@ -290,14 +321,30 @@ do b = 1, nBlock
       i = 1
       do j = 2, blocks(b) % nCells(2)
          p = blocks(b) % refs(i,j,k)
-         git % point_move_rest(p) = .true.
-         git % point_move_rest_type(p) = 2
          v1 = blocks(b) % coords(i,j+1,k,:) - git % point_coords(:,p)
          v2 = git % point_coords(:,p) - blocks(b) % coords(i,j-1,k,:)
          call vec_common(v1,v2)
+         ! calculating normal vektor
+         v2(1) = v1(2)
+         v2(2) = -v1(1)
+         v1 = v2
          git % point_move_rest_vector(:,p) = v1
+         if (abs(v1(1)) < EPSI .and. abs(v1(2)) < EPSI) then ! point is fixed
+            git % point_move_dim_rest(:,p) = .true.
+         else if (abs(v1(1)) < EPSI) then               ! y is fixed
+            git % point_move_dim_rest(2,p) = .true.
+         else if (abs(v1(2)) < EPSI) then               ! x is fixed
+            git % point_move_dim_rest(1,p) = .true.
+         else
+            f = git % nWallEquation + 1
+            git % nWallEquation = f
+            git % wall_equations(f) = p
+            git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
+                                               + v1(2) * git % point_coords(2,p)
+         end if
       end do
       ! CORNER POINTS
+      ! restriction comes from different blocks and different faces
       do j = 1, blocks(b) % nPoints(2), blocks(b) % nCells(2)
          if (j == 1) then
             dn = +1
@@ -310,25 +357,56 @@ do b = 1, nBlock
          if (git % point_move_rest(p)) then
             v2 = git % point_move_rest_vector(:,p)
             call vec_common(v1,v2)
+            ! calculating normal vektor
+            v2(1) = v1(2)
+            v2(2) = -v1(1)
+            v1 = v2
             git % point_move_rest_vector(:,p) = v1
+            if (abs(v1(1)) < EPSI .and. abs(v1(2)) < EPSI) then ! point is fixed
+               git % point_move_dim_rest(:,p) = .true.
+            else if (abs(v1(1)) < EPSI) then               ! y is fixed
+               git % point_move_dim_rest(2,p) = .true.
+            else if (abs(v1(2)) < EPSI) then               ! x is fixed
+               git % point_move_dim_rest(1,p) = .true.
+            else
+               f = git % nWallEquation + 1
+               git % nWallEquation = f
+               git % wall_equations(f) = p
+               git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
+                                                  + v1(2) * git % point_coords(2,p)
+            end if
          else
             git % point_move_rest(p) = .true.
             call vec_normalize(v1)
             git % point_move_rest_vector(:,p) = v1
          end if
-         git % point_move_rest_type(p) = 2
       end do
    end if
    if (blocks(b) % boundary_cond(2) % bc_type <= 0) then !!! NO BLOCK CONNECTION EAST SIDE
       i = blocks(b) % nPoints(1)
       do j = 2, blocks(b) % nCells(2)
          p = blocks(b) % refs(i,j,k)
-         git % point_move_rest(p) = .true.
-         git % point_move_rest_type(p) = 2
          v1 = blocks(b) % coords(i,j+1,k,:) - git % point_coords(:,p)
          v2 = git % point_coords(:,p) - blocks(b) % coords(i,j-1,k,:)
          call vec_common(v1,v2)
+         ! calculating normal vektor
+         v2(1) = v1(2)
+         v2(2) = -v1(1)
+         v1 = v2
          git % point_move_rest_vector(:,p) = v1
+         if (abs(v1(1)) < EPSI .and. abs(v1(2)) < EPSI) then ! point is fixed
+            git % point_move_dim_rest(:,p) = .true.
+         else if (abs(v1(1)) < EPSI) then               ! y is fixed
+            git % point_move_dim_rest(2,p) = .true.
+         else if (abs(v1(2)) < EPSI) then               ! x is fixed
+            git % point_move_dim_rest(1,p) = .true.
+         else
+            f = git % nWallEquation + 1
+            git % nWallEquation = f
+            git % wall_equations(f) = p
+            git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
+                                               + v1(2) * git % point_coords(2,p)
+         end if
       end do
       ! CORNER POINTS
       do j = 1, blocks(b) % nPoints(2), blocks(b) % nCells(2)
@@ -343,25 +421,56 @@ do b = 1, nBlock
          if (git % point_move_rest(p)) then
             v2 = git % point_move_rest_vector(:,p)
             call vec_common(v1,v2)
+            ! calculating normal vektor
+            v2(1) = v1(2)
+            v2(2) = -v1(1)
+            v1 = v2
             git % point_move_rest_vector(:,p) = v1
+            if (abs(v1(1)) < EPSI .and. abs(v1(2)) < EPSI) then ! point is fixed
+               git % point_move_dim_rest(:,p) = .true.
+            else if (abs(v1(1)) < EPSI) then               ! y is fixed
+               git % point_move_dim_rest(2,p) = .true.
+            else if (abs(v1(2)) < EPSI) then               ! x is fixed
+               git % point_move_dim_rest(1,p) = .true.
+            else
+               f = git % nWallEquation + 1
+               git % nWallEquation = f
+               git % wall_equations(f) = p
+               git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
+                                                  + v1(2) * git % point_coords(2,p)
+            end if
          else
             git % point_move_rest(p) = .true.
             call vec_normalize(v1)
             git % point_move_rest_vector(:,p) = v1
          end if
-         git % point_move_rest_type(p) = 2
       end do
    end if
    if (blocks(b) % boundary_cond(3) % bc_type <= 0) then !!! NO BLOCK CONNECTION SOUTH SIDE
       j= 1
       do i = 2, blocks(b) % nCells(1)
          p = blocks(b) % refs(i,j,k)
-         git % point_move_rest(p) = .true.
-         git % point_move_rest_type(p) = 2
          v1 = blocks(b) % coords(i+1,j,k,:) - git % point_coords(:,p)
          v2 = git % point_coords(:,p) - blocks(b) % coords(i-1,j,k,:)
          call vec_common(v1,v2)
+         ! calculating normal vektor
+         v2(1) = v1(2)
+         v2(2) = -v1(1)
+         v1 = v2
          git % point_move_rest_vector(:,p) = v1
+         if (abs(v1(1)) < EPSI .and. abs(v1(2)) < EPSI) then ! point is fixed
+            git % point_move_dim_rest(:,p) = .true.
+         else if (abs(v1(1)) < EPSI) then               ! y is fixed
+            git % point_move_dim_rest(2,p) = .true.
+         else if (abs(v1(2)) < EPSI) then               ! x is fixed
+            git % point_move_dim_rest(1,p) = .true.
+         else
+            f = git % nWallEquation + 1
+            git % nWallEquation = f
+            git % wall_equations(f) = p
+            git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
+                                               + v1(2) * git % point_coords(2,p)
+         end if
       end do
       ! CORNER POINTS
       do i = 1, blocks(b) % nPoints(1), blocks(b) % nCells(1)
@@ -376,25 +485,56 @@ do b = 1, nBlock
          if (git % point_move_rest(p)) then
             v2 = git % point_move_rest_vector(:,p)
             call vec_common(v1,v2)
+            ! calculating normal vektor
+            v2(1) = v1(2)
+            v2(2) = -v1(1)
+            v1 = v2
             git % point_move_rest_vector(:,p) = v1
+            if (abs(v1(1)) < EPSI .and. abs(v1(2)) < EPSI) then ! point is fixed
+               git % point_move_dim_rest(:,p) = .true.
+            else if (abs(v1(1)) < EPSI) then               ! y is fixed
+               git % point_move_dim_rest(2,p) = .true.
+            else if (abs(v1(2)) < EPSI) then               ! x is fixed
+               git % point_move_dim_rest(1,p) = .true.
+            else
+               f = git % nWallEquation + 1
+               git % nWallEquation = f
+               git % wall_equations(f) = p
+               git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
+                                                  + v1(2) * git % point_coords(2,p)
+            end if
          else
             git % point_move_rest(p) = .true.
             call vec_normalize(v1)
             git % point_move_rest_vector(:,p) = v1
          end if
-         git % point_move_rest_type(p) = 2
       end do
    end if
    if (blocks(b) % boundary_cond(4) % bc_type <= 0) then !!! NO BLOCK CONNECTION NORTH SIDE
       j= blocks(b) % nPoints(2)
       do i = 2, blocks(b) % nCells(1)
          p = blocks(b) % refs(i,j,k)
-         git % point_move_rest(p) = .true.
-         git % point_move_rest_type(p) = 2
          v1 = blocks(b) % coords(i+1,j,k,:) - git % point_coords(:,p)
          v2 = git % point_coords(:,p) - blocks(b) % coords(i-1,j,k,:)
          call vec_common(v1,v2)
+         ! calculating normal vektor
+         v2(1) = v1(2)
+         v2(2) = -v1(1)
+         v1 = v2
          git % point_move_rest_vector(:,p) = v1
+         if (abs(v1(1)) < EPSI .and. abs(v1(2)) < EPSI) then ! point is fixed
+            git % point_move_dim_rest(:,p) = .true.
+         else if (abs(v1(1)) < EPSI) then               ! y is fixed
+            git % point_move_dim_rest(2,p) = .true.
+         else if (abs(v1(2)) < EPSI) then               ! x is fixed
+            git % point_move_dim_rest(1,p) = .true.
+         else
+            f = git % nWallEquation + 1
+            git % nWallEquation = f
+            git % wall_equations(f) = p
+            git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
+                                               + v1(2) * git % point_coords(2,p)
+         end if
       end do
       ! CORNER POINTS
       do i = 1, blocks(b) % nPoints(1), blocks(b) % nCells(1)
@@ -409,17 +549,36 @@ do b = 1, nBlock
          if (git % point_move_rest(p)) then
             v2 = git % point_move_rest_vector(:,p)
             call vec_common(v1,v2)
+            ! calculating normal vektor
+            v2(1) = v1(2)
+            v2(2) = -v1(1)
+            v1 = v2
             git % point_move_rest_vector(:,p) = v1
+            if (abs(v1(1)) < EPSI .and. abs(v1(2)) < EPSI) then ! point is fixed
+               git % point_move_dim_rest(:,p) = .true.
+            else if (abs(v1(1)) < EPSI) then               ! y is fixed
+               git % point_move_dim_rest(2,p) = .true.
+            else if (abs(v1(2)) < EPSI) then               ! x is fixed
+               git % point_move_dim_rest(1,p) = .true.
+            else
+               f = git % nWallEquation + 1
+               git % nWallEquation = f
+               git % wall_equations(f) = p
+               git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
+                                                  + v1(2) * git % point_coords(2,p)
+            end if
          else
             git % point_move_rest(p) = .true.
             call vec_normalize(v1)
             git % point_move_rest_vector(:,p) = v1
          end if
-         git % point_move_rest_type(p) = 2
       end do
    end if
    end if !is_3D
 end do
+!do p = 1, git % nPoint
+!      write(*,*) p,git % point_move_dim_rest(1:2,p), git % point_move_rest_vector(:,p)
+!end do
 end subroutine init_boundary
 
 subroutine init_walledges(git, blocks)

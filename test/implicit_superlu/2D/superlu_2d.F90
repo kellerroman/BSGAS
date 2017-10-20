@@ -52,9 +52,9 @@ integer                                      :: delta_index
 logical                                      :: print_mat
 
 real(kind = 8)                               :: temp
-cell_i = 1000
-cell_j = 10
- print_mat = .false.
+cell_i = 3
+cell_j = 3 
+ print_mat = .true.
 
 
 !  [13]---(19) --- [14]---(21) ---[15] ---(23) --- [16]
@@ -278,7 +278,8 @@ iter = 0
 do eq = 1, npkts
    d = mat_to_id(1,eq)
    p_eq = mat_to_id(2,eq)
-   do pos = max(1,eq-delta_index), min(npkts,eq+delta_index)
+   do pos = 1, npkts
+   !do pos = max(1,eq-delta_index), min(npkts,eq+delta_index)
       found = 0
       if (d == mat_to_id(1,pos)) then
          p_pos = mat_to_id(2,pos)
@@ -320,6 +321,7 @@ if (nnz /= iter) then
    !stop 1
    nnz = iter
 end if
+stop
 allocate(rowind(nnz))
 allocate(colptr(npkts+1))
 
