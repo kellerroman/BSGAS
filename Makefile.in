@@ -1,5 +1,6 @@
 include ../Makefile.global
 include ../inc_Makefile_src
+include ../superlu/make.inc
 OBJECTS=$(_SOURCES:.F90=.o)
 EXECUTABLE = ../bin/BSGAS
 SOURCE_DIR = ../src
@@ -15,13 +16,13 @@ write:
 	@echo "COMPILING PROGRAM:" `pwd`
 
 $(EXECUTABLE): $(OBJECTS) superlu_fortran_wrapper.o
-	$(FC) $(CFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
+	$(FC) $(FFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
 
 %.o: %.F90
-	$(FC) -c $(CFLAGS) -DVERSION=\"$(GIT_VERSION)\" $(INCLUDE) $< -o $@
+	$(FC) -c $(FFLAGS) -DVERSION=\"$(GIT_VERSION)\" $(INCLUDE) $< -o $@
 	
 .c.o:
-	$(CC) $(CFLAGS) $(CDEFS) -I$(HEADER) -c $< $(VERBOSE)
+	$(CC) $(CFLAGS) $(CDEFS) -I$(SUPERLU_HEADER) -c $< $(VERBOSE)
 
 include ../inc_Makefile_dep
 

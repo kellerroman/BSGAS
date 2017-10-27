@@ -104,6 +104,7 @@ end subroutine sw_grid_info
 
 subroutine sw_residual(iter &
                       ,max_res, sum_res            &
+                      ,max_spring_res, sum_spring_res &
                       ,max_spring, min_spring &
                       ,max_edge_len,min_edge_len &
                       ,max_walledge_len,min_walledge_len)
@@ -111,13 +112,15 @@ subroutine sw_residual(iter &
 implicit none
 integer, intent(in) :: iter
 real(REAL_KIND), intent(in) :: max_res, sum_res &
+                             , max_spring_res, sum_spring_res &
                              , max_spring, min_spring &
                              , max_edge_len,min_edge_len &
                              , max_walledge_len,min_walledge_len
 
 if (iter <= res_out_start .or. mod(iter,res_out) == 0) then
-   write(*,'(I10,8(1X,ES10.3))') iter                                                     &
+   write(*,'(I10,10(1X,ES10.3))') iter                                                     &
                                , max_res, sum_res &
+                               , max_spring_res, sum_spring_res &
                                , max_spring, min_spring                                   & 
                                , max_edge_len,min_edge_len                                &
                                , max_walledge_len,min_walledge_len
@@ -128,31 +131,32 @@ end subroutine sw_residual
 subroutine sw_init_residual
 implicit none
 write(*,*) 
-write(*,'(9(A10,1X))') "ITERATION"                        &
+write(*,'(11(A10,1X))') "ITERATION"                        &
                       , "MAX RES", "SUM RES"              &
+                      , "MAX SPRING RES", "SUM SPRING RES"              &
                       , "MAX SPRING", "MIN SPRING"        &
                       , "LEN MAX","LEN MIN"               &
                       , "WALL MAX","WALL MIN"
 end subroutine sw_init_residual
 
-subroutine sw_edge_info(e)
-   use unstr, only: git
-   implicit none
-   integer, intent(in) :: e
-   integer :: ne
-   write(*,'("Edge: ",I0," Length: ",ES11.4)') e, git % edge_lengths(e)
-   write(*,'(2X,"From",4(1X,I4)," to",4(1X,I4))') git % point_refs(:,git % edge_points(1,e)) &
-                                              ,git % point_refs(:,git % edge_points(2,e))
-   ne = git % edge_neighbor(1,e)
-   write(*,'(2X,"Neighbors: ",I0," Length: ",ES11.4)') ne, git % edge_lengths(ne)
-   write(*,'(4X,"From",4(1X,I4)," to",4(1X,I4))') git % point_refs(:,git % edge_points(1,ne)) &
-                                              ,git % point_refs(:,git % edge_points(2,ne))
-   ne = git % edge_neighbor(2,e)
-   write(*,'(2X,"Neighbors: ",I0," Length: ",ES11.4)') ne, git % edge_lengths(ne)
-   write(*,'(4X,"From",4(1X,I4)," to",4(1X,I4))') git % point_refs(:,git % edge_points(1,ne)) &
-                                              ,git % point_refs(:,git % edge_points(2,ne))
-
-end subroutine
+!subroutine sw_edge_info(e)
+!   use unstr, only: git
+!   implicit none
+!   integer, intent(in) :: e
+!   integer :: ne
+!   write(*,'("Edge: ",I0," Length: ",ES11.4)') e, git % edge_lengths(e)
+!   write(*,'(2X,"From",4(1X,I4)," to",4(1X,I4))') git % point_refs(:,git % edge_points(1,e)) &
+!                                              ,git % point_refs(:,git % edge_points(2,e))
+!   ne = git % edge_neighbor(1,e)
+!   write(*,'(2X,"Neighbors: ",I0," Length: ",ES11.4)') ne, git % edge_lengths(ne)
+!   write(*,'(4X,"From",4(1X,I4)," to",4(1X,I4))') git % point_refs(:,git % edge_points(1,ne)) &
+!                                              ,git % point_refs(:,git % edge_points(2,ne))
+!   ne = git % edge_neighbor(2,e)
+!   write(*,'(2X,"Neighbors: ",I0," Length: ",ES11.4)') ne, git % edge_lengths(ne)
+!   write(*,'(4X,"From",4(1X,I4)," to",4(1X,I4))') git % point_refs(:,git % edge_points(1,ne)) &
+!                                              ,git % point_refs(:,git % edge_points(2,ne))
+!
+!end subroutine
 
 subroutine sw_info_1_int(str,int)
 implicit none

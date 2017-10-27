@@ -13,8 +13,8 @@ all: run
 
 
 run: compile grid.h5
-	#@$(HOMEDIR)/bin/BSGAS
-	@env OMP_NUM_THREADS=2 $(HOMEDIR)/bin/BSGAS
+	@$(HOMEDIR)/bin/BSGAS
+	#@env OMP_NUM_THREADS=2 $(HOMEDIR)/bin/BSGAS
 
 compile:
 	@$(MAKE) -C $(HOMEDIR) --no-print-directory
@@ -27,4 +27,4 @@ clean:
 	@rm -vf bc.cfg
 	@rm -vrf *~
 
-.PHONY: compile 
+.PHONY: compile  grid.h5

@@ -52,14 +52,14 @@ call allocate_blocks(nVar)
  j = 1
  length  = abs(y1)
 do i = 1,nj2+1
-   blocks(1) % xyzs(i,j,k,2) = length/dble(nj2) * dble(i-1) + y1
+   blocks(1) % xyzs(i,j,k,1) = length/dble(nj2) * dble(i-1) + y1
 end do
  length  = abs(y3)
 do i = 1,nj1+1
-   blocks(1) % xyzs(i+nj2,j,k,2) = length/dble(nj1) * dble(i-1)
+   blocks(1) % xyzs(i+nj2,j,k,1) = length/dble(nj1) * dble(i-1)
 end do
 
-blocks(1) % xyzs(:,j,k,1) = 0.0D0
+blocks(1) % xyzs(:,j,k,2) = 0.0D0
 blocks(1) % xyzs(:,j,k,3) = 0.0d0
 call write_grid()
 open(666,file="bc.cfg")

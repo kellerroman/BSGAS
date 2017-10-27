@@ -105,8 +105,13 @@ end do
 
 call write_grid()
 open(666,file="bc.cfg")
-write(666,'(A)') "!wall: 1N,1S,2S,2W,3N ! Wall"
-write(666,'(A)') "!dn = 1E-6    ! Spacing of first Cell"
+if (bfs_case == 1) then
+   write(666,'(A)') "wall: 1N,1S,2S,2W,3N ! Wall"
+   write(666,'(A)') "dn = 1E-6    ! Spacing of first Cell"
+else
+   write(666,'(A)') "wall: 1N,1S,2S,2W,3N ! Wall"
+   write(666,'(A)') "dn = 1E-5    ! Spacing of first Cell"
+end if
 close(666)
 
 WRITE(*,*) "======================================================" &

@@ -1,5 +1,6 @@
 module boundary
 use help_routines
+use screen_io
 use types
 implicit none
    real(REAL_KIND) , parameter :: EPSI        = 1.0E-8_REAL_KIND
@@ -194,16 +195,18 @@ real(REAL_KIND) :: v1(3), v2(3),vec(3,2)
 logical :: is_3D
 
 nBlock = ubound(blocks,1)
-git % point_move_rest = .false.
-git % point_move_dim_rest = .false.
+git % point_move_rest = .FALSE.
+git % point_move_dim_rest = .FALSE.
 !git % point_move_rest_type = 0
 if (blocks(1) % nPoints(2) == 1) then
+   git % point_move_dim_rest(2,:) = .TRUE.
    do b = 1, nBlock
       do i = 1,blocks(b) % nPoints(1), blocks(b) % nCells(1)
          p = blocks(b) % refs(i,1,1)
-         git % point_move_rest(p) = .true.
+         git % point_move_rest(p) = .TRUE.
          !git % point_move_rest_type(p) = 1
          git % point_move_rest_vector(:,p) = 0.0d0
+         git % point_move_dim_rest(1,p) = .TRUE.
          write(*,*) "Restiricting Movement for",i,p
       end do
    end do
@@ -636,6 +639,7 @@ do b = 1, nBlock
    end do
 end do
 
+call sw_info_1_int("Number of WallEdges:",git % nWallEdge)
 call alloc(git % wall_edges         , git % nWallEdge)
 call alloc(git % wall_edge_dns      , git % nWallEdge)
 nwe = 0

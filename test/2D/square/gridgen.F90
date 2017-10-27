@@ -50,8 +50,8 @@ case(4)
    call add_block(imax-1,jmax-1)
    nBlock = 1
 case(5)
-   imax = 4
-   jmax = 4
+   imax = 5
+   jmax = 5
    call add_block(imax-1,jmax-1)
    nBlock = 1
 case default
@@ -97,17 +97,22 @@ call write_grid()
 open(666,file="bc.cfg")
 write(666,'(A)') "! Wall at South of all  and EAST OF BLOCK 1"
 select case(square_case) 
-case(1,4,5)
+case(1,4)
 write(666,'(A)') "wall: 1S, 1E ! Wall"
+write(666,'(A)') "dn = 4E-2    ! Spacing of first Cell"
 case(2)
 write(666,'(A)') "wall: 1S, 2S, 2E ! Wall"
+write(666,'(A)') "dn = 4E-2    ! Spacing of first Cell"
 case(3)
 write(666,'(A)') "wall: 1S, 2S, 2E, 4E ! Wall"
+write(666,'(A)') "dn = 4E-2    ! Spacing of first Cell"
+case(5)
+write(666,'(A)') "wall: 1W ! Wall"
+write(666,'(A)') "dn = 2.0E-1    ! Spacing of first Cell"
 case default
    write(*,*) "Case unknown"
    stop 1
 end select
-write(666,'(A)') "dn = 4E-2    ! Spacing of first Cell"
 close(666)
 
 write(*,'(A)') "done"

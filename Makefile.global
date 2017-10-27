@@ -16,28 +16,28 @@ INCLUDE = -I/usr/include/
 
 SUPERLU_HEADER = ../superlu/SRC
 ifneq (,$(findstring $(FC),gfortran))
-   CFLAGS = -std=f2008
-   CFLAGS += -Wconversion -Wall -Wextra -Warray-temporaries -Werror
+   FFLAGS = -std=f2008
+   FFLAGS += -Wconversion -Wall -Wextra -Warray-temporaries -Werror
 
 #   INCLUDE = -I/media/LDS/module/software/libs/hdf5/1.8.17_gnu/include/static/
    ifeq ($(DEBUG), 0)
-      CFLAGS += -O3
-      CFLAGS += -fopenmp
+      FFLAGS += -O3
+      #FFLAGS += -fopenmp
    else
-      CFLAGS += -g -fbacktrace -ffpe-trap=invalid,zero,overflow -fcheck=all -fbounds-check
+      FFLAGS += -g -fbacktrace -ffpe-trap=invalid,zero,overflow -fcheck=all -fbounds-check
    endif
 endif
 
 ifneq (,$(findstring $(FC),ifort))
-   CFLAGS += -assume buffered_io
+   FFLAGS += -assume buffered_io
    ifeq ($(DEBUG), 0)
-      CFLAGS += -O3
+      FFLAGS += -O3
    else
-      CFLAGS += -g
+      FFLAGS += -g
    endif
    LIBS+=-static-intel
 #   LIBS+=-L/media/LDS/module/software/libs/hdf5/1.8.17_intel/lib/
 #   INCLUDE = -I/media/LDS/module/software/libs/hdf5/1.8.17_intel/include/static/
 endif
 
-#CFLAGS += -DDEBUG #Unnecessary comments are oppressed
+#FFLAGS += -DDEBUG #Unnecessary comments are oppressed

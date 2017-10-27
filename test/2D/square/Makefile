@@ -21,5 +21,5 @@ clean:
 	@$(MAKE) -C 3x3 clean
 
 gridgen: gridgen.F90 $(TOOLS_OBJ)/module_gridgen.o
-	$(FC) $(CFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
+	$(FC) $(FFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
 

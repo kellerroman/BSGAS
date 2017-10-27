@@ -18,9 +18,9 @@ all: $(EXE) module_gridgen.o
 
 
 $(EXECUTABLE_DIR)/%:$(SOURCE_DIR)/%.F90
-	$(FC) $(CFLAGS) $^ $(LIBS) -o $@ $(INCLUDE)
+	$(FC) $(FFLAGS) $^ $(LIBS) -o $@ $(INCLUDE)
 
 %.o: ../src/%.F90
-	$(FC) $(CFLAGS) $< -c $(INCLUDE)
+	$(FC) $(FFLAGS) $< -c $(INCLUDE)
 
 include ../../inc_Makefile_dep

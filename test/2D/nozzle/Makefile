@@ -9,7 +9,7 @@ INCLUDE += -I$(TOOLS_OBJ) -I$(CODE_OBJ)
 all: run
 
 gridgen: gridgen.F90 $(TOOLS_OBJ)/module_gridgen.o
-	$(FC) $(CFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
+	$(FC) $(FFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
 
 
 run: compile grid.h5

@@ -29,7 +29,7 @@ program BSGAS
 use boundary, only: read_boundary, init_boundary, init_walledges
 use control, only: loop_control, end_adaption, iter
 use config, only: read_config
-use screen_io, only: sw_program_start,sw_program_end, sw_init_residual, sw_residual, sw_grid_info,sw_edge_info
+use screen_io, only: sw_program_start,sw_program_end, sw_init_residual, sw_residual, sw_grid_info
 use structured_grid, only: read_grid, blocks, write_grid
 use unstr, only: strukt2unstr,calc_edge_length, git, unstr2struct
 use unstr_output, only: write_output
@@ -41,6 +41,7 @@ real(REAL_KIND) :: max_edge_len,min_edge_len
 real(REAL_KIND) :: max_walledge_len,min_walledge_len
 real(REAL_KIND) :: max_spring, min_spring
 real(REAL_KIND) :: max_res, sum_res
+real(REAL_KIND) :: max_spring_res, sum_spring_res
 
 call sw_program_start()
 
@@ -58,28 +59,32 @@ call init_matrix(git)
 
 call calc_edge_length(max_edge_len,min_edge_len,max_walledge_len,min_walledge_len)
 call init_springs
-call calc_edge_springs(max_spring,min_spring)
+!call calc_edge_springs(max_spring,min_spring)
 
 call write_output(0)
 
 call sw_init_residual
 
 end_adaption = .false.
+max_res = 1.0D0
 
 ITER_LOOP: do while (.not. end_adaption)
 
-   call loop_control()
+   call loop_control(max_res)
 
-   call calc_edge_length(max_edge_len,min_edge_len,max_walledge_len,min_walledge_len)
+   !call calc_edge_length(max_edge_len,min_edge_len,max_walledge_len,min_walledge_len)
 
-   call calc_edge_springs(max_spring,min_spring)
+   call calc_edge_springs(max_spring,min_spring,max_spring_res,sum_spring_res)
 
    call calc_matrix(git)
 
-   call solve_system(max_res,sum_res)
+   call solve_system(max_res,sum_res,git % point_coords)
+
+   call calc_edge_length(max_edge_len,min_edge_len,max_walledge_len,min_walledge_len)
 
    call sw_residual(iter                              &
                    ,max_res, sum_res                  &
+                   ,max_spring_res, sum_spring_res    &
                    ,max_spring, min_spring            &
                    ,max_edge_len, min_edge_len        &
                    ,max_walledge_len, min_walledge_len)

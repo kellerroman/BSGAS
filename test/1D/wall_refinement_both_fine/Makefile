@@ -17,7 +17,7 @@ grid.h5: gridgen
 	@./gridgen
 
 gridgen: gridgen.F90 $(TOOLS_OBJ)/module_gridgen.o
-	$(FC) $(CFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
+	$(FC) $(FFLAGS) $^ -o $@ $(LIBS) $(INCLUDE)
 
 clean:
 	@rm -vf *.o *.mod *.dat *.plt *.png *.vtk *.txt *.bin gridgen *.dx stubex *.csv *.h5 *.xdmf fort.* bc.cfg

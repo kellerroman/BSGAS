@@ -5,7 +5,7 @@ contains
 subroutine write_output(iter)
    use types
    use unstr, only: git
-   use spring, only: springs, edge_values
+   use spring, only: springs, edge_values, driving_forces
    !use structured_grid, only: nBlock,nCell,blocks
 implicit none
 
@@ -111,17 +111,15 @@ if (mod(iter,output_intervall) == 0) then
    do i = 1, git % nedge
       write(10,*) edge_values(3,i)
    end do
-   write(10,"(A)") 'SCALARS KantenSteifigkeit double'
+   write(10,"(A)") 'SCALARS Edge_Spring double'
    write(10,"(A)") 'LOOKUP_TABLE Default'
    do i = 1, git % nedge
       write(10,*) git % edge_springs(i)
    end do
-   write(10,"(A)") 'SCALARS KantenForce double'
+   write(10,"(A)") 'SCALARS Edge_Driving_Force int'
    write(10,"(A)") 'LOOKUP_TABLE Default'
    do i = 1, git % nedge
-      write(10,*) sqrt(git % edge_forces(1,i)*git % edge_forces(1,i) &
-                      +git % edge_forces(2,i)*git % edge_forces(2,i) &
-                      +git % edge_forces(3,i)*git % edge_forces(3,i) )
+      write(10,*) driving_forces(i)
    end do
    close(10)
 end if
