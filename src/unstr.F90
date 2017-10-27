@@ -236,6 +236,11 @@ do b = 1, nBlock
                   associate (bc => blocks(b) % boundary_cond(WEST))
                      ! eventually there is a edge on another blockto connect to
                      nb = bc% bc_type
+                     if (nb > b) then
+                        write(*,*) "Block has a larger Block-Number",__FILE__,__LINE__
+                        write(*,*) b, i,j,k,nb,bc % face
+                        stop 1
+                     end if
                      ps = blocks(nb) % refs( &
                            bc % ci + bc % dii * (i-2) + bc % dij * j + bc % dik * k &
                           ,bc % cj + bc % dji * (i-2) + bc % djj * j + bc % djk * k &

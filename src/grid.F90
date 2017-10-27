@@ -5,13 +5,15 @@ use types
 use help_routines, only: alloc
 implicit none
 
-real(REAL_KIND),parameter :: EPS = 1.0E-6_REAL_KIND
+real(REAL_KIND), parameter  :: EPS = 1.0E-6_REAL_KIND
 
 character(len=100)          :: filename_grid_in
 character(len=100)          :: filename_grid_out
 character(len=*), parameter :: GROUP_GRID            = "grid"
 character(len=*), parameter :: GROUP_BLOCK           = "block"
-character(len=*), parameter :: COORD_NAME(3)      = [ "CoordinateX","CoordinateY","CoordinateZ" ]
+character(len=*), parameter :: COORD_NAME(3)         = ["CoordinateX","CoordinateY","CoordinateZ"]
+integer(INT_KIND)           :: filetype              = -1   ! 1 = HDF5
+                                                            ! 2 = TASCOM-FILE
 
 integer(INT_KIND)           :: nBlock
 integer(INT_KIND)           :: nCell
@@ -27,7 +29,38 @@ contains
 
 subroutine read_grid()
 implicit none
-call read_grid_hdf5()
+integer :: pos
+logical :: fexists
+
+inquire(file=trim(filename_grid_in),exist=fexists)
+
+if (.not. fexists) then
+   write(*,*) "Grid file: '"//trim(filename_grid_in)//"' not found!",__FILE__,__LINE__
+   stop 1
+end if
+
+if (filetype == -1) then
+   pos = index(filename_grid_in,".",.TRUE.)
+   if (pos > 0) then
+      if (trim(filename_grid_in(pos+1:)) == "h5") then
+         filetype = 1
+      else if (trim(filename_grid_in(pos+1:)) == "bin") then
+         filetype = 2
+      else
+         write(*,*) "Filetype unkown"
+         stop 1
+      end if
+   else
+      write(*,*) "Filetype unkown"
+      stop 1
+   end if
+end if
+
+if (filetype == 1) then
+   call read_grid_hdf5()
+else if (filetype == 2) then
+   call read_grid_ufo()
+end if
 call connect_blocks()
 end subroutine read_grid
 
@@ -45,13 +78,6 @@ integer(hid_t) :: dspace_id     ! dataspace identifier
 integer(HSIZE_T) :: dims(3)
 integer(HSIZE_T) :: maxdims(3)
 integer :: b,d
-logical :: fexists
-
-inquire(file=trim(filename_grid_in),exist=fexists)
-if (.not. fexists) then
-   write(*,*) "Grid file: '"//trim(filename_grid_in)//"' not found!",__FILE__,__LINE__
-   stop 1
-end if
 ! Initialize FORTRAN interface.
 nCell = 0
 call h5open_f(error)
@@ -113,6 +139,50 @@ call h5gclose_f(group_id_grid, error) ! CLOSE GRID GROUP
 
 call h5fclose_f(file_id, error)
 end subroutine read_grid_hdf5
+
+subroutine read_grid_ufo()
+implicit none
+integer :: fu
+integer :: b,i,j,k
+nCell = 0
+
+open(newunit=fu,file=trim(filename_grid_in),form="unformatted",access="stream")
+
+read(fu) dimen, nBlock
+if (dimen == 2) then
+   dimen = 3
+else
+   dimen = 2
+end if
+allocate(blocks(nBlock))
+do b = 1, nBlock
+   blocks(b) % nPoints = 1
+   read(fu) blocks(b) % nPoints(1:dimen)
+
+   blocks(b) % nCells = max(1,blocks(b) % nPoints - 1)
+   nCell = nCell + product(blocks(b) % nCells)
+end do
+do b = 1, nBlock
+   allocate ( blocks(b) % coords (blocks(b)%nPoints(1),blocks(b)%nPoints(2),blocks(b)%nPoints(3),3))
+   call alloc (blocks(b) % refs,blocks(b) % nPoints)
+   call alloc (blocks(b) % nSamePoints,blocks(b) % nPoints)
+   allocate ( blocks(b) % samePoints(8,blocks(b) % nPoints(1) &
+                                      ,blocks(b) % nPoints(2) &
+                                      ,blocks(b) % nPoints(3) ))
+   blocks(b) % refs = -1
+   blocks(b) % nSamePoints = 0
+   blocks(b) % samePoints(:,:,:,:) % b = -1
+   blocks(b) % samePoints(:,:,:,:) % i = -1
+   blocks(b) % samePoints(:,:,:,:) % j = -1
+   blocks(b) % samePoints(:,:,:,:) % k = -1
+
+   read(fu) (((blocks(b) % coords (i,j,k,1:dimen),i = 1, blocks(b) % nPoints(1)) &
+                                                 ,j = 1, blocks(b) % nPoints(2)) & 
+                                                 ,k = 1, blocks(b) % nPoints(3))  
+
+end do
+close(fu)
+end subroutine read_grid_ufo
 
 subroutine connect_blocks()
 implicit none
@@ -336,6 +406,15 @@ do b = 1, nBlock
                      case default 
                         goto 666
                      end select
+                  else if (f == WEST .and. nf == SOUTH) then
+                     select case (per) 
+                     case(1)
+                        ci = 0                          ; dij = 1
+                        cj = 2                          ; dji = -1
+                        ck = 0                          ; dkk = 1
+                     case default 
+                        goto 666
+                     end select
                   else if (f == NORTH .and. nf == SOUTH) then
                      select case (per) 
                      case(1)
@@ -354,11 +433,29 @@ do b = 1, nBlock
                      case default 
                         goto 666
                      end select
+                  else if (f == SOUTH .and. nf == SOUTH) then
+                     select case (per) 
+                     case(2)
+                        ci = blocks(nb) % nPoints(1)+1; dii = -1
+                        cj = 2                        ; djj = -1
+                        ck = 0                        ; dkk = 1
+                     case default 
+                        goto 666
+                     end select
                   else if (f == SOUTH .and. nf == EAST) then
                      select case (per) 
                      case(2)
                         ci = blocks(nb) % nPoints(1) - 1; dij = 1
                         cj = blocks(nb) % nPoints(2) + 1; dji = -1
+                        ck = 0                          ; dkk = 1
+                     case default 
+                        goto 666
+                     end select
+                  else if (f == SOUTH .and. nf == WEST) then
+                     select case (per) 
+                     case(1)
+                        ci = 2                          ; dij = -1
+                        cj = 0                          ; dji = 1
                         ck = 0                          ; dkk = 1
                      case default 
                         goto 666
@@ -400,7 +497,11 @@ do b = 1, nBlock
                         goto 666
                      end select
                   else
-                     goto 6666
+                     write(*,*) "Case ",FACE_NAMES(f)  &
+                               ," and ",FACE_NAMES(nf) &
+                               , per &
+                               ," not implemented yet: ",__FILE__,__LINE__
+                     stop 1
                   end if
 
                   blocks(b) % boundary_cond(f) % ci   = ci
@@ -444,12 +545,9 @@ end do
 return
 
 666   continue
-      write(*,*) "Per: ",per, "for ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"
+      write(*,*) "Per: ",per, "for ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet: ",__FILE__,__LINE__
       stop 1
    
-6666  continue
-      write(*,*) "Case ",FACE_NAMES(f)," and ",FACE_NAMES(nf)," not implemented yet"
-      stop 1
 end subroutine connect_blocks
 
 subroutine addSamePoint(b,i,j,k,nb,ni,nj,nk)
