@@ -551,70 +551,71 @@ return
 end subroutine connect_blocks
 
 subroutine addSamePoint(b,i,j,k,nb,ni,nj,nk)
-   implicit none
-   integer, intent(in) :: b,i,j,k,nb,ni,nj,nk
+implicit none
+integer, intent(in) :: b,i,j,k,nb,ni,nj,nk
 
-   integer :: nsp_b,nsp_nb,n,nsp_t
-   type(t_same), allocatable :: sp_b(:)
-   type(t_same)              :: temp   
+integer :: nsp_b,nsp_nb,n,nsp_t
+type(t_same), allocatable :: sp_b(:)
+type(t_same)              :: temp   
 
-   nsp_b = blocks(b) % nSamePoints(i,j,k)
-   nsp_nb = blocks(nb) % nSamePoints(ni,nj,nk)
-   ! check if already in list
-   do n = 1, nsp_b
-      if (nb == blocks(b) % SamePoints(n,i,j,k) % b .and. & 
-          ni == blocks(b) % SamePoints(n,i,j,k) % i .and. & 
-          nj == blocks(b) % SamePoints(n,i,j,k) % j .and. & 
-          nk == blocks(b) % SamePoints(n,i,j,k) % k ) then
-         !write(*,*) b,i,j,k," is already connected to ",nb,ni,nj,nk,n
-         return
-      end if
+nsp_b = blocks(b) % nSamePoints(i,j,k)
+nsp_nb = blocks(nb) % nSamePoints(ni,nj,nk)
+! check if already in list
+do n = 1, nsp_b
+   if (nb == blocks(b) % SamePoints(n,i,j,k) % b .and. & 
+       ni == blocks(b) % SamePoints(n,i,j,k) % i .and. & 
+       nj == blocks(b) % SamePoints(n,i,j,k) % j .and. & 
+       nk == blocks(b) % SamePoints(n,i,j,k) % k ) then
+      !write(*,*) b,i,j,k," is already connected to ",nb,ni,nj,nk,n
+      return
+   end if
+end do
+!write(*,*) "Working @",b,i,j,k,nsp_b,nsp_nb
+
+if (nsp_b > 0) then
+   allocate(sp_b(nsp_b))
+   do n =  1, nsp_b 
+      sp_b(n) = blocks(b) % SamePoints(n,i,j,k)
    end do
-   !write(*,*) "Working @",b,i,j,k,nsp_b,nsp_nb
+end if
    
-   if (nsp_b > 0) then
-      allocate(sp_b(nsp_b))
-      do n =  1, nsp_b 
-         sp_b(n) = blocks(b) % SamePoints(n,i,j,k)
-      end do
-   end if
-      
-   if (nsp_nb > 0) then
-      do n =  1, nsp_nb 
-         temp = blocks(nb) % SamePoints(n,ni,nj,nk)
-         nsp_b = nsp_b + 1
-         blocks(b) % SamePoints(nsp_b,i,j,k) = temp
-         nsp_t = blocks(temp % b) % nSamePoints(temp % i,temp % j,temp % k)
-         nsp_t = nsp_t + 1
-         blocks(temp % b) % SamePoints(nsp_t,temp % i,temp % j, temp % k) = t_same(b,i,j,k)
-         blocks(temp % b) % nSamePoints(temp % i,temp % j,temp % k) = nsp_t
-      end do
-   end if
+if (nsp_nb > 0) then
+   do n =  1, nsp_nb 
+      temp = blocks(nb) % SamePoints(n,ni,nj,nk)
+      nsp_b = nsp_b + 1
+      blocks(b) % SamePoints(nsp_b,i,j,k) = temp
+      nsp_t = blocks(temp % b) % nSamePoints(temp % i,temp % j,temp % k)
+      nsp_t = nsp_t + 1
+      blocks(temp % b) % SamePoints(nsp_t,temp % i,temp % j, temp % k) = t_same(b,i,j,k)
+      blocks(temp % b) % nSamePoints(temp % i,temp % j,temp % k) = nsp_t
+   end do
+end if
 
-   if (allocated(sp_b)) then
-      do n =  1, ubound(sp_b,1) 
-         nsp_nb = nsp_nb + 1 
-         blocks(nb) % SamePoints(nsp_nb,ni,nj,nk) = sp_b(n)
-         nsp_t = blocks(sp_b(n) % b) % nSamePoints(sp_b(n) % i,sp_b(n) % j,sp_b(n) % k)
-         nsp_t = nsp_t + 1
-         blocks(sp_b(n) % b) % SamePoints(nsp_t,sp_b(n) % i,sp_b(n) % j, sp_b(n) % k) = t_same(nb,ni,nj,nk)
-         blocks(sp_b(n) % b) % nSamePoints(sp_b(n) % i,sp_b(n) % j,sp_b(n) % k) = nsp_t
-      end do
-      deallocate(sp_b)
-   end if
+if (allocated(sp_b)) then
+   do n =  1, ubound(sp_b,1) 
+      nsp_nb = nsp_nb + 1 
+      blocks(nb) % SamePoints(nsp_nb,ni,nj,nk) = sp_b(n)
+      nsp_t = blocks(sp_b(n) % b) % nSamePoints(sp_b(n) % i,sp_b(n) % j,sp_b(n) % k)
+      nsp_t = nsp_t + 1
+      blocks(sp_b(n) % b) % SamePoints(nsp_t,sp_b(n) % i,sp_b(n) % j, sp_b(n) % k) = t_same(nb,ni,nj,nk)
+      blocks(sp_b(n) % b) % nSamePoints(sp_b(n) % i,sp_b(n) % j,sp_b(n) % k) = nsp_t
+   end do
+   deallocate(sp_b)
+end if
 
-   nsp_b = nsp_b + 1
-   !write(*,*) "+Adding:",nb,ni,nj,nk," to ",b,i,j,k,"@",nsp_b
-   blocks(b) % SamePoints(nsp_b,i,j,k) = t_same(nb,ni,nj,nk)
+nsp_b = nsp_b + 1
+!write(*,*) "+Adding:",nb,ni,nj,nk," to ",b,i,j,k,"@",nsp_b
+blocks(b) % SamePoints(nsp_b,i,j,k) = t_same(nb,ni,nj,nk)
 
-   nsp_nb = nsp_nb + 1
-   !write(*,*) "-Adding:",b,i,j,k," to ",nb,ni,nj,nk,"@",nsp_nb
-   blocks(nb) % SamePoints(nsp_nb,ni,nj,nk) = t_same(b,i,j,k)
+nsp_nb = nsp_nb + 1
+!write(*,*) "-Adding:",b,i,j,k," to ",nb,ni,nj,nk,"@",nsp_nb
+blocks(nb) % SamePoints(nsp_nb,ni,nj,nk) = t_same(b,i,j,k)
 
-   ! Updating the Number of Same points
-   blocks(b) % nSamePoints(i,j,k) = nsp_b
-   blocks(nb) % nSamePoints(ni,nj,nk) = nsp_nb
-   end subroutine addSamePoint
+! Updating the Number of Same points
+blocks(b) % nSamePoints(i,j,k) = nsp_b
+blocks(nb) % nSamePoints(ni,nj,nk) = nsp_nb
+end subroutine addSamePoint
+
 subroutine write_grid()
 implicit none
 

@@ -112,7 +112,6 @@ call alloc(git % point_coords          , 3, git % npoint)
 call alloc(git % point_refs            , 4, git % npoint)
 call alloc(git % point_nedges             , git % npoint)
 call alloc(git % point_edges           , 6, git % npoint)
-call alloc(git % point_edge_signs      , 6, git % npoint)
 call alloc(git % point_neighbors       , 6, git % npoint)
 call alloc(git % point_forces          , 3, git % npoint)
 call alloc(git % point_move_rest          , git % npoint)
@@ -218,8 +217,6 @@ do b = 1, nBlock
                      git % point_nedges(p1) = pe
                      ! add edge to point at current edge count
                      git % point_edges(pe,p1) = e
-                     ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
-                     git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
                      ! add point p2 to neighbor list of p1 at possiton of the
                      ! new edge pe
                      git % point_neighbors(pe,p1) = blocks(b) % refs(i-(p-1),j,k)
@@ -239,7 +236,8 @@ do b = 1, nBlock
                      if (nb > b) then
                         write(*,*) "Block has a larger Block-Number",__FILE__,__LINE__
                         write(*,*) b, i,j,k,nb,bc % face
-                        stop 1
+                        do_connect = .false.
+                        !stop 1
                      end if
                      ps = blocks(nb) % refs( &
                            bc % ci + bc % dii * (i-2) + bc % dij * j + bc % dik * k &
@@ -427,8 +425,6 @@ do b = 1, nBlock
                      git % point_nedges(p1) = pe
                      ! add edge to point at current edge count
                      git % point_edges(pe,p1) = e
-                     ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
-                     git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
                      git % point_neighbors(pe,p1) = blocks(b) % refs(i,j-(p-1),k)
                   end do
    !====================================================================================================
@@ -447,6 +443,12 @@ do b = 1, nBlock
                   associate (bc => blocks(b) % boundary_cond(SOUTH))
                      ! eventually there is a edge on another blockto connect to
                      nb = bc % bc_type
+                     if (nb > b) then
+                        write(*,*) "Block has a larger Block-Number",__FILE__,__LINE__
+                        write(*,*) b, i,j,k,nb,bc % face
+                        do_connect = .false.
+                        !stop 1
+                     end if
                      ps = blocks(nb) % refs( &
                            bc % ci + bc % dii * (i) + bc % dij * (j-2) + bc % dik * k &
                           ,bc % cj + bc % dji * (i) + bc % djj * (j-2) + bc % djk * k &
@@ -617,8 +619,6 @@ do b = 1, nBlock
                         git % point_nedges(p1) = pe
                         ! add edge to point at current edge count
                         git % point_edges(pe,p1) = e
-                        ! add sign of the resulting edge force, for p2 -> -1 p1 -> 1
-                        git % point_edge_signs(pe,p1) =  dble (1-(p-1)*2)
                         git % point_neighbors(pe,p1) = blocks(b) % refs(i,j,k-(p-1))
                      end do
    !====================================================================================================

@@ -3,7 +3,7 @@ use help_routines
 use screen_io
 use types
 implicit none
-   real(REAL_KIND) , parameter :: EPSI        = 1.0E-8_REAL_KIND
+   real(REAL_KIND) , parameter :: EPSI        = 1.0E-4_REAL_KIND
    character(len=*), parameter :: BC_SHORT(6) = ["w","e","s","n","f","b"]
 contains
 
@@ -339,6 +339,8 @@ do b = 1, nBlock
          else if (abs(v1(2)) < EPSI) then               ! x is fixed
             git % point_move_dim_rest(1,p) = .true.
          else
+            write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
+            stop 1
             f = git % nWallEquation + 1
             git % nWallEquation = f
             git % wall_equations(f) = p
@@ -372,6 +374,8 @@ do b = 1, nBlock
             else if (abs(v1(2)) < EPSI) then               ! x is fixed
                git % point_move_dim_rest(1,p) = .true.
             else
+               write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
+               stop 1
                f = git % nWallEquation + 1
                git % nWallEquation = f
                git % wall_equations(f) = p
@@ -404,6 +408,9 @@ do b = 1, nBlock
          else if (abs(v1(2)) < EPSI) then               ! x is fixed
             git % point_move_dim_rest(1,p) = .true.
          else
+            write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
+            write(*,*) b,j,v1
+            stop 1
             f = git % nWallEquation + 1
             git % nWallEquation = f
             git % wall_equations(f) = p
@@ -436,6 +443,9 @@ do b = 1, nBlock
             else if (abs(v1(2)) < EPSI) then               ! x is fixed
                git % point_move_dim_rest(1,p) = .true.
             else
+               write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
+               write(*,*) b,j,v1
+               stop 1
                f = git % nWallEquation + 1
                git % nWallEquation = f
                git % wall_equations(f) = p
@@ -468,6 +478,8 @@ do b = 1, nBlock
          else if (abs(v1(2)) < EPSI) then               ! x is fixed
             git % point_move_dim_rest(1,p) = .true.
          else
+            write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
+            stop 1
             f = git % nWallEquation + 1
             git % nWallEquation = f
             git % wall_equations(f) = p
@@ -500,6 +512,8 @@ do b = 1, nBlock
             else if (abs(v1(2)) < EPSI) then               ! x is fixed
                git % point_move_dim_rest(1,p) = .true.
             else
+               write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
+               stop 1
                f = git % nWallEquation + 1
                git % nWallEquation = f
                git % wall_equations(f) = p
@@ -532,6 +546,8 @@ do b = 1, nBlock
          else if (abs(v1(2)) < EPSI) then               ! x is fixed
             git % point_move_dim_rest(1,p) = .true.
          else
+            write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
+            stop 1
             f = git % nWallEquation + 1
             git % nWallEquation = f
             git % wall_equations(f) = p
@@ -564,6 +580,8 @@ do b = 1, nBlock
             else if (abs(v1(2)) < EPSI) then               ! x is fixed
                git % point_move_dim_rest(1,p) = .true.
             else
+               write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
+               stop 1
                f = git % nWallEquation + 1
                git % nWallEquation = f
                git % wall_equations(f) = p

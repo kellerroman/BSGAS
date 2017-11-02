@@ -16,12 +16,12 @@ character(len = 1) :: arg
 integer :: testcase
 WRITE(*,*) "GRIDGEN FÜR EIN EINFACHES O_GRID"
 
-testcase = 2
+testcase = 1
 call get_command_argument(1, arg)
 if (len_trim(arg) /= 0) then
    read(arg,*) testcase
 end if
-ny2 = 32
+ny2 = 48
 if (testcase == 1) then
    nk = 16
    ny = 32

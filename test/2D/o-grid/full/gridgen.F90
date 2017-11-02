@@ -127,8 +127,8 @@ call write_grid()
 open(666,file="bc.cfg")
 write(666,'(A)') "! Wall at South of all  and EAST OF BLOCK 1"
 if (testcase == 1) then
-   write(666,'(A)') "wall: 2N, 3N ! Wall"
-   write(666,'(A)') "dn = 1E-2    ! Spacing of first Cell"
+   write(666,'(A)') "wall: 2N, 3N, 4N, 5N ! Wall"
+   write(666,'(A)') "dn = 5E-3    ! Spacing of first Cell"
 else
    write(666,'(A)') "wall: 2N, 3N ! Wall"
    write(666,'(A)') "dn = 1E-6    ! Spacing of first Cell"

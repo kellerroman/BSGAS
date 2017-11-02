@@ -67,10 +67,6 @@ type :: t_unstr
       integer(INT_KIND), allocatable :: point_Neighbors(:,:)
       !< Indices of attached edges (edge_id,point_id) 
 
-      real(REAL_KIND), allocatable   :: point_edge_signs(:,:)
-      !< Edge vectors are always from first to second point.
-      !< So for second points, the sign of the force must be inverted
-
       real(REAL_KIND), allocatable   :: point_forces(:,:)
       !< Force, sum of attateced edge forces, acting on the point
 
