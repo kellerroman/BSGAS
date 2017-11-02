@@ -121,6 +121,11 @@ if (mod(iter,output_intervall) == 0) then
    do i = 1, git % nedge
       write(10,*) driving_forces(i)
    end do
+   write(10,"(A)") 'SCALARS Edge_Neighbors int'
+   write(10,"(A)") 'LOOKUP_TABLE Default'
+   do i = 1, git % nedge
+      write(10,*) git % edge_nparallel(i)
+   end do
    close(10)
 end if
 end subroutine write_output

@@ -82,77 +82,77 @@ end do
 ! smoothing
 if (smooth_springs == 1) then
 !$OMP PARALLEL DO PRIVATE(ne,n)
-do e = 1, git % nedge
-   do n = 1, git % edge_nneighbor(e)
-      ne = git % edge_neighbor(n,e)
-      !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-      !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
-      springs(2,ne) = max(git % edge_springs(e) / 1.3D0, springs(2,ne))
-      springs(2,e) = max(git % edge_springs(ne) / 1.3D0, springs(2,e))
+   do e = 1, git % nedge
+      do n = 1, git % edge_nneighbor(e)
+         ne = git % edge_neighbor(n,e)
+         !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
+         !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
+         springs(2,ne) = max(git % edge_springs(e) / 1.3D0, springs(2,ne))
+         springs(2,e) = max(git % edge_springs(ne) / 1.3D0, springs(2,e))
+      end do
+      do n = 1, git % edge_nparallel(e)
+         ne = git % edge_parallel(n,e)
+         !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
+         !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
+         springs(3,ne) = max(git % edge_springs(e) / 1.3D0, springs(3,ne))
+         springs(3,e) = max(git % edge_springs(ne) / 1.3D0, springs(3,e))
+      end do
    end do
-   do n = 1, git % edge_nparallel(e)
-      ne = git % edge_parallel(n,e)
-      !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-      !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
-      springs(3,ne) = max(git % edge_springs(e) / 1.3D0, springs(3,ne))
-      springs(3,e) = max(git % edge_springs(ne) / 1.3D0, springs(3,e))
-   end do
-end do
 !$OMP END PARALLEL DO
 !$OMP PARALLEL DO PRIVATE(ne,n)
-do e =  git % nedge,1,-1
-   do n = 1, git % edge_nneighbor(e)
-      ne = git % edge_neighbor(n,e)
-      !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-      !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
-      springs(2,ne) = max(git % edge_springs(e) / 1.3D0, springs(2,ne))
-      springs(2,e) = max(git % edge_springs(ne) / 1.3D0, springs(2,e))
-      git % edge_springs(ne) = maxval(           springs(:,ne))
-      driving_forces(ne)     = maxloc(           springs(:,ne),1)
-      git % edge_springs(e)  = maxval(           springs(:,e))
-      driving_forces(e)      = maxloc(           springs(:,e),1)
+   do e =  git % nedge,1,-1
+      do n = 1, git % edge_nneighbor(e)
+         ne = git % edge_neighbor(n,e)
+         !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
+         !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
+         springs(2,ne) = max(git % edge_springs(e) / 1.3D0, springs(2,ne))
+         springs(2,e) = max(git % edge_springs(ne) / 1.3D0, springs(2,e))
+         git % edge_springs(ne) = maxval(           springs(:,ne))
+         driving_forces(ne)     = maxloc(           springs(:,ne),1)
+         git % edge_springs(e)  = maxval(           springs(:,e))
+         driving_forces(e)      = maxloc(           springs(:,e),1)
+      end do
+      do n = 1, git % edge_nparallel(e)
+         ne = git % edge_parallel(n,e)
+         !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
+         !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
+         springs(3,ne) = max(git % edge_springs(e) / 1.3D0, springs(3,ne))
+         springs(3,e) = max(git % edge_springs(ne) / 1.3D0, springs(3,e))
+         git % edge_springs(ne) = maxval(           springs(:,ne))
+         driving_forces(ne)     = maxloc(           springs(:,ne),1)
+         git % edge_springs(e)  = maxval(           springs(:,e))
+         driving_forces(e)      = maxloc(           springs(:,e),1)
+      end do
    end do
-   do n = 1, git % edge_nparallel(e)
-      ne = git % edge_parallel(n,e)
-      !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-      !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
-      springs(3,ne) = max(git % edge_springs(e) / 1.3D0, springs(3,ne))
-      springs(3,e) = max(git % edge_springs(ne) / 1.3D0, springs(3,e))
-      git % edge_springs(ne) = maxval(           springs(:,ne))
-      driving_forces(ne)     = maxloc(           springs(:,ne),1)
-      git % edge_springs(e)  = maxval(           springs(:,e))
-      driving_forces(e)      = maxloc(           springs(:,e),1)
-   end do
-end do
 !$OMP END PARALLEL DO
 else if (smooth_springs == 2) then
 !$OMP PARALLEL DO PRIVATE(ne,n)
-do e = 1, git % nedge
-   do n = 1, git % edge_nneighbor(e)
-      ne = git % edge_neighbor(n,e)
-      git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-      git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
+   do e = 1, git % nedge
+      do n = 1, git % edge_nneighbor(e)
+         ne = git % edge_neighbor(n,e)
+         git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
+         git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
+      end do
+      do n = 1, git % edge_nparallel(e)
+         ne = git % edge_parallel(n,e)
+         git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
+         git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
+      end do
    end do
-   do n = 1, git % edge_nparallel(e)
-      ne = git % edge_parallel(n,e)
-      git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-      git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
-   end do
-end do
 !$OMP END PARALLEL DO
 !$OMP PARALLEL DO PRIVATE(ne,n)
-do e =  git % nedge,1,-1
-   do n = 1, git % edge_nneighbor(e)
-      ne = git % edge_neighbor(n,e)
-      git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-      git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
+   do e =  git % nedge,1,-1
+      do n = 1, git % edge_nneighbor(e)
+         ne = git % edge_neighbor(n,e)
+         git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
+         git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
+      end do
+      do n = 1, git % edge_nparallel(e)
+         ne = git % edge_parallel(n,e)
+         git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
+         git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
+      end do
    end do
-   do n = 1, git % edge_nparallel(e)
-      ne = git % edge_parallel(n,e)
-      git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-      git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
-   end do
-end do
 !$OMP END PARALLEL DO
 end if !Smoothing
 !$OMP PARALLEL DO

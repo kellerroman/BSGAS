@@ -424,6 +424,17 @@ do b = 1, nBlock
                      case default 
                         goto 666
                      end select
+                  else if (f == NORTH .and. nf == NORTH) then
+                     select case (per) 
+                     case(2)
+                        ci = blocks(nb) % nPoints(1)+1; dii = -1
+                        cj = blocks(nb) % nPoints(2)              &
+                           + blocks(b) % nPoints(2)
+                                                        djj = -1
+                        ck = 0                        ; dkk = 1
+                     case default 
+                        goto 666
+                     end select
                   else if (f == SOUTH .and. nf == NORTH) then
                      select case (per) 
                      case(1)
