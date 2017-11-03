@@ -106,23 +106,23 @@ subroutine sw_residual(iter &
                       ,max_res, sum_res            &
                       ,max_spring_res, sum_spring_res &
                       ,max_spring, min_spring &
-                      ,max_edge_len,min_edge_len &
+                      ,max_edge_len,min_edge_len, avg_edge_len & 
                       ,max_walledge_len,min_walledge_len)
    use control, only:res_out_start, res_out
 implicit none
 integer, intent(in) :: iter
 real(REAL_KIND), intent(in) :: max_res, sum_res &
                              , max_spring_res, sum_spring_res &
-                             , max_spring, min_spring &
+                             , max_spring, min_spring, avg_edge_len&
                              , max_edge_len,min_edge_len &
                              , max_walledge_len,min_walledge_len
 
 if (iter <= res_out_start .or. mod(iter,res_out) == 0) then
-   write(*,'(I10,10(1X,ES10.3))') iter                                                     &
+   write(*,'(I10,11(1X,ES10.3))') iter                                                     &
                                , max_res, sum_res &
                                , max_spring_res, sum_spring_res &
-                               , max_spring, min_spring                                   & 
-                               , max_edge_len,min_edge_len                                &
+                               , max_spring, min_spring                                    & 
+                               , max_edge_len,min_edge_len, avg_edge_len                   &
                                , max_walledge_len,min_walledge_len
 end if
 
@@ -131,11 +131,11 @@ end subroutine sw_residual
 subroutine sw_init_residual
 implicit none
 write(*,*) 
-write(*,'(11(A10,1X))') "ITERATION"                        &
+write(*,'(12(A10,1X))') "ITERATION"                        &
                       , "MAX RES", "SUM RES"              &
                       , "MAX SPRING RES", "SUM SPRING RES"              &
                       , "MAX SPRING", "MIN SPRING"        &
-                      , "LEN MAX","LEN MIN"               &
+                      , "LEN MAX","LEN MIN","LEN AVG"               &
                       , "WALL MAX","WALL MIN"
 end subroutine sw_init_residual
 

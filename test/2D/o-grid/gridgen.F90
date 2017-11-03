@@ -50,24 +50,8 @@ do j = 1, nj
       blocks(b) % xyzs(i,j,k,2) = dble(j-1)*RADIUS*0.3d0/dble(nj-1)
    end do
 end do
-b = 2
-NI = blocks(b) % nPkts(1)
-NJ = blocks(b) % nPkts(2)
-do j = 1, nj
-   do i = 1,ni
-      winkel =  45.0D0 * DBLE(I-1) /DBLE(NI-1) * pi
-      spktx = DBLE(I-1)*RADIUS*0.3D0/DBLE(NI-1)
-      spkty = RADIUS*0.3D0
-      epktx = RADIUS * SIN(WINKEL)
-      epkty = RADIUS * COS(WINKEL)
-      lx = epktx-spktx
-      ly = epkty-spkty
-      blocks(b) % xyzs(i,j,k,1) = spktx + DBLE(J-1)/DBLE(NJ-1) * lx 
-      blocks(b) % xyzs(i,j,k,2) = spkty + DBLE(J-1)/DBLE(NJ-1) * ly
-   END DO
-END DO
 
-b = 3
+b = 2
 NI = blocks(b) % nPkts(1)
 NJ = blocks(b) % nPkts(2)
 do j = 1, nj
@@ -89,12 +73,29 @@ do j = 1, nj
    end do
 end do
 
+b = 3
+NI = blocks(b) % nPkts(1)
+NJ = blocks(b) % nPkts(2)
+do j = 1, nj
+   do i = 1,ni
+      winkel =  45.0D0 * DBLE(I-1) /DBLE(NI-1) * pi
+      spktx = DBLE(I-1)*RADIUS*0.3D0/DBLE(NI-1)
+      spkty = RADIUS*0.3D0
+      epktx = RADIUS * SIN(WINKEL)
+      epkty = RADIUS * COS(WINKEL)
+      lx = epktx-spktx
+      ly = epkty-spkty
+      blocks(b) % xyzs(i,j,k,1) = spktx + DBLE(J-1)/DBLE(NJ-1) * lx 
+      blocks(b) % xyzs(i,j,k,2) = spkty + DBLE(J-1)/DBLE(NJ-1) * ly
+   END DO
+END DO
+
 call write_grid()
 open(666,file="bc.cfg")
 write(666,'(A)') "! Wall at South of all  and EAST OF BLOCK 1"
 if (testcase == 1) then
-   write(666,'(A)') "wall: 2N, 3N ! Wall"
-   write(666,'(A)') "dn = 1E-2    ! Spacing of first Cell"
+!   write(666,'(A)') "wall: 2N, 3N ! Wall"
+!   write(666,'(A)') "dn = 1E-2    ! Spacing of first Cell"
 else
    write(666,'(A)') "wall: 2N, 3N ! Wall"
    write(666,'(A)') "dn = 1E-6    ! Spacing of first Cell"

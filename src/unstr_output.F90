@@ -61,22 +61,13 @@ if (mod(iter,output_intervall) == 0) then
    end do
    write(10,*)
    write(10,"(A,1X,I0)") "POINT_DATA",git % nPoint
-   write(10,"(A)") 'VECTORS Point_FORCE double'
-   do i = 1, git % nPoint
-      write(10,*) git % point_forces(:,i)
-   end do
-!   write(10,"(A)") 'SCALARS MOVEMENT double'
-!   write(10,"(A)") 'LOOKUP_TABLE Default'
-!   do i = 1, git % nPoint
-!      write(10,*) git % point_move_rest_type(i)
-!   end do
    write(10,"(A)") 'VECTORS MOVEMENT_VECTOR double'
    do i = 1, git % nPoint
       !write(10,'(3(D20.13,1X))') git % point_move_rest_vector(:,i)
       write(10,*) git % point_move_rest_vector(:,i)
    end do
    write(10,"(A,1X,I0)") "CELL_DATA",git % nedge
-   write(10,"(A)") 'SCALARS Kantenlaenge double'
+   write(10,"(A)") 'SCALARS Edge_Length double'
    write(10,"(A)") 'LOOKUP_TABLE Default'
    do i = 1, git % nedge
       write(10,*) git % edge_lengths(i)

@@ -37,7 +37,7 @@ use spring, only: init_springs,calc_edge_springs
 use types
 use implicit, only: init_matrix, calc_matrix, solve_system
 implicit none
-real(REAL_KIND) :: max_edge_len,min_edge_len
+real(REAL_KIND) :: max_edge_len,min_edge_len, avg_edge_len
 real(REAL_KIND) :: max_walledge_len,min_walledge_len
 real(REAL_KIND) :: max_spring, min_spring
 real(REAL_KIND) :: max_res, sum_res
@@ -57,7 +57,7 @@ call init_walledges(git,blocks)
 
 call init_matrix(git)
 
-call calc_edge_length(max_edge_len,min_edge_len,max_walledge_len,min_walledge_len)
+call calc_edge_length(max_edge_len,min_edge_len,avg_edge_len,max_walledge_len,min_walledge_len)
 call init_springs
 !call calc_edge_springs(max_spring,min_spring)
 
@@ -80,13 +80,13 @@ ITER_LOOP: do while (.not. end_adaption)
 
    call solve_system(max_res,sum_res,git % point_coords)
 
-   call calc_edge_length(max_edge_len,min_edge_len,max_walledge_len,min_walledge_len)
+   call calc_edge_length(max_edge_len,min_edge_len,avg_edge_len,max_walledge_len,min_walledge_len)
 
    call sw_residual(iter                              &
                    ,max_res, sum_res                  &
                    ,max_spring_res, sum_spring_res    &
                    ,max_spring, min_spring            &
-                   ,max_edge_len, min_edge_len        &
+                   ,max_edge_len, min_edge_len, avg_edge_len  &
                    ,max_walledge_len, min_walledge_len)
 
    call write_output(iter)

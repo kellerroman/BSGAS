@@ -19,7 +19,7 @@ real(REAL_KIND)              :: faktor_wall
 real(REAL_KIND)              :: faktor_strech
 real(REAL_KIND)              :: faktor_para
 real(REAL_KIND)              :: spring_max
-real(REAL_KIND), parameter   :: SPRING_MIN     = 1.00E-10_REAL_KIND
+real(REAL_KIND), parameter   :: SPRING_MIN     = 1.00E-2_REAL_KIND
 !real(REAL_KIND), parameter   :: SPRING_INC     = 1.05E-00_REAL_KIND
 !real(REAL_KIND), parameter   :: INV_SPRING_INC = 1.0E0_REAL_KIND / SPRING_INC
 real(REAL_KIND), allocatable :: springs(:,:)
