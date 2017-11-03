@@ -70,7 +70,7 @@ type(t_unstr), intent(in) :: git
 integer(INT_KIND) :: p,d,n
 integer(INT_KIND) :: eq, pos
 integer(INT_KIND) :: gpkt1, gpkt2, d1 , d2
-integer(INT_KIND) :: found, mat_pos
+integer(INT_KIND) :: mat_pos
 !integer :: iopt, info
 
 
@@ -158,38 +158,14 @@ call sw_info_1_int("Maximum id-Dist:",git % max_id_delta)
 do eq = 1, nPoint
    gpkt1 = Point_ids (eq)
    d1    = Point_dims(eq)
-   do pos = max(1,eq-git % max_id_delta), min(nPoint,eq+git % max_id_delta)
-      d2    = Point_dims(pos)
-      found = 0
-      if (d1 == d2) then
-         if (pos == eq) then
-            do n = 1, git % point_nedges(gpkt1)
-               p = git % point_edges(n,gpkt1)
-               found = found + p
-            end do
-         else
-            gpkt2 = Point_ids (pos)
-            do n = 1, git % point_nedges(gpkt1)
-               if (gpkt2 == git % point_neighbors(n,gpkt1)) then
-                  found = git % point_edges(n,gpkt1)
-                  exit
-               end if
-            end do
-         end if
-      end if
-      if (found /= 0) then
-   !      write(*,'(" ",I3.3,1X)',ADVANCE="NO") found
+   nNonZero = nNonZero + 1 ! Diagonal Element
+   do d = 1, git % point_nEdges(gpkt1)
+      gpkt2 = git % point_Neighbors(d,gpkt1)
+      pos = GridPkt2MatPkt(d1,gpkt2)
+      if (pos /= -1) then
          nNonZero = nNonZero + 1
-      else  
-   !      write(*,'("    ",1X)',ADVANCE="NO")
       end if
    end do
-   do n = 1, git % point_nedges(gpkt1)
-      if (GridPkt2MatPkt(d1,git % point_neighbors(n,gpkt1)) == -1 ) then
-   !      write(*,'(" ",I3.3,1X)',ADVANCE="NO") git % point_edges(n,gpkt1)
-      end if
-   end do
-   !write(*,'("    ",1X)')
 end do
 
 call sw_info_1_int("Number of Non-Zero Elements:",nNonZero)
