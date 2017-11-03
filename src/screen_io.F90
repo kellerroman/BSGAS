@@ -133,7 +133,7 @@ implicit none
 write(*,*) 
 write(*,'(12(A10,1X))') "ITERATION"                        &
                       , "MAX RES", "SUM RES"              &
-                      , "MAX SPRING RES", "SUM SPRING RES"              &
+                      , "MAX SP RES", "SUM SP RES"              &
                       , "MAX SPRING", "MIN SPRING"        &
                       , "LEN MAX","LEN MIN","LEN AVG"               &
                       , "WALL MAX","WALL MIN"
