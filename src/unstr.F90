@@ -31,13 +31,11 @@ integer :: nne, ne
 
 logical :: edge_exists,do_connect
                   
-real(REAL_KIND) :: temp
+!real(REAL_KIND) :: temp
 
 type(t_same) :: sp
 
 nBlock = ubound(blocks,1)
-
-!write(*,*) "Block structured number of Blocks:",nBlock
 
 b = 1
 git % nPoint = 0
@@ -63,7 +61,7 @@ do b = 1, nBlock
    do f = 1, number_of_face
       if (blocks(b) % boundary_cond(f) % bc_type > 0 .and. &
           blocks(b) % boundary_cond(f) % bc_type < b) then
-         if (f <= WEST) then
+         if (f <= EAST) then
             i = i - 1
          else if (f <= NORTH) then
             j = j - 1
@@ -90,20 +88,21 @@ do b = 1, nBlock
    end if
 end do
 
-p = 0
-temp = 0.0d0
-do b = 1, nBlock
-   p = p + product(blocks(b) % nPoints)
-   do k = 1, blocks(b) % nPoints(3)
-      do j = 1, blocks(b) % nPoints(2)
-         do i = 1, blocks(b) % nPoints(1)
-            nb = blocks(b) % nSamePoints(i,j,k)
-            temp = temp + dble(nb) / dble(nb+1)
-         end do
-      end do
-   end do
-end do
-git % npoint = p-int(temp)
+!p = 0
+!temp = 0.0d0
+!do b = 1, nBlock
+!   p = p + product(blocks(b) % nPoints)
+!   do k = 1, blocks(b) % nPoints(3)
+!      do j = 1, blocks(b) % nPoints(2)
+!         do i = 1, blocks(b) % nPoints(1)
+!            nb = blocks(b) % nSamePoints(i,j,k)
+!            temp = temp + dble(nb) / dble(nb+1)
+!         end do
+!      end do
+!   end do
+!end do
+!git % npoint = p-int(temp)
+
 call sw_info_1_int("Points in structured Grid:",p)
 call sw_info_1_int("Number of Points",git % npoint)
 call sw_info_1_int( "Edges in unstr Grid:", git % nedge)
@@ -232,10 +231,10 @@ do b = 1, nBlock
                   else if (blocks(b) % boundary_cond(WEST) % bc_type > 0) then
                   associate (bc => blocks(b) % boundary_cond(WEST))
                      ! eventually there is a edge on another blockto connect to
-                     nb = bc% bc_type
+                     nb = bc % bc_type
                      if (nb > b) then
-                        write(*,*) "Block has a larger Block-Number",__FILE__,__LINE__
-                        write(*,*) b, i,j,k,nb,bc % face
+                        !write(*,*) "Block has a larger Block-Number",__FILE__,__LINE__
+                        !write(*,*) b, i,j,k,nb,bc % face
                         do_connect = .false.
                         !stop 1
                      end if
@@ -444,8 +443,8 @@ do b = 1, nBlock
                      ! eventually there is a edge on another blockto connect to
                      nb = bc % bc_type
                      if (nb > b) then
-                        write(*,*) "Block has a larger Block-Number",__FILE__,__LINE__
-                        write(*,*) b, i,j,k,nb,bc % face
+                        !write(*,*) "Block has a larger Block-Number",__FILE__,__LINE__
+                        !write(*,*) b, i,j,k,nb,bc % face
                         do_connect = .false.
                         !stop 1
                      end if
