@@ -12,9 +12,11 @@ character(len=100)          :: filename_grid_out
 character(len=*), parameter :: GROUP_GRID            = "grid"
 character(len=*), parameter :: GROUP_BLOCK           = "block"
 character(len=*), parameter :: COORD_NAME(3)         = ["CoordinateX","CoordinateY","CoordinateZ"]
-integer(INT_KIND)           :: filetype              = -1   ! 1 = HDF5
-                                                            ! 2 = TASCOM-FILE
+integer(INT_KIND)           :: filetype_grid_in              = -1   ! 1 = HDF5
+                                                                    ! 2 = TASCOM-FILE
 
+integer(INT_KIND)           :: filetype_grid_out             = -1   ! 1 = HDF5
+                                                                    ! 2 = TASCOM-FILE
 integer(INT_KIND)           :: nBlock
 integer(INT_KIND)           :: nCell
 type(t_block), allocatable  :: blocks(:)
@@ -39,13 +41,13 @@ if (.not. fexists) then
    stop 1
 end if
 
-if (filetype == -1) then
+if (filetype_grid_in == -1) then
    pos = index(filename_grid_in,".",.TRUE.)
    if (pos > 0) then
       if (trim(filename_grid_in(pos+1:)) == "h5") then
-         filetype = 1
+         filetype_grid_in = 1
       else if (trim(filename_grid_in(pos+1:)) == "bin") then
-         filetype = 2
+         filetype_grid_in = 2
       else
          write(*,*) "Filetype unkown"
          stop 1
@@ -56,9 +58,9 @@ if (filetype == -1) then
    end if
 end if
 
-if (filetype == 1) then
+if (filetype_grid_in == 1) then
    call read_grid_hdf5()
-else if (filetype == 2) then
+else if (filetype_grid_in == 2) then
    call read_grid_ufo()
 end if
 call connect_blocks()
@@ -629,6 +631,29 @@ end subroutine addSamePoint
 
 subroutine write_grid()
 implicit none
+integer :: pos
+if (filetype_grid_out == -1) then
+   pos = index(filename_grid_in,".",.TRUE.)
+   if (pos > 0) then
+      if (trim(filename_grid_in(pos+1:)) == "h5") then
+         filetype_grid_in = 1
+      else if (trim(filename_grid_in(pos+1:)) == "bin") then
+         filetype_grid_in = 2
+      else
+         filetype_grid_in = 1
+      end if
+   end if
+end if
+
+if (filetype_grid_in == 1) then
+   call write_grid_hdf5()
+else if (filetype_grid_in == 2) then
+   call write_grid_ufo()
+end if
+end subroutine write_grid
+
+subroutine write_grid_hdf5()
+implicit none
 
 integer, parameter                :: RANK = 3
 character(len=len(GROUP_BLOCK)+2) :: block_group
@@ -678,5 +703,31 @@ end do
 call h5gclose_f(group_id_grid, error) ! CLOSE GRID GROUP
 
 call h5fclose_f(file_id, error)
-end subroutine write_grid
+end subroutine write_grid_hdf5
+
+subroutine write_grid_ufo()
+implicit none
+integer :: fu
+integer :: b,i,j,k
+integer :: dimen_temp
+
+open(newunit=fu,file=trim(filename_grid_out),form="unformatted",access="stream")
+
+if (dimen == 3) then
+   dimen_temp = 2
+else
+   dimen_temp = 0
+end if
+write(fu) dimen_temp, nBlock
+do b = 1, nBlock
+  write(fu) blocks(b) % nPoints(1:dimen)
+end do
+do b = 1, nBlock
+   write(fu) (((blocks(b) % coords (i,j,k,1:dimen),i = 1, blocks(b) % nPoints(1)) &
+                                                  ,j = 1, blocks(b) % nPoints(2)) & 
+                                                  ,k = 1, blocks(b) % nPoints(3))  
+
+end do
+close(fu)
+end subroutine write_grid_ufo
 end module structured_grid  
