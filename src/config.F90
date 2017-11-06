@@ -26,7 +26,7 @@ implicit none
 
 call add_parameter("GRID_OUT"          ,filename_grid_out      ,"grid_out.h5"     )
 call add_parameter("GRID_IN"           ,filename_grid_in       ,"grid.h5"         )
-call add_parameter("SPRING_MAX"        ,spring_max             ,1.00E+04_REAL_KIND)
+call add_parameter("SPRING_MAX"        ,spring_max             ,1.00E+10_REAL_KIND)
 call add_parameter("FAKTOR_PARA"       ,faktor_para            ,1.00E-03_REAL_KIND)
 call add_parameter("FAKTOR_STRECH"     ,faktor_strech          ,1.00E-05_REAL_KIND)
 call add_parameter("FAKTOR_WALL"       ,faktor_wall            ,1.00E+00_REAL_KIND)

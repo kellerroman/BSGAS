@@ -4,7 +4,7 @@ use types
 use unstr, only: git
 use help_routines, only: alloc
 implicit none
-integer(INT_KIND), parameter :: N_SPRINGS      = 3
+integer(INT_KIND), parameter :: N_SPRINGS      = 4
 
 enum, bind(C)
    enumerator :: TYPE_EXP= 1, TYPE_DENOM, TYPE_PID
@@ -12,6 +12,7 @@ end enum
 integer(INT_KIND)            :: spring_control_type_wall   = TYPE_DENOM
 integer(INT_KIND)            :: spring_control_type_strech = TYPE_DENOM
 integer(INT_KIND)            :: spring_control_type_para   = TYPE_DENOM
+integer(INT_KIND)            :: spring_control_type_smooth = TYPE_DENOM
 
 integer(INT_KIND)            :: smooth_springs = 0
 
@@ -22,6 +23,7 @@ real(REAL_KIND)              :: spring_max
 real(REAL_KIND), parameter   :: SPRING_MIN     = 1.00E-2_REAL_KIND
 !real(REAL_KIND), parameter   :: SPRING_INC     = 1.05E-00_REAL_KIND
 !real(REAL_KIND), parameter   :: INV_SPRING_INC = 1.0E0_REAL_KIND / SPRING_INC
+real(REAL_KIND), parameter   :: SPRING_SMOOTH_MAX = SPRING_MIN * 1.0E+12_REAL_KIND
 real(REAL_KIND), allocatable :: springs(:,:)
 real(REAL_KIND), allocatable :: edge_values(:,:)
 real(REAL_KIND), allocatable :: spring_old(:)
@@ -69,7 +71,7 @@ integer :: e,n,ne
 call wall_refinement
 call edge_streching
 call edge_parallel_streching
-
+call edge_smoothing
 
 !$OMP PARALLEL DO
 do e = 1, git % nedge
@@ -279,4 +281,47 @@ else
 end if
 end subroutine edge_parallel_streching
 
+subroutine edge_smoothing
+implicit none
+integer :: e
+integer :: ne  !neighbor edge
+integer :: n
+
+real(REAL_KIND) :: el,nel
+real(REAL_KIND) :: fkt
+real(REAL_KIND) :: delta
+
+if (spring_control_type_smooth == TYPE_EXP) then
+!$OMP PARALLEL DO PRIVATE(el,nel,fkt,ne,n,delta)
+   do e = 1, git % nedge
+      write(*,*) "not implemented yet", __FILE__,__LINE__
+      el = git % edge_lengths(e)
+      nel = 1E10_REAL_KIND
+      do n = 1, git % edge_nneighbor(e)
+         ne = git % edge_neighbor(n,e)
+         nel = min(nel, git % edge_lengths(ne))
+      end do
+      fkt = el / nel - 1.0E0_REAL_KIND
+      edge_values(4,e) = fkt
+      delta = exp(faktor_strech * fkt)
+      springs(4,e) = max(springs(4,e) * delta, SPRING_MIN)
+   end do
+!$OMP END PARALLEL DO
+else
+!$OMP PARALLEL DO PRIVATE(el,nel,fkt,ne,n,delta)
+   do e = 1, git % nedge
+      el = git % edge_lengths(e)
+      nel = 1E10_REAL_KIND
+      do n = 1, git % edge_nneighbor(e)
+         ne = git % edge_neighbor(n,e)
+         nel = min(nel, git % edge_lengths(ne))
+      end do
+      fkt = el / nel
+      edge_values(4,e) = fkt
+      springs(4,e) = min(max(springs(4,e) * fkt, SPRING_MIN),SPRING_SMOOTH_MAX*el)
+      !springs(4,e) = SPRING_MIN
+   end do
+!$OMP END PARALLEL DO
+end if
+end subroutine edge_smoothing
 end module spring

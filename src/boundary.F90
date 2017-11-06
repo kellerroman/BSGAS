@@ -478,13 +478,14 @@ do b = 1, nBlock
          else if (abs(v1(2)) < EPSI) then               ! x is fixed
             git % point_move_dim_rest(1,p) = .true.
          else
-            write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
-            stop 1
-            f = git % nWallEquation + 1
-            git % nWallEquation = f
-            git % wall_equations(f) = p
-            git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
-                                               + v1(2) * git % point_coords(2,p)
+            git % point_move_dim_rest(:,p) = .true.
+            !write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
+            !stop 1
+            !f = git % nWallEquation + 1
+            !git % nWallEquation = f
+            !git % wall_equations(f) = p
+            !git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
+            !                                   + v1(2) * git % point_coords(2,p)
          end if
       end do
       ! CORNER POINTS
@@ -546,13 +547,14 @@ do b = 1, nBlock
          else if (abs(v1(2)) < EPSI) then               ! x is fixed
             git % point_move_dim_rest(1,p) = .true.
          else
-            write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
-            stop 1
-            f = git % nWallEquation + 1
-            git % nWallEquation = f
-            git % wall_equations(f) = p
-            git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
-                                               + v1(2) * git % point_coords(2,p)
+            git % point_move_dim_rest(:,p) = .true.
+            !write(*,*) "no Diagonal Walls currently possible",__FILE__,__LINE__
+            !stop 1
+            !f = git % nWallEquation + 1
+            !git % nWallEquation = f
+            !git % wall_equations(f) = p
+            !git % wall_equations_rhs_values(f) = v1(1) * git % point_coords(1,p) &
+            !                                   + v1(2) * git % point_coords(2,p)
          end if
       end do
       ! CORNER POINTS

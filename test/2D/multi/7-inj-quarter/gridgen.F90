@@ -8,7 +8,7 @@ real(kind = 8), parameter :: Pi = 3.1415927/180.D0
 integer :: nk  = 32
 integer :: ny  = 32
 integer :: ny2 = 32
-integer :: nj_wall = 5!64
+integer :: nj_wall = 32!64
 
 real(kind = 8),parameter :: radius      = 3.0D-3
 real(kind = 8),parameter :: radius_o    = radius * 0.3d0
@@ -487,8 +487,8 @@ END DO
 call write_grid()
 open(666,file="bc.cfg")
 write(666,'(A)') "! Wall at South of all  and EAST OF BLOCK 1"
-!write(666,'(A)') "wall: 22N, 23N! Wall"
-!write(666,'(A)') "dn = 5E-5    ! Spacing of first Cell"
+write(666,'(A)') "wall: 22N, 23N! Wall"
+write(666,'(A)') "dn = 5E-5    ! Spacing of first Cell"
 close(666)
 write(*,*) "done"
 
