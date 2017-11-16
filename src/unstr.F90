@@ -4,9 +4,7 @@ use types
 use help_routines, only: alloc, vec_common
 use screen_io
 implicit none
-real(REAL_KIND) :: point_weight ! read in config and calculated invers
 type(t_unstr) :: git
-integer :: wall_move_rest
 contains
 subroutine strukt2unstr(blocks)
 use structured_grid, only: number_of_face
@@ -31,7 +29,7 @@ integer :: nne, ne
 
 logical :: edge_exists,do_connect
                   
-!real(REAL_KIND) :: temp
+real(REAL_KIND) :: temp
 
 type(t_same) :: sp
 
@@ -88,20 +86,21 @@ do b = 1, nBlock
    end if
 end do
 
-!p = 0
-!temp = 0.0d0
-!do b = 1, nBlock
-!   p = p + product(blocks(b) % nPoints)
-!   do k = 1, blocks(b) % nPoints(3)
-!      do j = 1, blocks(b) % nPoints(2)
-!         do i = 1, blocks(b) % nPoints(1)
-!            nb = blocks(b) % nSamePoints(i,j,k)
-!            temp = temp + dble(nb) / dble(nb+1)
-!         end do
-!      end do
-!   end do
-!end do
-!git % npoint = p-int(temp)
+! This method is used since the method above has issues with complex grids e.g. multi-inj-chamber
+p = 0
+temp = 0.0d0
+do b = 1, nBlock
+   p = p + product(blocks(b) % nPoints)
+   do k = 1, blocks(b) % nPoints(3)
+      do j = 1, blocks(b) % nPoints(2)
+         do i = 1, blocks(b) % nPoints(1)
+            nb = blocks(b) % nSamePoints(i,j,k)
+            temp = temp + dble(nb) / dble(nb+1)
+         end do
+      end do
+   end do
+end do
+git % npoint = p-nint(temp)
 
 call sw_info_1_int("Points in structured Grid:",p)
 call sw_info_1_int("Number of Points",git % npoint)

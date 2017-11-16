@@ -7,16 +7,18 @@ implicit none
 
 real(REAL_KIND), parameter  :: EPS = 1.0E-6_REAL_KIND
 
+enum, bind(C)
+   enumerator :: FILETYPE_UNKNOWM, FILETYPE_HDF5, FILETYPE_UFO
+end enum
+
 character(len=100)          :: filename_grid_in
 character(len=100)          :: filename_grid_out
 character(len=*), parameter :: GROUP_GRID            = "grid"
 character(len=*), parameter :: GROUP_BLOCK           = "block"
 character(len=*), parameter :: COORD_NAME(3)         = ["CoordinateX","CoordinateY","CoordinateZ"]
-integer(INT_KIND)           :: filetype_grid_in              = -1   ! 1 = HDF5
-                                                                    ! 2 = TASCOM-FILE
+integer(INT_KIND)           :: filetype_grid_in              = FILETYPE_UNKNOWM
 
-integer(INT_KIND)           :: filetype_grid_out             = -1   ! 1 = HDF5
-                                                                    ! 2 = TASCOM-FILE
+integer(INT_KIND)           :: filetype_grid_out             = FILETYPE_UNKNOWM
 integer(INT_KIND)           :: nBlock
 integer(INT_KIND)           :: nCell
 type(t_block), allocatable  :: blocks(:)
@@ -41,13 +43,13 @@ if (.not. fexists) then
    stop 1
 end if
 
-if (filetype_grid_in == -1) then
+if (filetype_grid_in == FILETYPE_UNKNOWM) then
    pos = index(filename_grid_in,".",.TRUE.)
    if (pos > 0) then
       if (trim(filename_grid_in(pos+1:)) == "h5") then
-         filetype_grid_in = 1
+         filetype_grid_in = FILETYPE_HDF5
       else if (trim(filename_grid_in(pos+1:)) == "bin") then
-         filetype_grid_in = 2
+         filetype_grid_in = FILETYPE_UFO
       else
          write(*,*) "Filetype unkown"
          stop 1
@@ -58,9 +60,9 @@ if (filetype_grid_in == -1) then
    end if
 end if
 
-if (filetype_grid_in == 1) then
+if (filetype_grid_in == FILETYPE_HDF5) then
    call read_grid_hdf5()
-else if (filetype_grid_in == 2) then
+else if (filetype_grid_in == FILETYPE_UFO) then
    call read_grid_ufo()
 end if
 call connect_blocks()
@@ -632,22 +634,21 @@ end subroutine addSamePoint
 subroutine write_grid()
 implicit none
 integer :: pos
-if (filetype_grid_out == -1) then
-   pos = index(filename_grid_in,".",.TRUE.)
+if (filetype_grid_out == FILETYPE_UNKNOWM) then
+   filetype_grid_out = FILETYPE_HDF5 ! Default is always HDF5
+   pos = index(filename_grid_out,".",.TRUE.)
    if (pos > 0) then
-      if (trim(filename_grid_in(pos+1:)) == "h5") then
-         filetype_grid_in = 1
-      else if (trim(filename_grid_in(pos+1:)) == "bin") then
-         filetype_grid_in = 2
-      else
-         filetype_grid_in = 1
+      if (trim(filename_grid_out(pos+1:)) == "h5") then
+         filetype_grid_out = FILETYPE_HDF5
+      else if (trim(filename_grid_out(pos+1:)) == "bin") then
+         filetype_grid_out = FILETYPE_UFO
       end if
    end if
 end if
 
-if (filetype_grid_in == 1) then
+if (filetype_grid_out == FILETYPE_HDF5) then
    call write_grid_hdf5()
-else if (filetype_grid_in == 2) then
+else if (filetype_grid_out == FILETYPE_UFO) then
    call write_grid_ufo()
 end if
 end subroutine write_grid

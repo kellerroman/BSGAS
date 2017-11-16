@@ -9,10 +9,9 @@ contains
 
 subroutine read_config
    use control, only: nIter, res_out,res_out_start
-   use spring, only: cell_inc,cell_parallel_inc, faktor_wall, faktor_strech, faktor_para, spring_max
+   use spring, only: cell_inc,cell_parallel_inc, faktor_wall, faktor_strech, faktor_para, faktor_smooth, spring_max, relax_fkt
    use structured_grid, only: filename_grid_in,filename_grid_out
    use unstr_output, only: output_intervall
-   use unstr, only: wall_move_rest, point_weight
 
 implicit none
    logical :: fexists
@@ -26,18 +25,24 @@ implicit none
 
 call add_parameter("GRID_OUT"          ,filename_grid_out      ,"grid_out.h5"     )
 call add_parameter("GRID_IN"           ,filename_grid_in       ,"grid.h5"         )
+
+call add_parameter("RELAXATION_FACTOR" ,relax_fkt              ,9.00E-01_REAL_KIND)
+
 call add_parameter("SPRING_MAX"        ,spring_max             ,1.00E+10_REAL_KIND)
+
 call add_parameter("FAKTOR_PARA"       ,faktor_para            ,1.00E-03_REAL_KIND)
 call add_parameter("FAKTOR_STRECH"     ,faktor_strech          ,1.00E-05_REAL_KIND)
 call add_parameter("FAKTOR_WALL"       ,faktor_wall            ,1.00E+00_REAL_KIND)
-call add_parameter("POINT_WEIGHT"      ,point_weight           ,2.50E-00_REAL_KIND)
-call add_parameter("WALL_MOVE_REST"    ,wall_move_rest                            )
+call add_parameter("FAKTOR_SMOOTH"     ,faktor_smooth          ,1.00E-05_REAL_KIND)
+
 call add_parameter("CELL_INC"          ,cell_inc               ,1.25E+00_REAL_KIND)
 call add_parameter("CELL_PARALLEL_INC" ,cell_parallel_inc      ,1.25E+00_REAL_KIND)
-call add_parameter("OUTPUT_INTERVALL"  ,output_intervall       ,10                )
+
+call add_parameter("OUTPUT_INTERVALL"  ,output_intervall       ,10000             )
+
 call add_parameter("RES_OUT_START"     ,res_out_start          ,50                )
-call add_parameter("RES_OUT"           ,res_out                ,100               )
-call add_parameter("NITER"             ,niter                                     )
+call add_parameter("RES_OUT"           ,res_out                ,10                )
+call add_parameter("NITER"             ,niter                  ,10000             )
 
 inquire(file=trim(filename_config),exist=fexists)
 if (.not. fexists) then
@@ -99,7 +104,6 @@ call list_parameter()
 call free_all()
 
 ! Parameter calculation
-point_weight = 1.0E+00_REAL_KIND / point_weight
 end subroutine read_config
 
 end module config
