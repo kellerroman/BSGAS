@@ -10,7 +10,7 @@ EXECUTABLE_DIR = ../bin
 SOURCE_DIR = ../src
 
 
-_EXE= create_xdmf
+_EXE= create_xdmf config_writer
 
 EXE = $(patsubst %,$(EXECUTABLE_DIR)/%,$(_EXE))
 
@@ -18,6 +18,9 @@ all: $(EXE) module_gridgen.o
 
 
 $(EXECUTABLE_DIR)/%:$(SOURCE_DIR)/%.F90
+	$(FC) $(FFLAGS) $^ $(LIBS) -o $@ $(INCLUDE)
+
+$(EXECUTABLE_DIR)/config_writer: $(SOURCE_DIR)/config_writer.F90 $(CODE_OBJ)const.o $(CODE_OBJ)config_parser.o
 	$(FC) $(FFLAGS) $^ $(LIBS) -o $@ $(INCLUDE)
 
 %.o: ../src/%.F90

@@ -143,37 +143,36 @@ end if
 n_datin_para = n_datin_para + 1
 end subroutine add_str
 
-subroutine list_parameter()
+subroutine list_parameter(io_unit)
+use, intrinsic :: ISO_FORTRAN_ENV, only: stdout => OUTPUT_UNIT, stderr => ERROR_UNIT
 implicit none
-integer :: npara
+integer, optional :: io_unit
+integer :: npara, io
 type(t_datin_para), pointer :: tmp
 npara = 0
 tmp => first
+if (present(io_unit)) then
+   io = io_unit
+else
+   io = stdout
+end if
 do 
    if (.not. associated(tmp) ) exit
    npara = npara + 1
-   if ( tmp % datatype == DATATYPE_INT) then
-      if (tmp % is_set .or. .not. tmp % required) then 
-         write(*,'(A20," =  ",I0)') tmp % varname, tmp % int_var
+   if (tmp % is_set .or. .not. tmp % required) then 
+      if ( tmp % datatype == DATATYPE_INT) then
+         write(io,'(A20," =  ",I0)') tmp % varname, tmp % int_var
+      else if ( tmp % datatype == DATATYPE_REAL) then
+         write(io,'(A20," = ",ES11.4)') tmp % varname, tmp % real_var
+      else if ( tmp % datatype == DATATYPE_STRING) then
+         write(io,'(A20," =  ",A)') tmp % varname, trim(tmp % string_var)
       else
-         write(*,'(A20      )') tmp % varname
-      end if
-   else if ( tmp % datatype == DATATYPE_REAL) then
-      if (tmp % is_set .or. .not. tmp % required) then 
-         write(*,'(A20," = ",ES11.4)') tmp % varname, tmp % real_var
-      else
-         write(*,'(A20,1A       )') tmp % varname
-      end if
-   else if ( tmp % datatype == DATATYPE_STRING) then
-      if (tmp % is_set .or. .not. tmp % required) then 
-         write(*,'(A20," =  ",A)') tmp % varname, trim(tmp % string_var)
-      else
-         write(*,'(A20,1A       )') tmp % varname
+         write(stderr,*) "Error in List_parameter: DATAYPE unknown"
+         stop 1
       end if
    else
-      write(*,*) "Error in List_parameter: DATAYPE unknown"
-      stop 1
-   end if 
+      write(io,'(A20)') tmp % varname
+   end if
    tmp =>tmp % next
 end do
 

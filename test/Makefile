@@ -8,3 +8,6 @@ clean:
 	@$(MAKE) -C 1D clean
 	@$(MAKE) -C 2D clean
 	@$(MAKE) -C 3D clean
+
+update_config:
+	@find . -name config.cfg -exec ../tools/bin/config_writer -w {} \;
