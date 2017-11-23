@@ -14,7 +14,7 @@ integer :: i
 !integer :: b,j,k
 character(len=25) :: filename
 
-if (mod(iter,output_intervall) == 0) then
+if (output_intervall > 0 .and. mod(iter,output_intervall) == 0) then
    write(filename,'(a,i0,a)') "paraview_",iter,".vtk"
    open(10,file=trim(filename))
 
