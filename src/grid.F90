@@ -16,19 +16,20 @@ character(len=100)          :: filename_grid_out
 character(len=*), parameter :: GROUP_GRID            = "grid"
 character(len=*), parameter :: GROUP_BLOCK           = "block"
 character(len=*), parameter :: COORD_NAME(3)         = ["CoordinateX","CoordinateY","CoordinateZ"]
-integer(INT_KIND)           :: filetype_grid_in              = FILETYPE_UNKNOWM
+integer(INT_KIND)           :: filetype_grid_in      = FILETYPE_UNKNOWM
+integer(INT_KIND)           :: filetype_grid_out     = FILETYPE_UNKNOWM
 
-integer(INT_KIND)           :: filetype_grid_out             = FILETYPE_UNKNOWM
 integer(INT_KIND)           :: nBlock
 integer(INT_KIND)           :: nCell
-type(t_block), allocatable  :: blocks(:)
 integer(INT_KIND)           :: dimen
+integer(INT_KIND)           :: solution_output
 
-integer :: number_of_corner_point
-integer :: number_of_face
-integer :: number_of_points_per_face
-integer :: number_of_permutation
+integer(INT_KIND)           :: number_of_corner_point
+integer(INT_KIND)           :: number_of_face
+integer(INT_KIND)           :: number_of_points_per_face
+integer(INT_KIND)           :: number_of_permutation
 
+type(t_block), allocatable  :: blocks(:)
 contains
 
 subroutine read_grid()
@@ -67,6 +68,34 @@ else if (filetype_grid_in == FILETYPE_UFO) then
 end if
 call connect_blocks()
 end subroutine read_grid
+
+subroutine write_grid(iter)
+implicit none
+integer, intent(in), optional :: iter
+integer :: pos
+
+if (present(iter)) then
+   if (mod(iter,solution_output) /= 0) return
+end if
+if (filetype_grid_out == FILETYPE_UNKNOWM) then
+   filetype_grid_out = FILETYPE_HDF5 ! Default is always HDF5
+   pos = index(filename_grid_out,".",.TRUE.)
+   if (pos > 0) then
+      if (trim(filename_grid_out(pos+1:)) == "h5") then
+         filetype_grid_out = FILETYPE_HDF5
+      else if (trim(filename_grid_out(pos+1:)) == "bin") then
+         filetype_grid_out = FILETYPE_UFO
+      end if
+   end if
+end if
+
+
+if (filetype_grid_out == FILETYPE_HDF5) then
+   call write_grid_hdf5()
+else if (filetype_grid_out == FILETYPE_UFO) then
+   call write_grid_ufo()
+end if
+end subroutine write_grid
 
 subroutine read_grid_hdf5()
 implicit none
@@ -630,28 +659,6 @@ blocks(nb) % SamePoints(nsp_nb,ni,nj,nk) = t_same(b,i,j,k)
 blocks(b) % nSamePoints(i,j,k) = nsp_b
 blocks(nb) % nSamePoints(ni,nj,nk) = nsp_nb
 end subroutine addSamePoint
-
-subroutine write_grid()
-implicit none
-integer :: pos
-if (filetype_grid_out == FILETYPE_UNKNOWM) then
-   filetype_grid_out = FILETYPE_HDF5 ! Default is always HDF5
-   pos = index(filename_grid_out,".",.TRUE.)
-   if (pos > 0) then
-      if (trim(filename_grid_out(pos+1:)) == "h5") then
-         filetype_grid_out = FILETYPE_HDF5
-      else if (trim(filename_grid_out(pos+1:)) == "bin") then
-         filetype_grid_out = FILETYPE_UFO
-      end if
-   end if
-end if
-
-if (filetype_grid_out == FILETYPE_HDF5) then
-   call write_grid_hdf5()
-else if (filetype_grid_out == FILETYPE_UFO) then
-   call write_grid_ufo()
-end if
-end subroutine write_grid
 
 subroutine write_grid_hdf5()
 implicit none

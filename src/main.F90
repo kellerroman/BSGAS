@@ -90,11 +90,12 @@ ITER_LOOP: do while (.not. end_adaption)
                    ,max_walledge_len, min_walledge_len)
 
    call write_output(iter)
+   call unstr2struct(blocks,iter)
+   call write_grid(iter)
 end do ITER_LOOP
 
 call unstr2struct(blocks)
-
-call write_grid
+call write_grid()
 
 call sw_program_end()
 end program BSGAS

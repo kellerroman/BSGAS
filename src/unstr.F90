@@ -3,9 +3,12 @@ use const
 use types
 use help_routines, only: alloc, vec_common
 use screen_io
+
 implicit none
 type(t_unstr) :: git
+
 contains
+
 subroutine strukt2unstr(blocks)
 use structured_grid, only: number_of_face
 implicit none
@@ -927,13 +930,18 @@ end do
 avg_len = avg_len / git % nedge
 end subroutine calc_edge_length
 
-subroutine unstr2struct(blocks)
+subroutine unstr2struct(blocks,iter)
+use structured_grid, only: solution_output
 implicit none
 type(t_block), intent(inout) :: blocks(:)
+integer, intent(in), optional :: iter
 
 integer :: nBlock
 integer :: i,j,k,p,b
 
+if (present(iter)) then
+   if (mod(iter,solution_output) /= 0) return
+end if
 nBlock = ubound(blocks,1)
 
 do b = 1, nBlock

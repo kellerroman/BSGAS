@@ -10,7 +10,7 @@ contains
 subroutine read_config
    use control, only: nIter, res_out,res_out_start
    use spring, only: cell_inc,cell_parallel_inc, faktor_wall, faktor_strech, faktor_para, faktor_smooth, spring_max, relax_fkt
-   use structured_grid, only: filename_grid_in,filename_grid_out
+   use structured_grid, only: filename_grid_in,filename_grid_out, solution_output
    use unstr_output, only: output_intervall
 
 implicit none
@@ -39,6 +39,7 @@ call add_parameter("CELL_INC"          ,cell_inc               ,1.25E+00_REAL_KI
 call add_parameter("CELL_PARALLEL_INC" ,cell_parallel_inc      ,1.25E+00_REAL_KIND)
 
 call add_parameter("OUTPUT_INTERVALL"  ,output_intervall       ,10000             )
+call add_parameter("SOLUTION_OUTPUT"   ,solution_output        ,10000             )
 
 call add_parameter("RES_OUT_START"     ,res_out_start          ,50                )
 call add_parameter("RES_OUT"           ,res_out                ,10                )

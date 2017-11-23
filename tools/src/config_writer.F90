@@ -13,6 +13,7 @@ integer                                   ::   nIter
 integer                                   ::   res_out
 integer                                   ::   res_out_start
 integer                                   ::   output_intervall
+integer                                   ::   solution_output
 real(kind = 8)                            ::   cell_inc
 real(kind = 8)                            ::   cell_parallel_inc
 real(kind = 8)                            ::   faktor_wall
@@ -54,6 +55,7 @@ call add_parameter("CELL_PARALLEL_INC" ,cell_parallel_inc      ,1.25E+00_REAL_KI
 call add_parameter("CELL_INC"          ,cell_inc               ,1.25E+00_REAL_KIND)
 
 call add_parameter("OUTPUT_INTERVALL"  ,output_intervall       ,10000             )
+call add_parameter("SOLUTION_OUTPUT"   ,solution_output        ,10000             )
 
 call add_parameter("RES_OUT_START"     ,res_out_start          ,50                )
 call add_parameter("RES_OUT"           ,res_out                ,10                )
@@ -147,6 +149,7 @@ line = "niter"             ;write(fu,para_int) line, niter
 line = "res_out"           ;write(fu,para_int ) line, res_out           
 line = "res_out_start"     ;write(fu,para_int ) line, res_out_start     
 line = "output_intervall"  ;write(fu,para_int ) line, output_intervall  
+line = "solution_output"   ;write(fu,para_int ) line, solution_output  
 write(fu,'(A)') ""
 
 line = "cell_inc"          ;write(fu,para_real) line, cell_inc          
