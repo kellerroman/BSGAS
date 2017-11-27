@@ -198,6 +198,9 @@ nBlock = ubound(blocks,1)
 git % point_move_rest = .FALSE.
 git % point_move_dim_rest = .FALSE.
 !git % point_move_rest_type = 0
+!
+! 1d problem
+!
 if (blocks(1) % nPoints(2) == 1) then
    git % point_move_dim_rest(2,:) = .TRUE.
    do b = 1, nBlock

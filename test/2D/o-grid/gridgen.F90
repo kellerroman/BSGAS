@@ -23,18 +23,18 @@ if (len_trim(arg) /= 0) then
 end if
 if (testcase == 1) then
    nk = 16
-   ny = 32
+   ny = 24
    radius = 2.0000000d-0
 else
-   nk = 64
-   ny = 128
+   nk = 32
+   ny = 240
    radius = 19.0500000d-3
 end if
 call set_dimension(2)
 
 call add_block(nk / 2, nk / 2)
-call add_block(nk / 2, ny - nk / 2)
-call add_block(nk / 2, ny - nk / 2)
+call add_block(nk / 2, ny)
+call add_block(nk / 2, ny)
 
 call allocate_blocks(nVar)
 

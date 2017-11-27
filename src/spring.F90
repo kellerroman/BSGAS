@@ -9,7 +9,7 @@ enum, bind(C)
    enumerator :: CONTROLTYPE_EXP= 1, CONTROLTYPE_DENOM, CONTROLTYPE_PPID
    ! Spring Control types:
    ! EPX : Expotential, deviation is put into a exponential funktion to change the spring
-   ! DENOM : relatiive deviation is used to correct the spring, underrelaxation is also availble
+   ! DENOM : relative deviation is used to correct the spring, underrelaxation is also availble
    ! PPID : Pseudo PID, old value is used to control the spring value
 end enum
 
@@ -53,8 +53,8 @@ call alloc(driving_forces,git % nedge)
 call alloc(spring_old,git % nedge)
 call alloc(spring_res,git % nedge)
 do e = 1, git % nedge
-   springs(:,e) = SPRING_MIN / git % edge_lengths(e)  ! Length is taken to put grid at equilibrium at start up
-   springs(1,e) = SPRING_MIN ! Wall-Edges do noz have automatic decrease so start with very small values
+   springs(2:,e) = SPRING_MIN / git % edge_lengths(e)  ! Length is taken to put grid at equilibrium at start up
+   springs(1 ,e) = SPRING_MIN ! Wall-Edges do noz have automatic decrease so start with very small values
 end do
 
 ! Set WallEdges to the VAlue of the other springs to see an effect in the first iteration
@@ -95,15 +95,11 @@ if (smooth_springs == 1) then
    do e = 1, git % nedge
       do n = 1, git % edge_nneighbor(e)
          ne = git % edge_neighbor(n,e)
-         !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-         !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
          springs(2,ne) = max(git % edge_springs(e) / 1.3D0, springs(2,ne))
          springs(2,e) = max(git % edge_springs(ne) / 1.3D0, springs(2,e))
       end do
       do n = 1, git % edge_nparallel(e)
          ne = git % edge_parallel(n,e)
-         !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-         !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
          springs(3,ne) = max(git % edge_springs(e) / 1.3D0, springs(3,ne))
          springs(3,e) = max(git % edge_springs(ne) / 1.3D0, springs(3,e))
       end do
@@ -113,8 +109,6 @@ if (smooth_springs == 1) then
    do e =  git % nedge,1,-1
       do n = 1, git % edge_nneighbor(e)
          ne = git % edge_neighbor(n,e)
-         !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-         !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
          springs(2,ne) = max(git % edge_springs(e) / 1.3D0, springs(2,ne))
          springs(2,e) = max(git % edge_springs(ne) / 1.3D0, springs(2,e))
          git % edge_springs(ne) = maxval(           springs(:,ne))
@@ -124,8 +118,6 @@ if (smooth_springs == 1) then
       end do
       do n = 1, git % edge_nparallel(e)
          ne = git % edge_parallel(n,e)
-         !git % edge_springs(ne) = max(git % edge_springs(e) / 1.3D0, git % edge_springs(ne))
-         !git % edge_springs(e) = max(git % edge_springs(ne) / 1.3D0, git % edge_springs(e))
          springs(3,ne) = max(git % edge_springs(e) / 1.3D0, springs(3,ne))
          springs(3,e) = max(git % edge_springs(ne) / 1.3D0, springs(3,e))
          git % edge_springs(ne) = maxval(           springs(:,ne))
@@ -224,8 +216,6 @@ if (spring_control_type_strech == CONTROLTYPE_EXP) then
       fkt = el / nel - cell_inc
       edge_values(2,e) = fkt
       delta = exp(faktor_strech * fkt)
-      !delta = max (delta,INV_SPRING_INC )
-      !delta = min (delta,    SPRING_INC )
       springs(2,e) = max(springs(2,e) * delta, SPRING_MIN)
    end do
 !$OMP END PARALLEL DO

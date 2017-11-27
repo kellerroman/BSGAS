@@ -4,7 +4,7 @@ program BSGAS
 ! **************************************************************************************************
 ! Author:       Roman Keller(RK)
 ! Start date:   13.05.2017
-! Last changes: 03.10.2017
+! Last changes: 22.11.2017
 ! Version:      V0.1.0
 ! --------------------------------------------------------------------------------------------------
 ! Description:
@@ -24,7 +24,7 @@ program BSGAS
 !   - 2017-09-29,RK : Added ifort as possible compiler
 !   - 2017-10-03,RK : Added OpenMP support in gfortran
 !   - 2017-10-18,RK : Added Implicit Solver usingn SuperLU
-!
+!   - 2017-11-22,RK : Added solution output intervall and config writer
 ! **************************************************************************************************
 use boundary, only: read_boundary, init_boundary, init_walledges
 use control, only: loop_control, end_adaption, iter
@@ -59,7 +59,6 @@ call init_matrix(git)
 
 call calc_edge_length(max_edge_len,min_edge_len,avg_edge_len,max_walledge_len,min_walledge_len)
 call init_springs
-!call calc_edge_springs(max_spring,min_spring)
 
 call write_output(0)
 
@@ -71,8 +70,6 @@ max_res = 1.0D0
 ITER_LOOP: do while (.not. end_adaption)
 
    call loop_control(max_res)
-
-   !call calc_edge_length(max_edge_len,min_edge_len,max_walledge_len,min_walledge_len)
 
    call calc_edge_springs(max_spring,min_spring,max_spring_res,sum_spring_res)
 
