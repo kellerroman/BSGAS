@@ -5,6 +5,18 @@ use types
 implicit none
    real(REAL_KIND) , parameter :: EPSI        = 1.0E-4_REAL_KIND
    character(len=*), parameter :: BC_SHORT(6) = ["w","e","s","n","f","b"]
+
+
+   ! Boundary types larger DC_TYPE_WALL will create no walledges (no spatial
+   ! boundary condition)
+   integer, parameter :: BC_TYPE_WALL         = -10
+   integer, parameter :: BC_TYPE_FIXED_WALL   = BC_TYPE_WALL - 1
+   integer, parameter :: BC_TYPE_XF_WALL      = BC_TYPE_WALL - 2
+   !integer, parameter :: BC_TYPE_YF_WALL      = BC_TYPE_WALL - 3
+
+   integer, parameter :: BC_TYPE_POS_FIXED    = BC_TYPE_WALL + 1
+   integer, parameter :: BC_TYPE_XPOS_FIXED   = BC_TYPE_WALL + 2
+   !integer, parameter :: BC_TYPE_YPOS_FIXED   = BC_TYPE_WALL + 3
 contains
 
 subroutine read_boundary(blocks)
@@ -25,11 +37,14 @@ logical :: fexists
 character(len=100) :: line
 character(len=100) :: block_list
 character(len=100) :: temp
+character(len=100) :: boundary_type
+integer            :: bc_type
 real(REAL_KIND) :: dn_value
 
 integer :: stat
 ! stat = 0: Expecting new boundary condition
 ! stat = 1: Expecting a variable definiton (dn)
+! stat = 2: Processing the input
 integer :: b,f
 
 nBlock = ubound(blocks,1)
@@ -41,42 +56,7 @@ end if
 stat = 0
 open(newunit = fu, file= trim(filename_bc))
 do 
-   read(fu,'(A)',iostat=io_stat) line
-
-   if (io_stat < 0) then
-      !write(*,*) "End of File"
-      exit
-   end if
-   line = trim(adjustl(line))
-   pos = index(line,"!")
-   if (pos > 0 ) then
-      line = line(1:pos-1)
-   end if
-   if (len_trim(line) == 0) cycle
-   line = lower_case(line)
-   if (stat == 0) then
-      pos = index(line,":")
-      if (pos == 0) then
-         write(*,*) "Expecting new Boundary Type"
-         stop 1
-      end if
-
-      block_list = trim(adjustl(line(pos+1:)))
-      stat = 1
-   else if (stat == 1) then
-      pos = index(line,"=")
-      if (pos == 0) then
-         write(*,*) "Expecting Value Definition"
-         stop 1
-      end if
-      temp =trim(adjustl(line(1:pos-1)))
-      if (temp =="dn") then
-         temp = trim(adjustl(line(pos+1:)))
-         read(temp,*) dn_value
-      else
-         write(*,*) "Variable "//temp//" unknown"
-         stop 1
-      end if
+   if (stat == 2) then
       stat = 0
       fexists = .false.
       !separate the individuel blocks that are separated by a comma
@@ -111,22 +91,95 @@ do
                   write(*,*) "Block",b," Face ",f," is connected to another block and cannot be set as a special boundary"
                   stop 1
                else
-                  blocks(b) % boundary_cond(f) % bc_type = -1
-                  blocks(b) % boundary_cond(f) % dn = dn_value
+                  if (bc_type == BC_TYPE_WALL) then
+                     blocks(b) % boundary_cond(f) % bc_type = BC_TYPE_WALL
+                     blocks(b) % boundary_cond(f) % dn = dn_value
+                  else if (bc_type == BC_TYPE_XF_WALL) then
+                     blocks(b) % boundary_cond(f) % bc_type = BC_TYPE_XF_WALL
+                     blocks(b) % boundary_cond(f) % dn = dn_value
+                  else if (bc_type == BC_TYPE_FIXED_WALL) then
+                     blocks(b) % boundary_cond(f) % bc_type = BC_TYPE_FIXED_WALL
+                     blocks(b) % boundary_cond(f) % dn = dn_value
+                  else if (bc_type == BC_TYPE_POS_FIXED) then
+                     blocks(b) % boundary_cond(f) % bc_type = BC_TYPE_POS_FIXED
+                  else if (bc_type == BC_TYPE_XPOS_FIXED) then
+                     blocks(b) % boundary_cond(f) % bc_type = BC_TYPE_XPOS_FIXED
+                  else
+                     write(*,*) "bc_type unknown:",bc_type 
+                     stop 1
+                  end if
                end if
                exit
             else
                pos = pos + 1
             end if
          end do
-
          if (fexists) exit
-
       end do
    else
-      write(*,*) "Error with Status"
+      read(fu,'(A)',iostat=io_stat) line
+
+      if (io_stat < 0) then
+         !write(*,*) "End of File"
+         exit
+      end if
+      line = trim(adjustl(line))
+      pos = index(line,"!")
+      if (pos > 0 ) then
+         line = line(1:pos-1)
+      end if
+      if (len_trim(line) == 0) cycle
+      line = lower_case(line)
+
+      if (stat == 0) then
+         pos = index(line,":")
+         if (pos == 0) then
+            write(*,*) "Expecting new Boundary Type"
+            stop 1
+         end if
+         boundary_type = trim(adjustl(line(1:pos-1)))
+         block_list = trim(adjustl(line(pos+1:)))
+         if (trim(boundary_type) == "wall") then
+            bc_type = BC_TYPE_WALL
+            stat = 1
+         else if (trim(boundary_type) == "x-fixed-wall") then
+            bc_type = BC_TYPE_XF_WALL
+            stat = 1
+         else if (trim(boundary_type) == "fixed-wall") then
+            bc_type = BC_TYPE_FIXED_WALL
+            stat = 1
+         else if (trim(boundary_type) == "pos-fixed") then
+            bc_type = BC_TYPE_POS_FIXED
+            stat = 2
+         else if (trim(boundary_type) == "x-pos-fixed") then
+            bc_type = BC_TYPE_XPOS_FIXED
+            stat = 2
+         else 
+            write(*,*) "Boundary-Type unkown:",boundary_type,__FILE__,__LINE__
+            stop 1
+         end if
+      else if (stat == 1) then
+         pos = index(line,"=")
+         if (pos == 0) then
+            write(*,*) "Expecting Value Definition"
+            stop 1
+         end if
+         temp =trim(adjustl(line(1:pos-1)))
+         if (temp =="dn") then
+            temp = trim(adjustl(line(pos+1:)))
+            read(temp,*) dn_value
+         else
+            write(*,*) "Variable "//temp//" unknown"
+            stop 1
+         end if
+         stat = 2
+      end if
    end if
 end do
+   if (stat /= 0) then
+      write(*,*) "There is an unprocessed line in the bc file"
+      stop 1
+   end if
 close(fu)
 end subroutine read_boundary
 
@@ -146,8 +199,6 @@ subroutine init_boundary(git, blocks)
 !   general movement restriction (linear) can be applied, a equationi
 !   Ni * Xi = Ni * X0 is added to the matrix system
 !   (Ni=Normalvektor,Xi=Coordinates,X0=Starting Coordinates)
-!   
-!   
 !   
 ! --------------------------------------------------------------------------------------------------
 ! Comments and Notes:
@@ -197,7 +248,14 @@ logical :: is_3D
 nBlock = ubound(blocks,1)
 git % point_move_rest = .FALSE.
 git % point_move_dim_rest = .FALSE.
-!git % point_move_rest_type = 0
+
+!do b = 1, nBlock
+!   do i = 1, blocks(b) % nPoints(1)
+!      p = blocks(b) % refs(i,1,1)
+!      git % point_move_dim_rest(1,p) = .true.
+!   end do
+!end do
+
 !
 ! 1d problem
 !
@@ -207,7 +265,6 @@ if (blocks(1) % nPoints(2) == 1) then
       do i = 1,blocks(b) % nPoints(1), blocks(b) % nCells(1)
          p = blocks(b) % refs(i,1,1)
          git % point_move_rest(p) = .TRUE.
-         !git % point_move_rest_type(p) = 1
          git % point_move_rest_vector(:,p) = 0.0d0
          git % point_move_dim_rest(1,p) = .TRUE.
          write(*,*) "Restiricting Movement for",i,p
@@ -219,9 +276,11 @@ else if (blocks(1) % nPoints(3) > 1) then
 else
    is_3D = .false.
 end if
+
 !====================================================================================================
 !==========================      CREATE MOVEMENT RESTRICTION INFORMATION  ===========================
 !====================================================================================================
+
 allocate(norms(nBlock))
 k = 1
 do b = 1, nBlock
@@ -325,6 +384,28 @@ do b = 1, nBlock
 
    if (blocks(b) % boundary_cond(1) % bc_type <= 0) then !!! NO BLOCK CONNECTION WEST SIDE
       i = 1
+      ! Special boundary condition x-fixed-wall
+      if      (blocks(b) % boundary_cond(1) % bc_type == BC_TYPE_XF_WALL) then
+         do j = 1, blocks(b) % nPoints(2)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(1,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(1) % bc_type == BC_TYPE_FIXED_WALL) then
+         do j = 1, blocks(b) % nPoints(2)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(:,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(1) % bc_type == BC_TYPE_POS_FIXED) then
+         do j = 1, blocks(b) % nPoints(2)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(:,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(1) % bc_type == BC_TYPE_XPOS_FIXED) then
+         do j = 1, blocks(b) % nPoints(2)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(1,p) = .true.
+         end do
+      end if
       do j = 2, blocks(b) % nCells(2)
          p = blocks(b) % refs(i,j,k)
          v1 = blocks(b) % coords(i,j+1,k,:) - git % point_coords(:,p)
@@ -394,6 +475,28 @@ do b = 1, nBlock
    end if
    if (blocks(b) % boundary_cond(2) % bc_type <= 0) then !!! NO BLOCK CONNECTION EAST SIDE
       i = blocks(b) % nPoints(1)
+      ! Special boundary condition x-fixed-wall
+      if      (blocks(b) % boundary_cond(2) % bc_type == BC_TYPE_XF_WALL) then
+         do j = 1, blocks(b) % nPoints(2)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(1,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(2) % bc_type == BC_TYPE_FIXED_WALL) then
+         do j = 1, blocks(b) % nPoints(2)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(:,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(2) % bc_type == BC_TYPE_POS_FIXED) then
+         do j = 1, blocks(b) % nPoints(2)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(:,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(2) % bc_type == BC_TYPE_XPOS_FIXED) then
+         do j = 1, blocks(b) % nPoints(2)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(1,p) = .true.
+         end do
+      end if
       do j = 2, blocks(b) % nCells(2)
          p = blocks(b) % refs(i,j,k)
          v1 = blocks(b) % coords(i,j+1,k,:) - git % point_coords(:,p)
@@ -464,6 +567,28 @@ do b = 1, nBlock
    end if
    if (blocks(b) % boundary_cond(3) % bc_type <= 0) then !!! NO BLOCK CONNECTION SOUTH SIDE
       j= 1
+      ! Special boundary condition x-fixed-wall
+      if      (blocks(b) % boundary_cond(3) % bc_type == BC_TYPE_XF_WALL) then
+         do i = 1, blocks(b) % nPoints(1)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(1,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(3) % bc_type == BC_TYPE_FIXED_WALL) then
+         do i = 1, blocks(b) % nPoints(1)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(:,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(3) % bc_type == BC_TYPE_POS_FIXED) then
+         do i = 1, blocks(b) % nPoints(1)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(:,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(3) % bc_type == BC_TYPE_XPOS_FIXED) then
+         do i = 1, blocks(b) % nPoints(1)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(1,p) = .true.
+         end do
+      end if
       do i = 2, blocks(b) % nCells(1)
          p = blocks(b) % refs(i,j,k)
          v1 = blocks(b) % coords(i+1,j,k,:) - git % point_coords(:,p)
@@ -533,6 +658,28 @@ do b = 1, nBlock
    end if
    if (blocks(b) % boundary_cond(4) % bc_type <= 0) then !!! NO BLOCK CONNECTION NORTH SIDE
       j= blocks(b) % nPoints(2)
+      ! Special boundary condition x-fixed-wall
+      if      (blocks(b) % boundary_cond(4) % bc_type == BC_TYPE_XF_WALL) then
+         do i = 1, blocks(b) % nPoints(1)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(1,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(4) % bc_type == BC_TYPE_FIXED_WALL) then
+         do i = 1, blocks(b) % nPoints(1)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(:,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(4) % bc_type == BC_TYPE_POS_FIXED) then
+         do i = 1, blocks(b) % nPoints(1)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(:,p) = .true.
+         end do
+      else if (blocks(b) % boundary_cond(4) % bc_type == BC_TYPE_XPOS_FIXED) then
+         do i = 1, blocks(b) % nPoints(1)
+            p = blocks(b) % refs(i,j,k)
+            git % point_move_dim_rest(1,p) = .true.
+         end do
+      end if
       do i = 2, blocks(b) % nCells(1)
          p = blocks(b) % refs(i,j,k)
          v1 = blocks(b) % coords(i+1,j,k,:) - git % point_coords(:,p)
@@ -626,16 +773,16 @@ integer :: e, eop
 integer :: ne                ! Number of edges
 integer :: nwe ! NUMBER WALL EDGES
 
-!real(REAL_KIND) :: ref(4)
 nBlock = ubound(blocks,1)
+
 !====================================================================================================
 !====================    CREATE LIST OF WALL EDGES WITH SPECIFIC REQUIRED LENGTH   ==================
 !====================================================================================================
+
 git % nWallEdge = 0
-!write(*,*) "Walledges"
 do b = 1, nBlock
    do f = 1,number_of_face
-      if (blocks(b) % boundary_cond(f) % bc_type < 0) then
+      if (blocks(b) % boundary_cond(f) % bc_type <= BC_TYPE_WALL ) then
          i = blocks(b) % nPoints(1)
          j = blocks(b) % nPoints(2)
          k = blocks(b) % nPoints(3)
@@ -669,7 +816,7 @@ nwe = 0
 do b = 1, nBlock
    do f = 1,number_of_face
    associate(bc => blocks(b) % boundary_cond(f))
-      if (bc % bc_type < 0) then
+      if (blocks(b) % boundary_cond(f) % bc_type <= BC_TYPE_WALL ) then
          is = bc % is
          ie = bc % ie
          js = bc % js

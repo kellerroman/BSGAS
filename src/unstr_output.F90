@@ -13,6 +13,7 @@ integer, intent(in) :: iter
 integer :: i
 !integer :: b,j,k
 character(len=25) :: filename
+real(REAL_KIND) :: temp
 
 if (output_intervall > 0 .and. mod(iter,output_intervall) == 0) then
    write(filename,'(a,i0,a)') "paraview_",iter,".vtk"
@@ -61,11 +62,19 @@ if (output_intervall > 0 .and. mod(iter,output_intervall) == 0) then
    end do
    write(10,*)
    write(10,"(A,1X,I0)") "POINT_DATA",git % nPoint
-   write(10,"(A)") 'VECTORS MOVEMENT_VECTOR double'
+   write(10,"(A)") 'SCALARS Movement_Restriction double'
+   write(10,"(A)") 'LOOKUP_TABLE Default'
    do i = 1, git % nPoint
-      !write(10,'(3(D20.13,1X))') git % point_move_rest_vector(:,i)
-      write(10,*) git % point_move_rest_vector(:,i)
+      temp = 0.00E0_REAL_KIND
+      if (git % point_move_dim_rest(1,i)) temp = temp + 1.00E0_REAL_KIND
+      if (git % point_move_dim_rest(2,i)) temp = temp + 2.00E0_REAL_KIND
+      write(10,*) temp
    end do
+!   write(10,"(A)") 'VECTORS MOVEMENT_VECTOR double'
+!   do i = 1, git % nPoint
+!      !write(10,'(3(D20.13,1X))') git % point_move_rest_vector(:,i)
+!      write(10,*) git % point_move_rest_vector(:,i)
+!   end do
    write(10,"(A,1X,I0)") "CELL_DATA",git % nedge
    write(10,"(A)") 'SCALARS Edge_Length double'
    write(10,"(A)") 'LOOKUP_TABLE Default'
