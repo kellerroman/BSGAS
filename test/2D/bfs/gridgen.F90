@@ -65,7 +65,7 @@ if (bfs_case == 1) then
    x3 =  3.810d-01
    y1 = -1.270d-02
    y3 =  1.016d-01
-else
+else if (bfs_case == 2) then
    nj1 =  50
    nj2 = 100
    ni1 =  50
@@ -74,6 +74,16 @@ else
    x1 = -2.540d-02
    x3 =  7.620d-02
    y1 = -6.350d-03
+   y3 =  5.080d-02
+else
+   nj1 =  50
+   nj2 =  50
+   ni1 =  50
+   ni2 =  50
+
+   x1 = -5.000d-02
+   x3 =  5.000d-02
+   y1 = -5.000d-02
    y3 =  5.080d-02
 end if
 
@@ -108,9 +118,12 @@ open(666,file="bc.cfg")
 if (bfs_case == 1) then
    write(666,'(A)') "wall: 1N,1S,2S,2W,3N ! Wall"
    write(666,'(A)') "dn = 1E-6    ! Spacing of first Cell"
-else
+else if (bfs_case == 2) then
    write(666,'(A)') "wall: 1N,1S,2S,2W,3N ! Wall"
    write(666,'(A)') "dn = 1E-5    ! Spacing of first Cell"
+else
+   write(666,'(A)') "wall: 1S,2W ! Wall"
+   write(666,'(A)') "dn = 1E-6    ! Spacing of first Cell"
 end if
 close(666)
 

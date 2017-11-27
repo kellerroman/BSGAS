@@ -15,7 +15,7 @@ end enum
 
 integer(INT_KIND), parameter :: N_SPRINGS      = 4
 
-real(REAL_KIND), parameter   :: SPRING_MIN     = 1.00E-2_REAL_KIND
+real(REAL_KIND), parameter   :: SPRING_MIN     = 1.00E-9_REAL_KIND
 real(REAL_KIND), parameter   :: SPRING_SMOOTH_MAX = SPRING_MIN * 1.0E+12_REAL_KIND
 
 integer(INT_KIND)            :: spring_control_type_wall   = CONTROLTYPE_DENOM
